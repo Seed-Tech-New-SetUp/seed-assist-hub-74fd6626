@@ -6,24 +6,30 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SchoolProvider } from "@/contexts/SchoolContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+
+// Auth & Navigation
 import Login from "./pages/Login";
 import SchoolSelector from "./pages/SchoolSelector";
 import Dashboard from "./pages/Dashboard";
-import VirtualEvents from "./pages/VirtualEvents";
-import MeetupReports from "./pages/MeetupReports";
-import FestivalReports from "./pages/FestivalReports";
-import CampusTours from "./pages/CampusTours";
-import InCountryReports from "./pages/InCountryReports";
-import SchoolProfiles from "./pages/SchoolProfiles";
-import ProfileLeads from "./pages/ProfileLeads";
-import LeadGeneration from "./pages/LeadGeneration";
-import ScholarshipApplicants from "./pages/ScholarshipApplicants";
-import ApplicantProfiles from "./pages/ApplicantProfiles";
-import Applications from "./pages/Applications";
-import AdmitsTracking from "./pages/AdmitsTracking";
-import ReportDetail from "./pages/ReportDetail";
-import UserManagement from "./pages/UserManagement";
 import NotFound from "./pages/NotFound";
+
+// Events
+import InPersonReports from "./pages/events/InPersonReports";
+import UpcomingEvents from "./pages/events/UpcomingEvents";
+import VirtualMasterclass from "./pages/events/VirtualMasterclass";
+import VirtualMeetups from "./pages/events/VirtualMeetups";
+
+// Scholarships
+import ScholarshipApplications from "./pages/scholarships/ScholarshipApplications";
+import StudentProfile from "./pages/scholarships/StudentProfile";
+
+// School
+import SchoolProfileEdit from "./pages/school/SchoolProfileEdit";
+
+// Other
+import Analytics from "./pages/Analytics";
+import UserManagement from "./pages/UserManagement";
+import ReportDetail from "./pages/ReportDetail";
 
 const queryClient = new QueryClient();
 
@@ -36,24 +42,39 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
+              {/* Auth Routes */}
               <Route path="/" element={<Navigate to="/login" replace />} />
               <Route path="/login" element={<Login />} />
               <Route path="/select-school" element={<ProtectedRoute><SchoolSelector /></ProtectedRoute>} />
+
+              {/* Main Dashboard */}
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-              <Route path="/virtual-events" element={<ProtectedRoute><VirtualEvents /></ProtectedRoute>} />
-              <Route path="/meetup-reports" element={<ProtectedRoute><MeetupReports /></ProtectedRoute>} />
-              <Route path="/festival-reports" element={<ProtectedRoute><FestivalReports /></ProtectedRoute>} />
-              <Route path="/campus-tours" element={<ProtectedRoute><CampusTours /></ProtectedRoute>} />
-              <Route path="/in-country-reports" element={<ProtectedRoute><InCountryReports /></ProtectedRoute>} />
-              <Route path="/school-profiles" element={<ProtectedRoute><SchoolProfiles /></ProtectedRoute>} />
-              <Route path="/profile-leads" element={<ProtectedRoute><ProfileLeads /></ProtectedRoute>} />
-              <Route path="/lead-generation" element={<ProtectedRoute><LeadGeneration /></ProtectedRoute>} />
-              <Route path="/scholarship-applicants" element={<ProtectedRoute><ScholarshipApplicants /></ProtectedRoute>} />
-              <Route path="/applicant-profiles" element={<ProtectedRoute><ApplicantProfiles /></ProtectedRoute>} />
-              <Route path="/applications" element={<ProtectedRoute><Applications /></ProtectedRoute>} />
-              <Route path="/admits-tracking" element={<ProtectedRoute><AdmitsTracking /></ProtectedRoute>} />
+
+              {/* Events - In Person */}
+              <Route path="/events/in-person/reports" element={<ProtectedRoute><InPersonReports /></ProtectedRoute>} />
+              <Route path="/events/in-person/upcoming" element={<ProtectedRoute><UpcomingEvents /></ProtectedRoute>} />
+
+              {/* Events - Virtual */}
+              <Route path="/events/virtual/masterclass" element={<ProtectedRoute><VirtualMasterclass /></ProtectedRoute>} />
+              <Route path="/events/virtual/meetups" element={<ProtectedRoute><VirtualMeetups /></ProtectedRoute>} />
+
+              {/* Scholarships */}
+              <Route path="/scholarships/applications" element={<ProtectedRoute><ScholarshipApplications /></ProtectedRoute>} />
+              <Route path="/scholarships/applications/:studentId" element={<ProtectedRoute><StudentProfile /></ProtectedRoute>} />
+
+              {/* School Profile */}
+              <Route path="/school-profile/edit" element={<ProtectedRoute><SchoolProfileEdit /></ProtectedRoute>} />
+
+              {/* Analytics */}
+              <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+
+              {/* User Management */}
               <Route path="/user-management" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
+
+              {/* Public Routes */}
               <Route path="/reports/:reportId" element={<ReportDetail />} />
+
+              {/* 404 */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
