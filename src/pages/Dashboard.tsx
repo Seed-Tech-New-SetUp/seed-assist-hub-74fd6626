@@ -1,120 +1,133 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { StatsCard } from "@/components/dashboard/StatsCard";
-import { ROIChart, ChannelPerformanceChart } from "@/components/dashboard/ROIChart";
-import { RecentActivity } from "@/components/dashboard/RecentActivity";
-import { QuickActions } from "@/components/dashboard/QuickActions";
-import { UpcomingEvents } from "@/components/dashboard/UpcomingEvents";
+import { InsightCard } from "@/components/dashboard/InsightCard";
+import { MetricRing } from "@/components/dashboard/MetricRing";
+import { AdvancedROIChart, ChannelPerformance, ConversionFunnel } from "@/components/dashboard/AdvancedROIChart";
+import { ActivityFeed, UpcomingEventsList } from "@/components/dashboard/ActivityFeed";
+import { GlobalInsights, AIInsights } from "@/components/dashboard/GlobalInsights";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
-  TrendingUp,
-  Users,
+  Target,
   FileText,
   GraduationCap,
-  Target,
+  TrendingUp,
+  Users,
   Building2,
   CheckCircle2,
   DollarSign,
+  Sparkles,
+  ArrowRight,
 } from "lucide-react";
 
 export default function Dashboard() {
   return (
     <DashboardLayout>
       {/* Page Header */}
-      <div className="mb-6 animate-fade-in">
-        <h1 className="text-2xl font-display font-semibold mb-1">
-          Welcome back, <span className="text-primary">John</span>
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Here's your holistic ROI overview and recent activities for Harvard Business School.
-        </p>
+      <div className="mb-8 animate-fade-in">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-display font-bold mb-2">
+              Welcome back, <span className="gradient-text">John</span>
+            </h1>
+            <p className="text-muted-foreground">
+              Here's your holistic ROI overview for Harvard Business School
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button variant="outline" className="gap-2">
+              <Sparkles className="h-4 w-4" />
+              Generate Report
+            </Button>
+            <Button className="gap-2 gradient-primary text-white border-0">
+              View Analytics
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
       </div>
 
-      {/* Stats Grid */}
+      {/* Key Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatsCard
+        <InsightCard
           title="Total Leads"
           value="2,847"
           change={12.5}
           changeLabel="vs last month"
           icon={Target}
-          iconColor="accent"
+          gradient="primary"
           delay={100}
         />
-        <StatsCard
+        <InsightCard
           title="Active Applications"
           value="428"
           change={8.2}
           changeLabel="vs last month"
           icon={FileText}
-          iconColor="primary"
+          gradient="accent"
           delay={150}
         />
-        <StatsCard
+        <InsightCard
           title="Scholarship Applicants"
           value="156"
           change={-2.3}
           changeLabel="vs last month"
           icon={GraduationCap}
-          iconColor="success"
+          gradient="success"
           delay={200}
         />
-        <StatsCard
+        <InsightCard
           title="ROI Multiplier"
           value="5.4x"
           change={18.7}
           changeLabel="vs last quarter"
           icon={TrendingUp}
-          iconColor="info"
+          gradient="warm"
           delay={250}
         />
       </div>
 
-      {/* Secondary Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatsCard
-          title="Virtual Events"
-          value="24"
-          icon={Users}
-          iconColor="info"
-          delay={150}
-        />
-        <StatsCard
-          title="School Partners"
-          value="110+"
-          icon={Building2}
-          iconColor="warning"
-          delay={175}
-        />
-        <StatsCard
-          title="Admits This Year"
-          value="892"
-          change={24.5}
-          changeLabel="vs last year"
-          icon={CheckCircle2}
-          iconColor="success"
-          delay={200}
-        />
-        <StatsCard
-          title="Revenue Impact"
-          value="$2.4M"
-          change={32.1}
-          changeLabel="attributed"
-          icon={DollarSign}
-          iconColor="accent"
-          delay={225}
-        />
+      {/* ROI Performance Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        <AdvancedROIChart />
+        <ChannelPerformance />
       </div>
 
-      {/* Charts Row */}
+      {/* Secondary Stats + Conversion Funnel */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
+        <Card className="border-border/50 overflow-hidden animate-fade-in-up" style={{ animationDelay: "300ms" }}>
+          <CardContent className="p-5">
+            <div className="flex flex-col items-center">
+              <MetricRing value={24} max={30} label="Virtual Events" sublabel="this month" gradient="primary" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="border-border/50 overflow-hidden animate-fade-in-up" style={{ animationDelay: "350ms" }}>
+          <CardContent className="p-5">
+            <div className="flex flex-col items-center">
+              <MetricRing value={892} max={1000} label="Admits This Year" sublabel="+24.5%" gradient="success" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <div className="lg:col-span-2">
+          <ConversionFunnel />
+        </div>
+      </div>
+
+      {/* Activity + Insights Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-        <ROIChart />
-        <ChannelPerformanceChart />
+        <div className="lg:col-span-2">
+          <ActivityFeed />
+        </div>
+        <GlobalInsights />
       </div>
 
       {/* Bottom Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <RecentActivity />
-        <UpcomingEvents />
-        <QuickActions />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <UpcomingEventsList />
+        <AIInsights />
       </div>
     </DashboardLayout>
   );
