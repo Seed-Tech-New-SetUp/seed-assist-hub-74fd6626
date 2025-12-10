@@ -1,59 +1,51 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { Calendar, MapPin, Download, ArrowLeft, Tag } from "lucide-react";
+import { Calendar, MapPin, Download, ArrowLeft, Tag, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
 
-// Mock data for reports - in production, this would come from the database
-const reportsData: Record<string, {
+interface EventReport {
+  id: string;
   title: string;
-  date: string;
+  event_date: string;
   venue: string;
   season: string;
-  image: string;
+  image_url: string | null;
   type: string;
-}> = {
-  "bsf-nairobi-2025": {
-    title: "Business School Festival - Nairobi",
-    date: "22 October, 2025",
-    venue: "Hyatt Regency Nairobi Westlands",
-    season: "Fall - 2025",
-    image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=400&fit=crop",
-    type: "Festival",
-  },
-  "bsf-lagos-2025": {
-    title: "Business School Festival - Lagos",
-    date: "15 November, 2025",
-    venue: "Eko Hotels & Suites",
-    season: "Fall - 2025",
-    image: "https://images.unsplash.com/photo-1587825140708-dfaf72ae4b04?w=800&h=400&fit=crop",
-    type: "Festival",
-  },
-  "meetup-mumbai-2025": {
-    title: "MBA Meetup - Mumbai",
-    date: "10 September, 2025",
-    venue: "The Taj Mahal Palace",
-    season: "Fall - 2025",
-    image: "https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=800&h=400&fit=crop",
-    type: "Meetup",
-  },
-  "virtual-asia-2025": {
-    title: "Virtual MBA Fair - Asia Pacific",
-    date: "5 August, 2025",
-    venue: "Online Event",
-    season: "Summer - 2025",
-    image: "https://images.unsplash.com/photo-1591115765373-5207764f72e7?w=800&h=400&fit=crop",
-    type: "Virtual",
-  },
-};
+  share_token: string;
+}
 
 export default function ReportDetail() {
   const { reportId } = useParams<{ reportId: string }>();
   const navigate = useNavigate();
   
-  const report = reportId ? reportsData[reportId] : null;
+  const { data: report, isLoading, error } = useQuery({
+    queryKey: ['report', reportId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('event_reports')
+        .select('*')
+        .eq('share_token', reportId)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data as EventReport | null;
+    },
+    enabled: !!reportId,
+  });
 
-  if (!report) {
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-muted flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (error || !report) {
     return (
       <div className="min-h-screen bg-muted flex items-center justify-center p-4">
         <Card className="max-w-md w-full p-8 text-center">
@@ -90,7 +82,7 @@ export default function ReportDetail() {
           {/* Event Image */}
           <div className="relative">
             <img 
-              src={report.image} 
+              src={report.image_url || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=400&fit=crop'} 
               alt={report.title}
               className="w-full h-48 sm:h-64 object-cover"
             />
@@ -113,7 +105,7 @@ export default function ReportDetail() {
             <div className="bg-muted rounded-lg p-5 mb-6 space-y-3">
               <div className="flex items-center justify-center gap-2 text-muted-foreground">
                 <Calendar className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium">{report.date}</span>
+                <span className="text-sm font-medium">{format(new Date(report.event_date), 'd MMMM, yyyy')}</span>
               </div>
               <div className="flex items-center justify-center gap-2 text-muted-foreground">
                 <MapPin className="h-4 w-4 text-primary" />

@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      event_reports: {
+        Row: {
+          created_at: string
+          event_date: string
+          id: string
+          image_url: string | null
+          school_id: string | null
+          season: string
+          share_token: string
+          title: string
+          type: string
+          updated_at: string
+          venue: string
+        }
+        Insert: {
+          created_at?: string
+          event_date: string
+          id?: string
+          image_url?: string | null
+          school_id?: string | null
+          season: string
+          share_token?: string
+          title: string
+          type?: string
+          updated_at?: string
+          venue: string
+        }
+        Update: {
+          created_at?: string
+          event_date?: string
+          id?: string
+          image_url?: string | null
+          school_id?: string | null
+          season?: string
+          share_token?: string
+          title?: string
+          type?: string
+          updated_at?: string
+          venue?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_reports_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
