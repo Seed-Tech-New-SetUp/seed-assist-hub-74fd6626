@@ -21,6 +21,7 @@ import ScholarshipApplicants from "./pages/ScholarshipApplicants";
 import ApplicantProfiles from "./pages/ApplicantProfiles";
 import Applications from "./pages/Applications";
 import AdmitsTracking from "./pages/AdmitsTracking";
+import ReportDetail from "./pages/ReportDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -50,6 +51,7 @@ const App = () => (
               <Route path="/applicant-profiles" element={<ProtectedRoute><ApplicantProfiles /></ProtectedRoute>} />
               <Route path="/applications" element={<ProtectedRoute><Applications /></ProtectedRoute>} />
               <Route path="/admits-tracking" element={<ProtectedRoute><AdmitsTracking /></ProtectedRoute>} />
+              <Route path="/reports/:reportId" element={<ReportDetail />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
