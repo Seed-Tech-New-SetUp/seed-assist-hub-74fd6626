@@ -34,39 +34,39 @@ export function StatsCard({
 
   return (
     <Card 
-      variant="stats" 
+      variant="default" 
       className="animate-fade-in-up opacity-0"
       style={{ animationDelay: `${delay}ms`, animationFillMode: 'forwards' }}
     >
-      <CardContent className="p-6">
+      <CardContent className="p-5">
         <div className="flex items-start justify-between">
-          <div className="space-y-3">
-            <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <p className="text-3xl font-bold font-display tracking-tight">{value}</p>
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{title}</p>
+            <p className="text-2xl font-semibold font-display tracking-tight">{value}</p>
             {change !== undefined && (
               <div className="flex items-center gap-1.5">
                 <span className={cn(
-                  "flex items-center gap-0.5 text-sm font-medium",
+                  "flex items-center gap-0.5 text-xs font-medium",
                   isPositive && "text-success",
                   isNegative && "text-destructive",
                   !isPositive && !isNegative && "text-muted-foreground"
                 )}>
-                  {isPositive && <TrendingUp className="h-3.5 w-3.5" />}
-                  {isNegative && <TrendingDown className="h-3.5 w-3.5" />}
+                  {isPositive && <TrendingUp className="h-3 w-3" />}
+                  {isNegative && <TrendingDown className="h-3 w-3" />}
                   {isPositive && "+"}
                   {change}%
                 </span>
                 {changeLabel && (
-                  <span className="text-xs text-muted-foreground">{changeLabel}</span>
+                  <span className="text-[11px] text-muted-foreground">{changeLabel}</span>
                 )}
               </div>
             )}
           </div>
           <div className={cn(
-            "h-12 w-12 rounded-xl flex items-center justify-center",
+            "h-10 w-10 rounded-lg flex items-center justify-center",
             iconColorClasses[iconColor]
           )}>
-            <Icon className="h-6 w-6" />
+            <Icon className="h-5 w-5" />
           </div>
         </div>
       </CardContent>

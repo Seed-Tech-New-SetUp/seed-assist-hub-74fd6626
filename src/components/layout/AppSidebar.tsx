@@ -10,7 +10,6 @@ import {
   FileText,
   Target,
   Globe,
-  ClipboardList,
   TrendingUp,
   ChevronLeft,
   ChevronRight,
@@ -85,71 +84,67 @@ export function AppSidebar() {
   return (
     <aside
       className={cn(
-        "fixed left-0 top-0 z-40 h-screen gradient-sidebar border-r border-sidebar-border transition-all duration-300 ease-in-out",
-        collapsed ? "w-[72px]" : "w-64"
+        "fixed left-0 top-0 z-40 h-screen bg-sidebar border-r border-sidebar-border transition-all duration-200 ease-out",
+        collapsed ? "w-16" : "w-60"
       )}
     >
       {/* Logo */}
-      <div className="flex h-16 items-center justify-between px-4 border-b border-sidebar-border">
-        <div className={cn("flex items-center gap-3 overflow-hidden", collapsed && "justify-center")}>
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground font-display font-bold text-lg flex-shrink-0">
+      <div className="flex h-14 items-center justify-between px-3 border-b border-sidebar-border">
+        <div className={cn("flex items-center gap-2.5 overflow-hidden", collapsed && "justify-center")}>
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-display font-bold text-sm flex-shrink-0">
             S
           </div>
           {!collapsed && (
-            <div className="flex flex-col animate-fade-in">
-              <span className="font-display font-semibold text-sidebar-foreground">SEED Assist</span>
-              <span className="text-xs text-sidebar-foreground/60">Client Portal</span>
+            <div className="flex flex-col">
+              <span className="font-display font-semibold text-sm text-sidebar-accent-foreground">SEED Assist</span>
+              <span className="text-[10px] text-sidebar-foreground/60 leading-none">Client Portal</span>
             </div>
           )}
         </div>
         <Button
           variant="ghost"
           size="icon-sm"
-          className="text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+          className="text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent h-7 w-7"
           onClick={() => setCollapsed(!collapsed)}
         >
-          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          {collapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
         </Button>
       </div>
 
       {/* Navigation */}
-      <ScrollArea className="flex-1 h-[calc(100vh-8rem)]">
-        <nav className="p-3 space-y-6">
+      <ScrollArea className="flex-1 h-[calc(100vh-7rem)]">
+        <nav className="p-2 space-y-4">
           {navigation.map((group, groupIndex) => (
-            <div key={group.title} className="space-y-1">
+            <div key={group.title} className="space-y-0.5">
               {!collapsed && (
-                <h4 
-                  className="px-3 text-xs font-medium text-sidebar-foreground/50 uppercase tracking-wider mb-2 animate-fade-in"
-                  style={{ animationDelay: `${groupIndex * 50}ms` }}
-                >
+                <h4 className="px-2.5 py-1.5 text-[10px] font-medium text-sidebar-foreground/50 uppercase tracking-wider">
                   {group.title}
                 </h4>
               )}
-              {group.items.map((item, itemIndex) => {
+              {group.items.map((item) => {
                 const isActive = location.pathname === item.href;
                 return (
                   <NavLink
                     key={item.href}
                     to={item.href}
                     className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group relative",
+                      "flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[13px] font-medium transition-colors group relative",
                       isActive
-                        ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-soft"
-                        : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent",
+                        ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                        : "text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent",
                       collapsed && "justify-center px-0"
                     )}
-                    style={{ animationDelay: `${(groupIndex * 50) + (itemIndex * 30)}ms` }}
                   >
-                    <item.icon className={cn("h-5 w-5 flex-shrink-0", isActive && "animate-scale-in")} />
+                    <item.icon className="h-4 w-4 flex-shrink-0" />
                     {!collapsed && (
                       <>
                         <span className="flex-1 truncate">{item.title}</span>
                         {item.badge && (
                           <span className={cn(
-                            "px-2 py-0.5 text-xs font-medium rounded-full",
+                            "px-1.5 py-0.5 text-[10px] font-semibold rounded-full min-w-[18px] text-center",
                             isActive 
                               ? "bg-sidebar-primary-foreground/20 text-sidebar-primary-foreground" 
-                              : "bg-accent text-accent-foreground"
+                              : "bg-primary/10 text-primary"
                           )}>
                             {item.badge}
                           </span>
@@ -157,39 +152,42 @@ export function AppSidebar() {
                       </>
                     )}
                     {collapsed && item.badge && (
-                      <span className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center text-[10px] font-bold rounded-full bg-accent text-accent-foreground">
-                        {item.badge}
+                      <span className="absolute -top-0.5 -right-0.5 h-3.5 w-3.5 flex items-center justify-center text-[9px] font-bold rounded-full bg-primary text-primary-foreground">
+                        {item.badge > 9 ? '9+' : item.badge}
                       </span>
                     )}
                   </NavLink>
                 );
               })}
-              {groupIndex < navigation.length - 1 && !collapsed && (
-                <Separator className="mt-4 bg-sidebar-border/50" />
-              )}
             </div>
           ))}
         </nav>
       </ScrollArea>
 
       {/* Footer */}
-      <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-sidebar-border">
-        <div className={cn("flex gap-2", collapsed ? "flex-col" : "flex-row")}>
+      <div className="absolute bottom-0 left-0 right-0 p-2 border-t border-sidebar-border">
+        <div className={cn("flex gap-1", collapsed ? "flex-col" : "flex-row")}>
           <Button
             variant="ghost"
-            size={collapsed ? "icon-sm" : "sm"}
-            className="text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent flex-1 justify-start"
+            size="sm"
+            className={cn(
+              "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent h-8",
+              collapsed ? "w-full justify-center" : "flex-1 justify-start"
+            )}
           >
             <Settings className="h-4 w-4" />
-            {!collapsed && <span className="ml-2">Settings</span>}
+            {!collapsed && <span className="ml-2 text-xs">Settings</span>}
           </Button>
           <Button
             variant="ghost"
-            size={collapsed ? "icon-sm" : "sm"}
-            className="text-sidebar-foreground/70 hover:text-destructive hover:bg-sidebar-accent flex-1 justify-start"
+            size="sm"
+            className={cn(
+              "text-sidebar-foreground/60 hover:text-destructive hover:bg-sidebar-accent h-8",
+              collapsed ? "w-full justify-center" : "flex-1 justify-start"
+            )}
           >
             <LogOut className="h-4 w-4" />
-            {!collapsed && <span className="ml-2">Logout</span>}
+            {!collapsed && <span className="ml-2 text-xs">Logout</span>}
           </Button>
         </div>
       </div>

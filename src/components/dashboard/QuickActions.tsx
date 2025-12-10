@@ -2,13 +2,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Calendar,
-  FileText,
-  Users,
-  Building2,
-  Target,
-  GraduationCap,
   Plus,
   Upload,
+  Building2,
 } from "lucide-react";
 
 const actions = [
@@ -40,22 +36,21 @@ const actions = [
 
 export function QuickActions() {
   return (
-    <Card variant="elevated" className="animate-fade-in-up opacity-0" style={{ animationDelay: '700ms', animationFillMode: 'forwards' }}>
-      <CardHeader>
-        <CardTitle>Quick Actions</CardTitle>
+    <Card variant="default" className="animate-fade-in-up opacity-0" style={{ animationDelay: '700ms', animationFillMode: 'forwards' }}>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base font-semibold">Quick Actions</CardTitle>
       </CardHeader>
-      <CardContent className="grid gap-3">
-        {actions.map((action, index) => (
+      <CardContent className="grid gap-2">
+        {actions.map((action) => (
           <Button
             key={action.title}
             variant={action.variant}
-            className="h-auto py-3 px-4 justify-start animate-fade-in opacity-0"
-            style={{ animationDelay: `${800 + index * 50}ms`, animationFillMode: 'forwards' }}
+            className="h-auto py-2.5 px-3 justify-start"
           >
-            <action.icon className="h-5 w-5 mr-3 flex-shrink-0" />
+            <action.icon className="h-4 w-4 mr-2.5 flex-shrink-0" />
             <div className="text-left">
               <p className="font-medium text-sm">{action.title}</p>
-              <p className="text-xs opacity-70">{action.description}</p>
+              <p className="text-[11px] opacity-70 font-normal">{action.description}</p>
             </div>
           </Button>
         ))}

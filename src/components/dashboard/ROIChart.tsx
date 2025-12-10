@@ -33,58 +33,59 @@ const channelData = [
 
 export function ROIChart() {
   return (
-    <Card variant="elevated" className="col-span-2 animate-fade-in-up opacity-0" style={{ animationDelay: '400ms', animationFillMode: 'forwards' }}>
-      <CardHeader>
-        <CardTitle>ROI & Performance Trends</CardTitle>
-        <CardDescription>
+    <Card variant="default" className="col-span-2 animate-fade-in-up opacity-0" style={{ animationDelay: '400ms', animationFillMode: 'forwards' }}>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base font-semibold">ROI & Performance Trends</CardTitle>
+        <CardDescription className="text-xs">
           Monthly leads, applications, and admits with ROI multiplier
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="h-[350px]">
+        <div className="h-[320px]">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={roiData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+            <AreaChart data={roiData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="hsl(175, 80%, 30%)" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="hsl(175, 80%, 30%)" stopOpacity={0} />
+                  <stop offset="5%" stopColor="hsl(221, 83%, 53%)" stopOpacity={0.15} />
+                  <stop offset="95%" stopColor="hsl(221, 83%, 53%)" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="colorApplications" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="hsl(28, 85%, 52%)" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="hsl(28, 85%, 52%)" stopOpacity={0} />
+                  <stop offset="5%" stopColor="hsl(262, 83%, 58%)" stopOpacity={0.15} />
+                  <stop offset="95%" stopColor="hsl(262, 83%, 58%)" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="colorAdmits" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="hsl(158, 64%, 42%)" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="hsl(158, 64%, 42%)" stopOpacity={0} />
+                  <stop offset="5%" stopColor="hsl(142, 71%, 45%)" stopOpacity={0.15} />
+                  <stop offset="95%" stopColor="hsl(142, 71%, 45%)" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(210, 20%, 90%)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 91%)" vertical={false} />
               <XAxis 
                 dataKey="month" 
-                stroke="hsl(210, 15%, 45%)" 
-                fontSize={12}
+                stroke="hsl(220, 9%, 46%)" 
+                fontSize={11}
                 tickLine={false}
+                axisLine={false}
               />
               <YAxis 
-                stroke="hsl(210, 15%, 45%)" 
-                fontSize={12}
+                stroke="hsl(220, 9%, 46%)" 
+                fontSize={11}
                 tickLine={false}
                 axisLine={false}
               />
               <Tooltip
                 contentStyle={{
                   backgroundColor: 'hsl(0, 0%, 100%)',
-                  border: '1px solid hsl(210, 20%, 90%)',
+                  border: '1px solid hsl(220, 13%, 91%)',
                   borderRadius: '8px',
-                  boxShadow: '0 4px 12px -4px hsl(210, 20%, 20%, 0.12)',
+                  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)',
+                  fontSize: '12px',
                 }}
-                labelStyle={{ fontWeight: 600 }}
               />
-              <Legend />
+              <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '16px' }} />
               <Area
                 type="monotone"
                 dataKey="leads"
-                stroke="hsl(175, 80%, 30%)"
+                stroke="hsl(221, 83%, 53%)"
                 strokeWidth={2}
                 fillOpacity={1}
                 fill="url(#colorLeads)"
@@ -93,7 +94,7 @@ export function ROIChart() {
               <Area
                 type="monotone"
                 dataKey="applications"
-                stroke="hsl(28, 85%, 52%)"
+                stroke="hsl(262, 83%, 58%)"
                 strokeWidth={2}
                 fillOpacity={1}
                 fill="url(#colorApplications)"
@@ -102,7 +103,7 @@ export function ROIChart() {
               <Area
                 type="monotone"
                 dataKey="admits"
-                stroke="hsl(158, 64%, 42%)"
+                stroke="hsl(142, 71%, 45%)"
                 strokeWidth={2}
                 fillOpacity={1}
                 fill="url(#colorAdmits)"
@@ -118,37 +119,37 @@ export function ROIChart() {
 
 export function ChannelPerformanceChart() {
   return (
-    <Card variant="elevated" className="animate-fade-in-up opacity-0" style={{ animationDelay: '500ms', animationFillMode: 'forwards' }}>
-      <CardHeader>
-        <CardTitle>Channel Performance</CardTitle>
-        <CardDescription>Leads generated by channel with conversion rates</CardDescription>
+    <Card variant="default" className="animate-fade-in-up opacity-0" style={{ animationDelay: '500ms', animationFillMode: 'forwards' }}>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base font-semibold">Channel Performance</CardTitle>
+        <CardDescription className="text-xs">Leads by channel with conversion rates</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="h-[350px]">
+        <div className="h-[320px]">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={channelData} layout="vertical" margin={{ top: 10, right: 30, left: 80, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(210, 20%, 90%)" horizontal={true} vertical={false} />
-              <XAxis type="number" stroke="hsl(210, 15%, 45%)" fontSize={12} tickLine={false} />
+            <BarChart data={channelData} layout="vertical" margin={{ top: 10, right: 10, left: 70, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 91%)" horizontal={true} vertical={false} />
+              <XAxis type="number" stroke="hsl(220, 9%, 46%)" fontSize={11} tickLine={false} axisLine={false} />
               <YAxis 
                 type="category" 
                 dataKey="name" 
-                stroke="hsl(210, 15%, 45%)" 
-                fontSize={12}
+                stroke="hsl(220, 9%, 46%)" 
+                fontSize={11}
                 tickLine={false}
                 axisLine={false}
               />
               <Tooltip
                 contentStyle={{
                   backgroundColor: 'hsl(0, 0%, 100%)',
-                  border: '1px solid hsl(210, 20%, 90%)',
+                  border: '1px solid hsl(220, 13%, 91%)',
                   borderRadius: '8px',
-                  boxShadow: '0 4px 12px -4px hsl(210, 20%, 20%, 0.12)',
+                  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)',
+                  fontSize: '12px',
                 }}
-                labelStyle={{ fontWeight: 600 }}
               />
               <Bar 
                 dataKey="leads" 
-                fill="hsl(175, 80%, 30%)" 
+                fill="hsl(221, 83%, 53%)" 
                 radius={[0, 4, 4, 0]}
                 name="Leads Generated"
               />

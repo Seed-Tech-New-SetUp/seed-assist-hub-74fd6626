@@ -3,11 +3,11 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   Calendar,
-  Users,
   FileText,
-  GraduationCap,
+  Users,
   Building2,
   Target,
+  GraduationCap,
   ArrowRight,
 } from "lucide-react";
 
@@ -61,14 +61,6 @@ const activities: ActivityItem[] = [
     time: "2 days ago",
     status: "completed",
   },
-  {
-    id: "6",
-    type: "meetup",
-    title: "Meetup Report Pending",
-    description: "Alumni Networking Event - SF Bay Area",
-    time: "2 days ago",
-    status: "pending",
-  },
 ];
 
 const iconMap = {
@@ -86,47 +78,46 @@ const iconColorMap = {
   application: "bg-primary/10 text-primary",
   scholarship: "bg-success/10 text-success",
   school: "bg-warning/10 text-warning",
-  meetup: "bg-purple-500/10 text-purple-500",
+  meetup: "bg-purple-500/10 text-purple-600",
 };
 
 const statusClasses = {
-  new: "bg-accent/10 text-accent",
+  new: "bg-primary/10 text-primary",
   pending: "bg-warning/10 text-warning",
   completed: "bg-success/10 text-success",
 };
 
 export function RecentActivity() {
   return (
-    <Card variant="elevated" className="animate-fade-in-up opacity-0" style={{ animationDelay: '600ms', animationFillMode: 'forwards' }}>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Recent Activity</CardTitle>
-        <Button variant="ghost" size="sm" className="text-primary">
-          View All <ArrowRight className="ml-1 h-4 w-4" />
+    <Card variant="default" className="animate-fade-in-up opacity-0" style={{ animationDelay: '600ms', animationFillMode: 'forwards' }}>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-base font-semibold">Recent Activity</CardTitle>
+        <Button variant="ghost" size="sm" className="text-xs text-primary h-8">
+          View All <ArrowRight className="ml-1 h-3 w-3" />
         </Button>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {activities.map((activity, index) => {
+      <CardContent className="space-y-1">
+        {activities.map((activity) => {
           const Icon = iconMap[activity.type];
           return (
             <div
               key={activity.id}
-              className="flex items-start gap-4 p-3 rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer animate-fade-in opacity-0"
-              style={{ animationDelay: `${700 + index * 50}ms`, animationFillMode: 'forwards' }}
+              className="flex items-start gap-3 p-2.5 rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer"
             >
-              <div className={cn("h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0", iconColorMap[activity.type])}>
-                <Icon className="h-5 w-5" />
+              <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center flex-shrink-0", iconColorMap[activity.type])}>
+                <Icon className="h-4 w-4" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <p className="font-medium text-sm truncate">{activity.title}</p>
                   {activity.status && (
-                    <span className={cn("px-2 py-0.5 text-xs font-medium rounded-full capitalize", statusClasses[activity.status])}>
+                    <span className={cn("px-1.5 py-0.5 text-[10px] font-medium rounded capitalize", statusClasses[activity.status])}>
                       {activity.status}
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground truncate">{activity.description}</p>
-                <p className="text-xs text-muted-foreground mt-1">{activity.time}</p>
+                <p className="text-xs text-muted-foreground truncate">{activity.description}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">{activity.time}</p>
               </div>
             </div>
           );

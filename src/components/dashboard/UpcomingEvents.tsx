@@ -46,51 +46,44 @@ const upcomingEvents: Event[] = [
 
 export function UpcomingEvents() {
   return (
-    <Card variant="elevated" className="animate-fade-in-up opacity-0" style={{ animationDelay: '800ms', animationFillMode: 'forwards' }}>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Upcoming Events</CardTitle>
-        <Button variant="ghost" size="sm" className="text-primary">
-          View Calendar <ArrowRight className="ml-1 h-4 w-4" />
+    <Card variant="default" className="animate-fade-in-up opacity-0" style={{ animationDelay: '800ms', animationFillMode: 'forwards' }}>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-base font-semibold">Upcoming Events</CardTitle>
+        <Button variant="ghost" size="sm" className="text-xs text-primary h-8">
+          View Calendar <ArrowRight className="ml-1 h-3 w-3" />
         </Button>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {upcomingEvents.map((event, index) => (
+      <CardContent className="space-y-3">
+        {upcomingEvents.map((event) => (
           <div
             key={event.id}
-            className="flex items-start gap-4 p-4 rounded-xl border bg-card hover:shadow-soft transition-all duration-200 cursor-pointer animate-fade-in opacity-0"
-            style={{ animationDelay: `${900 + index * 50}ms`, animationFillMode: 'forwards' }}
+            className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-secondary/30 transition-colors cursor-pointer"
           >
             <div className={cn(
-              "h-12 w-12 rounded-xl flex items-center justify-center flex-shrink-0",
+              "h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0",
               event.type === "virtual" ? "bg-info/10 text-info" : "bg-accent/10 text-accent"
             )}>
               {event.type === "virtual" ? (
-                <Video className="h-6 w-6" />
+                <Video className="h-4 w-4" />
               ) : (
-                <Calendar className="h-6 w-6" />
+                <Calendar className="h-4 w-4" />
               )}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <h4 className="font-medium text-sm truncate">{event.title}</h4>
-                <Badge variant={event.type === "virtual" ? "secondary" : "default"} className="text-xs">
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
                   {event.type === "virtual" ? "Virtual" : "In-Person"}
                 </Badge>
               </div>
-              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+              <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
                 <span className="flex items-center gap-1">
                   <Calendar className="h-3 w-3" />
-                  {event.date} • {event.time}
-                </span>
-              </div>
-              <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
-                <span className="flex items-center gap-1">
-                  <MapPin className="h-3 w-3" />
-                  {event.location}
+                  {event.date}
                 </span>
                 <span className="flex items-center gap-1">
                   <Users className="h-3 w-3" />
-                  {event.attendees} expected
+                  {event.attendees}
                 </span>
               </div>
             </div>

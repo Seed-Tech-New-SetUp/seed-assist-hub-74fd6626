@@ -19,19 +19,19 @@ export default function Dashboard() {
   return (
     <DashboardLayout>
       {/* Page Header */}
-      <div className="mb-8 animate-fade-in">
-        <h1 className="text-3xl font-display font-bold mb-2">
-          Welcome back, <span className="text-gradient">John</span>
+      <div className="mb-6 animate-fade-in">
+        <h1 className="text-2xl font-display font-semibold mb-1">
+          Welcome back, <span className="text-primary">John</span>
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Here's your holistic ROI overview and recent activities for Harvard Business School.
         </p>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatsCard
-          title="Total Leads Generated"
+          title="Total Leads"
           value="2,847"
           change={12.5}
           changeLabel="vs last month"
@@ -46,7 +46,7 @@ export default function Dashboard() {
           changeLabel="vs last month"
           icon={FileText}
           iconColor="primary"
-          delay={200}
+          delay={150}
         />
         <StatsCard
           title="Scholarship Applicants"
@@ -55,7 +55,7 @@ export default function Dashboard() {
           changeLabel="vs last month"
           icon={GraduationCap}
           iconColor="success"
-          delay={300}
+          delay={200}
         />
         <StatsCard
           title="ROI Multiplier"
@@ -64,25 +64,25 @@ export default function Dashboard() {
           changeLabel="vs last quarter"
           icon={TrendingUp}
           iconColor="info"
-          delay={400}
+          delay={250}
         />
       </div>
 
       {/* Secondary Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatsCard
           title="Virtual Events"
           value="24"
           icon={Users}
           iconColor="info"
-          delay={200}
+          delay={150}
         />
         <StatsCard
           title="School Partners"
           value="110+"
           icon={Building2}
           iconColor="warning"
-          delay={250}
+          delay={175}
         />
         <StatsCard
           title="Admits This Year"
@@ -91,7 +91,7 @@ export default function Dashboard() {
           changeLabel="vs last year"
           icon={CheckCircle2}
           iconColor="success"
-          delay={300}
+          delay={200}
         />
         <StatsCard
           title="Revenue Impact"
@@ -100,18 +100,18 @@ export default function Dashboard() {
           changeLabel="attributed"
           icon={DollarSign}
           iconColor="accent"
-          delay={350}
+          delay={225}
         />
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
         <ROIChart />
         <ChannelPerformanceChart />
       </div>
 
       {/* Bottom Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <RecentActivity />
         <UpcomingEvents />
         <QuickActions />
