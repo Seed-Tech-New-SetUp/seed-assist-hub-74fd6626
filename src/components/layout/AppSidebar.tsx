@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSidebarState } from "@/contexts/SidebarContext";
 
 interface NavSubItem {
   title: string;
@@ -103,7 +104,7 @@ const navigation: NavItem[] = [
 ];
 
 export function AppSidebar() {
-  const [collapsed, setCollapsed] = useState(false);
+  const { collapsed, toggleCollapsed } = useSidebarState();
   const [openSections, setOpenSections] = useState<string[]>(["Events", "Scholarships", "School Profile"]);
   const location = useLocation();
   const navigate = useNavigate();
@@ -156,7 +157,7 @@ export function AppSidebar() {
           variant="ghost"
           size="icon-sm"
           className="text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent h-7 w-7"
-          onClick={() => setCollapsed(!collapsed)}
+          onClick={toggleCollapsed}
         >
           {collapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
         </Button>
