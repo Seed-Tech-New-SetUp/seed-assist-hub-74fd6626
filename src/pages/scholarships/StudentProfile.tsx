@@ -104,6 +104,17 @@ const statusConfig: Record<WorkflowStatus, { label: string; icon: React.ElementT
   WINNER: { label: "Winner", icon: Trophy, color: "bg-purple-500/10 text-purple-600 border-purple-500/20", buttonColor: "bg-purple-500 hover:bg-purple-600" },
 };
 
+// Mock list of all applicants (in real app, this would come from API/context)
+const allApplicants = [
+  { id: "1", name: "Priya Sharma" },
+  { id: "2", name: "Chen Wei" },
+  { id: "3", name: "Ahmed Hassan" },
+  { id: "4", name: "Maria Garcia" },
+  { id: "5", name: "John Obi" },
+  { id: "6", name: "Sara Kim" },
+  { id: "7", name: "Luis Fernandez" },
+];
+
 export default function StudentProfile() {
   const { studentId } = useParams();
   const navigate = useNavigate();
@@ -116,16 +127,24 @@ export default function StudentProfile() {
   const [newAwardName, setNewAwardName] = useState("");
   const [newAwardAmount, setNewAwardAmount] = useState("");
   const [showNotificationModal, setShowNotificationModal] = useState(false);
-  const [pendingWinnerData, setPendingWinnerData] = useState<{ totalAmount: number; awardCount: number } | null>(null);
+  const [pendingStatusData, setPendingStatusData] = useState<{ 
+    status: WorkflowStatus; 
+    totalAmount?: number; 
+    awardCount?: number 
+  } | null>(null);
+
+  // Calculate prev/next student IDs
+  const currentIndex = allApplicants.findIndex(a => a.id === studentId);
+  const prevStudent = currentIndex > 0 ? allApplicants[currentIndex - 1] : null;
+  const nextStudent = currentIndex < allApplicants.length - 1 ? allApplicants[currentIndex + 1] : null;
 
   const handleStatusChange = (status: WorkflowStatus) => {
     if (status === "WINNER") {
       setShowAwardsModal(true);
     } else {
-      toast({
-        title: "Status Updated",
-        description: `${student.name}'s status has been changed to ${statusConfig[status].label}.`,
-      });
+      // For non-winner statuses, go directly to notification modal
+      setPendingStatusData({ status });
+      setShowNotificationModal(true);
     }
   };
 
@@ -153,7 +172,8 @@ export default function StudentProfile() {
       customAwards.reduce((sum, a) => sum + (parseFloat(a.amount) || 0), 0);
 
     // Store data for notification step
-    setPendingWinnerData({
+    setPendingStatusData({
+      status: "WINNER",
       totalAmount,
       awardCount: selectedUniversityAwards.length + customAwards.length,
     });
@@ -163,17 +183,36 @@ export default function StudentProfile() {
   };
 
   const handleNotificationChoice = (sendNotification: boolean) => {
-    if (pendingWinnerData) {
-      toast({
-        title: "Winner Confirmed!",
-        description: `${student.name} has been marked as winner with ${pendingWinnerData.awardCount} award(s) totaling $${pendingWinnerData.totalAmount.toLocaleString()}.${sendNotification ? " Notification sent." : ""}`,
-      });
+    if (pendingStatusData) {
+      if (pendingStatusData.status === "WINNER" && pendingStatusData.awardCount) {
+        toast({
+          title: "Winner Confirmed!",
+          description: `${student.name} has been marked as winner with ${pendingStatusData.awardCount} award(s) totaling $${pendingStatusData.totalAmount?.toLocaleString()}.${sendNotification ? " Notification sent." : ""}`,
+        });
+      } else {
+        toast({
+          title: "Status Updated",
+          description: `${student.name}'s status has been changed to ${statusConfig[pendingStatusData.status].label}.${sendNotification ? " Notification sent." : ""}`,
+        });
+      }
     }
 
     setShowNotificationModal(false);
-    setPendingWinnerData(null);
+    setPendingStatusData(null);
     setSelectedAwards([]);
     setCustomAwards([]);
+  };
+
+  const navigateToPrev = () => {
+    if (prevStudent) {
+      navigate(`/scholarships/applications/${prevStudent.id}`);
+    }
+  };
+
+  const navigateToNext = () => {
+    if (nextStudent) {
+      navigate(`/scholarships/applications/${nextStudent.id}`);
+    }
   };
 
   return (
@@ -237,10 +276,22 @@ export default function StudentProfile() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="icon">
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  onClick={navigateToPrev}
+                  disabled={!prevStudent}
+                  title={prevStudent ? `Previous: ${prevStudent.name}` : "No previous student"}
+                >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <Button variant="outline" size="icon">
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  onClick={navigateToNext}
+                  disabled={!nextStudent}
+                  title={nextStudent ? `Next: ${nextStudent.name}` : "No next student"}
+                >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
@@ -537,14 +588,21 @@ export default function StudentProfile() {
                 Send Notification?
               </DialogTitle>
               <DialogDescription>
-                Would you like to send a notification to {student.name} about their scholarship award?
+                {pendingStatusData?.status === "WINNER" 
+                  ? `Would you like to send a notification to ${student.name} about their scholarship award?`
+                  : `Would you like to notify ${student.name} about their status update to "${pendingStatusData ? statusConfig[pendingStatusData.status].label : ""}"?`
+                }
               </DialogDescription>
             </DialogHeader>
 
             <div className="py-4">
               <div className="rounded-lg bg-muted/50 p-4">
                 <p className="text-sm text-muted-foreground">
-                  An email notification will be sent to <span className="font-medium text-foreground">{student.email}</span> with details about their scholarship awards.
+                  An email notification will be sent to <span className="font-medium text-foreground">{student.email}</span> 
+                  {pendingStatusData?.status === "WINNER" 
+                    ? " with details about their scholarship awards."
+                    : ` informing them of their updated application status.`
+                  }
                 </p>
               </div>
             </div>
