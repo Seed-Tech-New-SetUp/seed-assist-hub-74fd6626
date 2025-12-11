@@ -34,6 +34,8 @@ import {
   Plus,
   Trash2,
   Award,
+  Bell,
+  Send,
 } from "lucide-react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -113,6 +115,8 @@ export default function StudentProfile() {
   const [customAwards, setCustomAwards] = useState<{ name: string; amount: string }[]>([]);
   const [newAwardName, setNewAwardName] = useState("");
   const [newAwardAmount, setNewAwardAmount] = useState("");
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [pendingWinnerData, setPendingWinnerData] = useState<{ totalAmount: number; awardCount: number } | null>(null);
 
   const handleStatusChange = (status: WorkflowStatus) => {
     if (status === "WINNER") {
@@ -148,12 +152,26 @@ export default function StudentProfile() {
     const totalAmount = selectedUniversityAwards.reduce((sum, a) => sum + a.amount, 0) +
       customAwards.reduce((sum, a) => sum + (parseFloat(a.amount) || 0), 0);
 
-    toast({
-      title: "Winner Confirmed!",
-      description: `${student.name} has been marked as winner with ${selectedUniversityAwards.length + customAwards.length} award(s) totaling $${totalAmount.toLocaleString()}.`,
+    // Store data for notification step
+    setPendingWinnerData({
+      totalAmount,
+      awardCount: selectedUniversityAwards.length + customAwards.length,
     });
 
     setShowAwardsModal(false);
+    setShowNotificationModal(true);
+  };
+
+  const handleNotificationChoice = (sendNotification: boolean) => {
+    if (pendingWinnerData) {
+      toast({
+        title: "Winner Confirmed!",
+        description: `${student.name} has been marked as winner with ${pendingWinnerData.awardCount} award(s) totaling $${pendingWinnerData.totalAmount.toLocaleString()}.${sendNotification ? " Notification sent." : ""}`,
+      });
+    }
+
+    setShowNotificationModal(false);
+    setPendingWinnerData(null);
     setSelectedAwards([]);
     setCustomAwards([]);
   };
@@ -505,6 +523,47 @@ export default function StudentProfile() {
               >
                 <Trophy className="h-4 w-4 mr-2" />
                 Confirm Winner
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Notification Confirmation Modal */}
+        <Dialog open={showNotificationModal} onOpenChange={setShowNotificationModal}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Bell className="h-5 w-5 text-primary" />
+                Send Notification?
+              </DialogTitle>
+              <DialogDescription>
+                Would you like to send a notification to {student.name} about their scholarship award?
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="py-4">
+              <div className="rounded-lg bg-muted/50 p-4">
+                <p className="text-sm text-muted-foreground">
+                  An email notification will be sent to <span className="font-medium text-foreground">{student.email}</span> with details about their scholarship awards.
+                </p>
+              </div>
+            </div>
+
+            <DialogFooter className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => handleNotificationChoice(false)}
+                className="flex-1"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Skip Notification
+              </Button>
+              <Button
+                onClick={() => handleNotificationChoice(true)}
+                className="flex-1"
+              >
+                <Send className="h-4 w-4 mr-2" />
+                Send Notification
               </Button>
             </DialogFooter>
           </DialogContent>
