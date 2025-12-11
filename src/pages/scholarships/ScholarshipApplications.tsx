@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,7 @@ import {
 import { Star, Check, Pause, X, Trophy, Search, Eye } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { ApplicationFilters, FilterState } from "@/components/scholarships/ApplicationFilters";
 
 type WorkflowStatus = "SHORTLISTED" | "ON_HOLD" | "REJECTED" | "WINNER" | "PENDING";
 
@@ -39,6 +40,8 @@ interface Applicant {
   name: string;
   country: string;
   countryCode: string;
+  nationality: string;
+  gender: string;
   isSeedRecommended: boolean;
   status: WorkflowStatus;
   standardizedTest: {
@@ -57,6 +60,8 @@ const applicants: Applicant[] = [
     name: "Priya Sharma",
     country: "India",
     countryCode: "IN",
+    nationality: "Indian",
+    gender: "Female",
     isSeedRecommended: true,
     status: "PENDING",
     standardizedTest: { name: "GMAT", score: 720 },
@@ -69,6 +74,8 @@ const applicants: Applicant[] = [
     name: "Chen Wei",
     country: "China",
     countryCode: "CN",
+    nationality: "Chinese",
+    gender: "Male",
     isSeedRecommended: true,
     status: "SHORTLISTED",
     standardizedTest: { name: "GRE", score: 328 },
@@ -81,6 +88,8 @@ const applicants: Applicant[] = [
     name: "Ahmed Hassan",
     country: "Egypt",
     countryCode: "EG",
+    nationality: "Egyptian",
+    gender: "Male",
     isSeedRecommended: false,
     status: "ON_HOLD",
     standardizedTest: { name: "GMAT", score: 680 },
@@ -93,6 +102,8 @@ const applicants: Applicant[] = [
     name: "Maria Garcia",
     country: "Mexico",
     countryCode: "MX",
+    nationality: "Mexican",
+    gender: "Female",
     isSeedRecommended: true,
     status: "WINNER",
     standardizedTest: { name: "GRE", score: 335 },
@@ -105,12 +116,42 @@ const applicants: Applicant[] = [
     name: "John Obi",
     country: "Nigeria",
     countryCode: "NG",
+    nationality: "Nigerian",
+    gender: "Male",
     isSeedRecommended: false,
     status: "REJECTED",
     standardizedTest: { name: "GMAT", score: 650 },
     ugCompletionYear: 2021,
     ugGpa: 3.2,
     workExperience: 3,
+  },
+  {
+    id: "6",
+    name: "Sara Kim",
+    country: "South Korea",
+    countryCode: "KR",
+    nationality: "South Korean",
+    gender: "Female",
+    isSeedRecommended: true,
+    status: "PENDING",
+    standardizedTest: { name: "TOEFL", score: 115 },
+    ugCompletionYear: 2020,
+    ugGpa: 3.7,
+    workExperience: 3,
+  },
+  {
+    id: "7",
+    name: "Luis Fernandez",
+    country: "Brazil",
+    countryCode: "BR",
+    nationality: "Brazilian",
+    gender: "Male",
+    isSeedRecommended: false,
+    status: "SHORTLISTED",
+    standardizedTest: { name: "IELTS", score: 8 },
+    ugCompletionYear: 2017,
+    ugGpa: 3.4,
+    workExperience: 7,
   },
 ];
 
@@ -129,7 +170,23 @@ export default function ScholarshipApplications() {
   const [showStatusDialog, setShowStatusDialog] = useState(false);
   const [newStatus, setNewStatus] = useState<WorkflowStatus | null>(null);
   const [showNotifyDialog, setShowNotifyDialog] = useState(false);
+  const [filters, setFilters] = useState<FilterState>({
+    standardizedTests: [],
+    testScoreRange: [0, 800],
+    ugCompletionYears: [],
+    cgpaScale: "4",
+    cgpaRange: [0, 4],
+    workExpRange: [0, 20],
+    nationalities: [],
+    genders: [],
+  });
   const { toast } = useToast();
+
+  // Extract unique values for filters
+  const availableTests = useMemo(() => [...new Set(applicants.map(a => a.standardizedTest.name))], []);
+  const availableYears = useMemo(() => [...new Set(applicants.map(a => a.ugCompletionYear))].sort((a, b) => b - a), []);
+  const availableNationalities = useMemo(() => [...new Set(applicants.map(a => a.nationality))].sort(), []);
+  const availableGenders = useMemo(() => [...new Set(applicants.map(a => a.gender))].sort(), []);
 
   // Calculate status counts
   const statusCounts = applicants.reduce((acc, applicant) => {
@@ -140,15 +197,42 @@ export default function ScholarshipApplications() {
   const seedRecommendedCount = applicants.filter(a => a.isSeedRecommended).length;
 
   const filteredApplicants = applicants.filter(applicant => {
+    // Search filter
     const matchesSearch = applicant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       applicant.country.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === "all" || 
-      statusFilter === "SEED_RECOMMENDED" ? applicant.isSeedRecommended : applicant.status === statusFilter;
     
+    // Status filter
+    let matchesStatus = true;
     if (statusFilter === "SEED_RECOMMENDED") {
-      return matchesSearch && applicant.isSeedRecommended;
+      matchesStatus = applicant.isSeedRecommended;
+    } else if (statusFilter !== "all") {
+      matchesStatus = applicant.status === statusFilter;
     }
-    return matchesSearch && (statusFilter === "all" || applicant.status === statusFilter);
+
+    // Advanced filters
+    const matchesTest = filters.standardizedTests.length === 0 || 
+      filters.standardizedTests.includes(applicant.standardizedTest.name);
+    
+    const matchesTestScore = applicant.standardizedTest.score >= filters.testScoreRange[0] &&
+      applicant.standardizedTest.score <= filters.testScoreRange[1];
+    
+    const matchesYear = filters.ugCompletionYears.length === 0 ||
+      filters.ugCompletionYears.includes(applicant.ugCompletionYear);
+    
+    const matchesCgpa = applicant.ugGpa >= filters.cgpaRange[0] &&
+      applicant.ugGpa <= filters.cgpaRange[1];
+    
+    const matchesWorkExp = applicant.workExperience >= filters.workExpRange[0] &&
+      applicant.workExperience <= filters.workExpRange[1];
+    
+    const matchesNationality = filters.nationalities.length === 0 ||
+      filters.nationalities.includes(applicant.nationality);
+    
+    const matchesGender = filters.genders.length === 0 ||
+      filters.genders.includes(applicant.gender);
+
+    return matchesSearch && matchesStatus && matchesTest && matchesTestScore && 
+      matchesYear && matchesCgpa && matchesWorkExp && matchesNationality && matchesGender;
   });
 
   const toggleSelectAll = () => {
@@ -234,31 +318,27 @@ export default function ScholarshipApplications() {
           ))}
         </div>
 
-        {/* Filters */}
+        {/* Search & Filters */}
         <Card>
-          <CardContent className="p-4">
-            <div className="flex flex-wrap gap-3 items-center">
-              <div className="relative flex-1 min-w-[200px]">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by name or country..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[160px]">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  {Object.entries(statusConfig).map(([status, config]) => (
-                    <SelectItem key={status} value={status}>{config.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <CardContent className="p-4 space-y-4">
+            <div className="relative max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by name or country..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
             </div>
+            
+            <ApplicationFilters
+              filters={filters}
+              onFiltersChange={setFilters}
+              availableTests={availableTests}
+              availableYears={availableYears}
+              availableNationalities={availableNationalities}
+              availableGenders={availableGenders}
+            />
           </CardContent>
         </Card>
 
