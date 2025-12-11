@@ -244,9 +244,11 @@ export default function ScholarshipApplications() {
                       <SelectValue placeholder="Assign Status" />
                     </SelectTrigger>
                     <SelectContent>
-                      {Object.entries(statusConfig).map(([status, config]) => (
-                        <SelectItem key={status} value={status}>{config.label}</SelectItem>
-                      ))}
+                      {Object.entries(statusConfig)
+                        .filter(([status]) => status !== "WINNER")
+                        .map(([status, config]) => (
+                          <SelectItem key={status} value={status}>{config.label}</SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>

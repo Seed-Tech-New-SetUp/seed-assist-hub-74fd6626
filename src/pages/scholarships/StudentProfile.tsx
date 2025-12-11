@@ -1,12 +1,22 @@
+import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   ArrowLeft,
-  ArrowRight,
   ChevronLeft,
   ChevronRight,
   Mail,
@@ -21,11 +31,28 @@ import {
   Pause,
   X,
   Trophy,
+  Plus,
+  Trash2,
+  Award,
 } from "lucide-react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
 type ApplicationStatus = "SEED_RECOMMENDED" | "SHORTLISTED" | "ON_HOLD" | "REJECTED" | "WINNER";
+
+interface ScholarshipAward {
+  id: string;
+  name: string;
+  amount: number;
+  isCustom: boolean;
+}
+
+// Mock university-provided awards for the scholarship
+const universityAwards: ScholarshipAward[] = [
+  { id: "1", name: "Full Tuition Waiver", amount: 50000, isCustom: false },
+  { id: "2", name: "Living Stipend", amount: 15000, isCustom: false },
+  { id: "3", name: "Research Grant", amount: 5000, isCustom: false },
+];
 
 // Mock data for a single student
 const studentData = {
@@ -80,16 +107,72 @@ export default function StudentProfile() {
   const { toast } = useToast();
   const student = studentData;
 
+  const [showAwardsModal, setShowAwardsModal] = useState(false);
+  const [selectedAwards, setSelectedAwards] = useState<string[]>([]);
+  const [customAwards, setCustomAwards] = useState<{ name: string; amount: string }[]>([]);
+  const [newAwardName, setNewAwardName] = useState("");
+  const [newAwardAmount, setNewAwardAmount] = useState("");
+
   const handleStatusChange = (status: ApplicationStatus) => {
+    if (status === "WINNER") {
+      setShowAwardsModal(true);
+    } else {
+      toast({
+        title: "Status Updated",
+        description: `${student.name}'s status has been changed to ${statusConfig[status].label}.`,
+      });
+    }
+  };
+
+  const toggleAwardSelection = (awardId: string) => {
+    setSelectedAwards(prev =>
+      prev.includes(awardId) ? prev.filter(id => id !== awardId) : [...prev, awardId]
+    );
+  };
+
+  const addCustomAward = () => {
+    if (newAwardName.trim() && newAwardAmount.trim()) {
+      setCustomAwards(prev => [...prev, { name: newAwardName.trim(), amount: newAwardAmount.trim() }]);
+      setNewAwardName("");
+      setNewAwardAmount("");
+    }
+  };
+
+  const removeCustomAward = (index: number) => {
+    setCustomAwards(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const confirmWinner = () => {
+    const selectedUniversityAwards = universityAwards.filter(a => selectedAwards.includes(a.id));
+    const totalAmount = selectedUniversityAwards.reduce((sum, a) => sum + a.amount, 0) +
+      customAwards.reduce((sum, a) => sum + (parseFloat(a.amount) || 0), 0);
+
     toast({
-      title: "Status Updated",
-      description: `${student.name}'s status has been changed to ${statusConfig[status].label}.`,
+      title: "Winner Confirmed!",
+      description: `${student.name} has been marked as winner with ${selectedUniversityAwards.length + customAwards.length} award(s) totaling $${totalAmount.toLocaleString()}.`,
     });
+
+    setShowAwardsModal(false);
+    setSelectedAwards([]);
+    setCustomAwards([]);
   };
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        {/* Scholarship Name - Top Most */}
+        <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-xl p-6 border border-primary/20">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <Award className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider">Scholarship</p>
+              <h2 className="text-xl font-display font-bold text-foreground">{student.scholarshipName}</h2>
+            </div>
+          </div>
+        </div>
+
         {/* Top Action Bar */}
         <div className="flex items-center justify-between">
           <Button variant="ghost" asChild>
@@ -119,23 +202,20 @@ export default function StudentProfile() {
         {/* Header Section */}
         <Card>
           <CardContent className="p-6">
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">{student.scholarshipName}</p>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <h1 className="text-2xl font-display font-bold">{student.name}</h1>
-                  <Badge variant="outline" className={statusConfig[student.status].color}>
-                    {statusConfig[student.status].label}
-                  </Badge>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="icon">
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <Button variant="outline" size="icon">
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <h1 className="text-2xl font-display font-bold">{student.name}</h1>
+                <Badge variant="outline" className={statusConfig[student.status].color}>
+                  {statusConfig[student.status].label}
+                </Badge>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="icon">
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="icon">
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
               </div>
             </div>
           </CardContent>
@@ -314,6 +394,112 @@ export default function StudentProfile() {
             </Tabs>
           </CardContent>
         </Card>
+
+        {/* Awards Modal for Winner */}
+        <Dialog open={showAwardsModal} onOpenChange={setShowAwardsModal}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Trophy className="h-5 w-5 text-purple-500" />
+                Assign Awards to Winner
+              </DialogTitle>
+              <DialogDescription>
+                Select the awards to grant to {student.name} and add any custom awards.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6 py-4">
+              {/* University-provided Awards */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">University Awards</Label>
+                {universityAwards.map((award) => (
+                  <div
+                    key={award.id}
+                    onClick={() => toggleAwardSelection(award.id)}
+                    className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all ${
+                      selectedAwards.includes(award.id)
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-primary/50"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-4 h-4 rounded border flex items-center justify-center ${
+                        selectedAwards.includes(award.id)
+                          ? "bg-primary border-primary"
+                          : "border-muted-foreground"
+                      }`}>
+                        {selectedAwards.includes(award.id) && (
+                          <Check className="h-3 w-3 text-primary-foreground" />
+                        )}
+                      </div>
+                      <span className="text-sm font-medium">{award.name}</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground">${award.amount.toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Custom Awards */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Custom Awards</Label>
+                
+                {customAwards.map((award, index) => (
+                  <div key={index} className="flex items-center gap-2 p-3 rounded-lg border border-primary/50 bg-primary/5">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{award.name}</p>
+                      <p className="text-xs text-muted-foreground">${parseFloat(award.amount).toLocaleString()}</p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-destructive hover:text-destructive"
+                      onClick={() => removeCustomAward(index)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+
+                {/* Add Custom Award Form */}
+                <div className="grid grid-cols-[1fr,120px,auto] gap-2">
+                  <Input
+                    placeholder="Award name"
+                    value={newAwardName}
+                    onChange={(e) => setNewAwardName(e.target.value)}
+                  />
+                  <Input
+                    placeholder="Amount"
+                    type="number"
+                    value={newAwardAmount}
+                    onChange={(e) => setNewAwardAmount(e.target.value)}
+                  />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={addCustomAward}
+                    disabled={!newAwardName.trim() || !newAwardAmount.trim()}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowAwardsModal(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={confirmWinner}
+                className="bg-purple-500 hover:bg-purple-600"
+                disabled={selectedAwards.length === 0 && customAwards.length === 0}
+              >
+                <Trophy className="h-4 w-4 mr-2" />
+                Confirm Winner
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );
