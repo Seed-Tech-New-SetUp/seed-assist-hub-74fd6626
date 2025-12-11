@@ -16,6 +16,8 @@ import {
 import { Search, Bell, Settings, User, LogOut, HelpCircle, ChevronDown, Building2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSchool } from "@/contexts/SchoolContext";
+import { useSidebarState } from "@/contexts/SidebarContext";
+import { cn } from "@/lib/utils";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -24,6 +26,7 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, signOut } = useAuth();
   const { schools } = useSchool();
+  const { collapsed } = useSidebarState();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -55,7 +58,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     <div className="min-h-screen bg-background">
       <AppSidebar />
       
-      <div className="pl-16 lg:pl-60 transition-all duration-200">
+      <div className={cn(
+        "transition-all duration-200",
+        collapsed ? "pl-16" : "pl-64"
+      )}>
         <header className="sticky top-0 z-30 h-16 bg-card/80 backdrop-blur-sm border-b border-border">
           <div className="flex items-center justify-between h-full px-6">
             <div className="flex items-center gap-4">

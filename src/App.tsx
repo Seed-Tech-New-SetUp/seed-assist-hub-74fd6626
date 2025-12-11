@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SchoolProvider } from "@/contexts/SchoolContext";
+import { SidebarProvider } from "@/contexts/SidebarContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 // Auth & Navigation
@@ -38,49 +39,51 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <SchoolProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              {/* Auth Routes */}
-              <Route path="/" element={<Navigate to="/login" replace />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/select-school" element={<ProtectedRoute><SchoolSelector /></ProtectedRoute>} />
+        <SidebarProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                {/* Auth Routes */}
+                <Route path="/" element={<Navigate to="/login" replace />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/select-school" element={<ProtectedRoute><SchoolSelector /></ProtectedRoute>} />
 
-              {/* Main Dashboard */}
-              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                {/* Main Dashboard */}
+                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
 
-              {/* Events - In Person */}
-              <Route path="/events/in-person/bsf" element={<ProtectedRoute><BSFReports /></ProtectedRoute>} />
-              <Route path="/events/in-person/campus-tour" element={<ProtectedRoute><CampusTourReports /></ProtectedRoute>} />
-              <Route path="/events/in-person/upcoming" element={<ProtectedRoute><UpcomingEvents /></ProtectedRoute>} />
+                {/* Events - In Person */}
+                <Route path="/events/in-person/bsf" element={<ProtectedRoute><BSFReports /></ProtectedRoute>} />
+                <Route path="/events/in-person/campus-tour" element={<ProtectedRoute><CampusTourReports /></ProtectedRoute>} />
+                <Route path="/events/in-person/upcoming" element={<ProtectedRoute><UpcomingEvents /></ProtectedRoute>} />
 
-              {/* Events - Virtual */}
-              <Route path="/events/virtual/masterclass" element={<ProtectedRoute><VirtualMasterclass /></ProtectedRoute>} />
-              <Route path="/events/virtual/meetups" element={<ProtectedRoute><VirtualMeetups /></ProtectedRoute>} />
+                {/* Events - Virtual */}
+                <Route path="/events/virtual/masterclass" element={<ProtectedRoute><VirtualMasterclass /></ProtectedRoute>} />
+                <Route path="/events/virtual/meetups" element={<ProtectedRoute><VirtualMeetups /></ProtectedRoute>} />
 
-              {/* Scholarships */}
-              <Route path="/scholarships/applications" element={<ProtectedRoute><ScholarshipApplications /></ProtectedRoute>} />
-              <Route path="/scholarships/applications/:studentId" element={<ProtectedRoute><StudentProfile /></ProtectedRoute>} />
+                {/* Scholarships */}
+                <Route path="/scholarships/applications" element={<ProtectedRoute><ScholarshipApplications /></ProtectedRoute>} />
+                <Route path="/scholarships/applications/:studentId" element={<ProtectedRoute><StudentProfile /></ProtectedRoute>} />
 
-              {/* School Profile */}
-              <Route path="/school-profile/edit" element={<ProtectedRoute><SchoolProfileEdit /></ProtectedRoute>} />
+                {/* School Profile */}
+                <Route path="/school-profile/edit" element={<ProtectedRoute><SchoolProfileEdit /></ProtectedRoute>} />
 
-              {/* Analytics */}
-              <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+                {/* Analytics */}
+                <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
 
-              {/* User Management */}
-              <Route path="/user-management" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
+                {/* User Management */}
+                <Route path="/user-management" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
 
-              {/* Public Routes */}
-              <Route path="/reports/:reportId" element={<ReportDetail />} />
+                {/* Public Routes */}
+                <Route path="/reports/:reportId" element={<ReportDetail />} />
 
-              {/* 404 */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
+                {/* 404 */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </SidebarProvider>
       </SchoolProvider>
     </AuthProvider>
   </QueryClientProvider>
