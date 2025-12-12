@@ -56,45 +56,317 @@ const universityAwards: ScholarshipAward[] = [
   { id: "3", name: "Research Grant", amount: 5000, isCustom: false },
 ];
 
-// Mock base data for a single student (details reused for all mock applicants)
-const baseStudentData = {
-  id: "1",
-  name: "Priya Sharma",
-  country: "India",
-  countryCode: "IN",
-  isSeedRecommended: true,
-  status: "PENDING" as WorkflowStatus,
-  scholarshipName: "Global Leaders MBA Scholarship 2024",
-  email: "priya.sharma@email.com",
-  phone: "+91 98765 43210",
-  gender: "Female",
-  countryOfResidence: "India",
-  nationality: "Indian",
+interface StudentProfileData {
+  id: string;
+  name: string;
+  country: string;
+  countryCode: string;
+  isSeedRecommended: boolean;
+  status: WorkflowStatus;
+  scholarshipName: string;
+  email: string;
+  phone: string;
+  gender: string;
+  countryOfResidence: string;
+  nationality: string;
   programInterest: {
-    name: "Full-Time MBA",
-    intake: "Fall 2024",
-  },
+    name: string;
+    intake: string;
+  };
   academic: {
-    institution: "Delhi University",
-    year: 2019,
-    studyArea: "Computer Science",
-    gpa: 3.8,
-    scale: 4.0,
-  },
+    institution: string;
+    year: number;
+    studyArea: string;
+    gpa: number;
+    scale: number;
+  };
   work: {
-    industry: "Technology",
-    years: 5,
-    hasResume: true,
-  },
+    industry: string;
+    years: number;
+    hasResume: boolean;
+  };
   documents: {
-    essay: { uploaded: true, filename: "scholarship_essay.pdf" },
-    passport: { uploaded: true, filename: "passport.pdf" },
-    finance: { uploaded: true, filename: "financial_docs.pdf" },
-    lor1: { uploaded: true, filename: "lor_1.pdf" },
-    lor2: { uploaded: false, filename: null },
+    essay: { uploaded: boolean; filename: string | null };
+    passport: { uploaded: boolean; filename: string | null };
+    finance: { uploaded: boolean; filename: string | null };
+    lor1: { uploaded: boolean; filename: string | null };
+    lor2: { uploaded: boolean; filename: string | null };
+  };
+  standardizedTest: {
+    name: string;
+    score: number;
+  };
+}
+
+// Mock detailed data for all applicants (would come from backend in real app)
+const students: StudentProfileData[] = [
+  {
+    id: "1",
+    name: "Priya Sharma",
+    country: "India",
+    countryCode: "IN",
+    isSeedRecommended: true,
+    status: "PENDING",
+    scholarshipName: "Global Leaders MBA Scholarship 2024",
+    email: "priya.sharma@email.com",
+    phone: "+91 98765 43210",
+    gender: "Female",
+    countryOfResidence: "India",
+    nationality: "Indian",
+    programInterest: {
+      name: "Full-Time MBA",
+      intake: "Fall 2024",
+    },
+    academic: {
+      institution: "Delhi University",
+      year: 2019,
+      studyArea: "Computer Science",
+      gpa: 3.8,
+      scale: 4.0,
+    },
+    work: {
+      industry: "Technology",
+      years: 5,
+      hasResume: true,
+    },
+    documents: {
+      essay: { uploaded: true, filename: "priya_essay.pdf" },
+      passport: { uploaded: true, filename: "priya_passport.pdf" },
+      finance: { uploaded: true, filename: "priya_financials.pdf" },
+      lor1: { uploaded: true, filename: "priya_lor_1.pdf" },
+      lor2: { uploaded: false, filename: null },
+    },
+    standardizedTest: { name: "GMAT", score: 720 },
   },
-  standardizedTest: { name: "GMAT", score: 720 },
-};
+  {
+    id: "2",
+    name: "Chen Wei",
+    country: "China",
+    countryCode: "CN",
+    isSeedRecommended: true,
+    status: "SHORTLISTED",
+    scholarshipName: "Asia-Pacific Future Leaders Scholarship 2024",
+    email: "chen.wei@example.com",
+    phone: "+86 10 1234 5678",
+    gender: "Male",
+    countryOfResidence: "China",
+    nationality: "Chinese",
+    programInterest: {
+      name: "Executive MBA",
+      intake: "Spring 2025",
+    },
+    academic: {
+      institution: "Tsinghua University",
+      year: 2018,
+      studyArea: "Mechanical Engineering",
+      gpa: 3.6,
+      scale: 4.0,
+    },
+    work: {
+      industry: "Manufacturing",
+      years: 7,
+      hasResume: true,
+    },
+    documents: {
+      essay: { uploaded: true, filename: "chen_essay.pdf" },
+      passport: { uploaded: true, filename: "chen_passport.pdf" },
+      finance: { uploaded: true, filename: "chen_financials.pdf" },
+      lor1: { uploaded: true, filename: "chen_lor_1.pdf" },
+      lor2: { uploaded: false, filename: null },
+    },
+    standardizedTest: { name: "GRE", score: 328 },
+  },
+  {
+    id: "3",
+    name: "Ahmed Hassan",
+    country: "Egypt",
+    countryCode: "EG",
+    isSeedRecommended: false,
+    status: "ON_HOLD",
+    scholarshipName: "Emerging Markets Impact Scholarship 2024",
+    email: "ahmed.hassan@example.com",
+    phone: "+20 2 1234 5678",
+    gender: "Male",
+    countryOfResidence: "Egypt",
+    nationality: "Egyptian",
+    programInterest: {
+      name: "Global MBA",
+      intake: "Fall 2024",
+    },
+    academic: {
+      institution: "Cairo University",
+      year: 2017,
+      studyArea: "Finance",
+      gpa: 3.5,
+      scale: 4.0,
+    },
+    work: {
+      industry: "Banking",
+      years: 6,
+      hasResume: true,
+    },
+    documents: {
+      essay: { uploaded: true, filename: "ahmed_essay.pdf" },
+      passport: { uploaded: true, filename: "ahmed_passport.pdf" },
+      finance: { uploaded: true, filename: "ahmed_financials.pdf" },
+      lor1: { uploaded: true, filename: "ahmed_lor_1.pdf" },
+      lor2: { uploaded: true, filename: "ahmed_lor_2.pdf" },
+    },
+    standardizedTest: { name: "GMAT", score: 680 },
+  },
+  {
+    id: "4",
+    name: "Maria Garcia",
+    country: "Mexico",
+    countryCode: "MX",
+    isSeedRecommended: true,
+    status: "WINNER",
+    scholarshipName: "Women in Leadership Scholarship 2024",
+    email: "maria.garcia@example.com",
+    phone: "+52 55 1234 5678",
+    gender: "Female",
+    countryOfResidence: "Mexico",
+    nationality: "Mexican",
+    programInterest: {
+      name: "Full-Time MBA",
+      intake: "Fall 2024",
+    },
+    academic: {
+      institution: "UNAM",
+      year: 2019,
+      studyArea: "Business Administration",
+      gpa: 3.9,
+      scale: 4.0,
+    },
+    work: {
+      industry: "Consulting",
+      years: 5,
+      hasResume: true,
+    },
+    documents: {
+      essay: { uploaded: true, filename: "maria_essay.pdf" },
+      passport: { uploaded: true, filename: "maria_passport.pdf" },
+      finance: { uploaded: true, filename: "maria_financials.pdf" },
+      lor1: { uploaded: true, filename: "maria_lor_1.pdf" },
+      lor2: { uploaded: true, filename: "maria_lor_2.pdf" },
+    },
+    standardizedTest: { name: "GRE", score: 335 },
+  },
+  {
+    id: "5",
+    name: "John Obi",
+    country: "Nigeria",
+    countryCode: "NG",
+    isSeedRecommended: false,
+    status: "REJECTED",
+    scholarshipName: "Africa Business Talent Scholarship 2024",
+    email: "john.obi@example.com",
+    phone: "+234 1 234 5678",
+    gender: "Male",
+    countryOfResidence: "Nigeria",
+    nationality: "Nigerian",
+    programInterest: {
+      name: "Full-Time MBA",
+      intake: "Spring 2025",
+    },
+    academic: {
+      institution: "University of Lagos",
+      year: 2020,
+      studyArea: "Economics",
+      gpa: 3.2,
+      scale: 4.0,
+    },
+    work: {
+      industry: "Energy",
+      years: 3,
+      hasResume: true,
+    },
+    documents: {
+      essay: { uploaded: true, filename: "john_essay.pdf" },
+      passport: { uploaded: true, filename: "john_passport.pdf" },
+      finance: { uploaded: false, filename: null },
+      lor1: { uploaded: true, filename: "john_lor_1.pdf" },
+      lor2: { uploaded: false, filename: null },
+    },
+    standardizedTest: { name: "GMAT", score: 650 },
+  },
+  {
+    id: "6",
+    name: "Sara Kim",
+    country: "South Korea",
+    countryCode: "KR",
+    isSeedRecommended: true,
+    status: "PENDING",
+    scholarshipName: "Asian Innovation Scholarship 2024",
+    email: "sara.kim@example.com",
+    phone: "+82 2 1234 5678",
+    gender: "Female",
+    countryOfResidence: "South Korea",
+    nationality: "South Korean",
+    programInterest: {
+      name: "Technology Management MBA",
+      intake: "Fall 2025",
+    },
+    academic: {
+      institution: "Seoul National University",
+      year: 2020,
+      studyArea: "Information Systems",
+      gpa: 3.7,
+      scale: 4.0,
+    },
+    work: {
+      industry: "Technology",
+      years: 3,
+      hasResume: true,
+    },
+    documents: {
+      essay: { uploaded: true, filename: "sara_essay.pdf" },
+      passport: { uploaded: true, filename: "sara_passport.pdf" },
+      finance: { uploaded: true, filename: "sara_financials.pdf" },
+      lor1: { uploaded: true, filename: "sara_lor_1.pdf" },
+      lor2: { uploaded: false, filename: null },
+    },
+    standardizedTest: { name: "TOEFL", score: 115 },
+  },
+  {
+    id: "7",
+    name: "Luis Fernandez",
+    country: "Brazil",
+    countryCode: "BR",
+    isSeedRecommended: false,
+    status: "SHORTLISTED",
+    scholarshipName: "Latin America Leadership Scholarship 2024",
+    email: "luis.fernandez@example.com",
+    phone: "+55 11 1234 5678",
+    gender: "Male",
+    countryOfResidence: "Brazil",
+    nationality: "Brazilian",
+    programInterest: {
+      name: "Global MBA",
+      intake: "Spring 2025",
+    },
+    academic: {
+      institution: "University of São Paulo",
+      year: 2019,
+      studyArea: "Industrial Engineering",
+      gpa: 3.4,
+      scale: 4.0,
+    },
+    work: {
+      industry: "Logistics",
+      years: 4,
+      hasResume: true,
+    },
+    documents: {
+      essay: { uploaded: true, filename: "luis_essay.pdf" },
+      passport: { uploaded: true, filename: "luis_passport.pdf" },
+      finance: { uploaded: true, filename: "luis_financials.pdf" },
+      lor1: { uploaded: true, filename: "luis_lor_1.pdf" },
+      lor2: { uploaded: true, filename: "luis_lor_2.pdf" },
+    },
+    standardizedTest: { name: "GMAT", score: 700 },
+  },
+];
 
 const statusConfig: Record<WorkflowStatus, { label: string; icon: React.ElementType; color: string; buttonColor: string }> = {
   PENDING: { label: "Pending", icon: Pause, color: "bg-gray-500/10 text-gray-600 border-gray-500/20", buttonColor: "bg-gray-500 hover:bg-gray-600" },
@@ -104,36 +376,18 @@ const statusConfig: Record<WorkflowStatus, { label: string; icon: React.ElementT
   WINNER: { label: "Winner", icon: Trophy, color: "bg-purple-500/10 text-purple-600 border-purple-500/20", buttonColor: "bg-purple-500 hover:bg-purple-600" },
 };
 
-// Mock list of all applicants (in real app, this would come from API/context)
-const allApplicants = [
-  { id: "1", name: "Priya Sharma" },
-  { id: "2", name: "Chen Wei" },
-  { id: "3", name: "Ahmed Hassan" },
-  { id: "4", name: "Maria Garcia" },
-  { id: "5", name: "John Obi" },
-  { id: "6", name: "Sara Kim" },
-  { id: "7", name: "Luis Fernandez" },
-];
-
 export default function StudentProfile() {
   const { studentId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   // Determine current student based on route param, fallback to first applicant
-  const currentIndex = allApplicants.findIndex((a) => a.id === studentId);
+  const currentIndex = students.findIndex((s) => s.id === studentId);
   const safeIndex = currentIndex === -1 ? 0 : currentIndex;
 
-  const currentApplicant = allApplicants[safeIndex];
-  const prevStudent = safeIndex > 0 ? allApplicants[safeIndex - 1] : null;
-  const nextStudent = safeIndex < allApplicants.length - 1 ? allApplicants[safeIndex + 1] : null;
-
-  // Merge base mock data with current applicant's id and name
-  const student = {
-    ...baseStudentData,
-    id: currentApplicant.id,
-    name: currentApplicant.name,
-  } as const;
+  const student = students[safeIndex];
+  const prevStudent = safeIndex > 0 ? students[safeIndex - 1] : null;
+  const nextStudent = safeIndex < students.length - 1 ? students[safeIndex + 1] : null;
 
   const [showAwardsModal, setShowAwardsModal] = useState(false);
   const [selectedAwards, setSelectedAwards] = useState<string[]>([]);
