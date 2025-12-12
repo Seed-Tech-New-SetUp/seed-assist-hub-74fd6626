@@ -53,8 +53,8 @@ interface Applicant {
   workExperience: number;
 }
 
-// Mock data
-const applicants: Applicant[] = [
+// Initial mock data
+const initialApplicants: Applicant[] = [
   {
     id: "1",
     name: "Priya Sharma",
@@ -164,6 +164,7 @@ const statusConfig: Record<WorkflowStatus, { label: string; icon: React.ElementT
 };
 
 export default function ScholarshipApplications() {
+  const [applicants, setApplicants] = useState<Applicant[]>(initialApplicants);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedApplicants, setSelectedApplicants] = useState<string[]>([]);
@@ -183,18 +184,18 @@ export default function ScholarshipApplications() {
   const { toast } = useToast();
 
   // Extract unique values for filters
-  const availableTests = useMemo(() => [...new Set(applicants.map(a => a.standardizedTest.name))], []);
-  const availableYears = useMemo(() => [...new Set(applicants.map(a => a.ugCompletionYear))].sort((a, b) => b - a), []);
-  const availableNationalities = useMemo(() => [...new Set(applicants.map(a => a.nationality))].sort(), []);
-  const availableGenders = useMemo(() => [...new Set(applicants.map(a => a.gender))].sort(), []);
+  const availableTests = useMemo(() => [...new Set(applicants.map(a => a.standardizedTest.name))], [applicants]);
+  const availableYears = useMemo(() => [...new Set(applicants.map(a => a.ugCompletionYear))].sort((a, b) => b - a), [applicants]);
+  const availableNationalities = useMemo(() => [...new Set(applicants.map(a => a.nationality))].sort(), [applicants]);
+  const availableGenders = useMemo(() => [...new Set(applicants.map(a => a.gender))].sort(), [applicants]);
 
   // Calculate status counts
-  const statusCounts = applicants.reduce((acc, applicant) => {
+  const statusCounts = useMemo(() => applicants.reduce((acc, applicant) => {
     acc[applicant.status] = (acc[applicant.status] || 0) + 1;
     return acc;
-  }, {} as Record<WorkflowStatus, number>);
+  }, {} as Record<WorkflowStatus, number>), [applicants]);
   
-  const seedRecommendedCount = applicants.filter(a => a.isSeedRecommended).length;
+  const seedRecommendedCount = useMemo(() => applicants.filter(a => a.isSeedRecommended).length, [applicants]);
 
   const filteredApplicants = applicants.filter(applicant => {
     // Search filter
@@ -260,6 +261,14 @@ export default function ScholarshipApplications() {
   };
 
   const handleNotifyDecision = (notify: boolean) => {
+    // Update the applicants state with new status
+    if (newStatus) {
+      setApplicants(prev => prev.map(applicant => 
+        selectedApplicants.includes(applicant.id) 
+          ? { ...applicant, status: newStatus }
+          : applicant
+      ));
+    }
     setShowNotifyDialog(false);
     toast({
       title: "Status Updated",
