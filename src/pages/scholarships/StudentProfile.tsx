@@ -56,8 +56,8 @@ const universityAwards: ScholarshipAward[] = [
   { id: "3", name: "Research Grant", amount: 5000, isCustom: false },
 ];
 
-// Mock data for a single student
-const studentData = {
+// Mock base data for a single student (details reused for all mock applicants)
+const baseStudentData = {
   id: "1",
   name: "Priya Sharma",
   country: "India",
@@ -119,7 +119,21 @@ export default function StudentProfile() {
   const { studentId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const student = studentData;
+
+  // Determine current student based on route param, fallback to first applicant
+  const currentIndex = allApplicants.findIndex((a) => a.id === studentId);
+  const safeIndex = currentIndex === -1 ? 0 : currentIndex;
+
+  const currentApplicant = allApplicants[safeIndex];
+  const prevStudent = safeIndex > 0 ? allApplicants[safeIndex - 1] : null;
+  const nextStudent = safeIndex < allApplicants.length - 1 ? allApplicants[safeIndex + 1] : null;
+
+  // Merge base mock data with current applicant's id and name
+  const student = {
+    ...baseStudentData,
+    id: currentApplicant.id,
+    name: currentApplicant.name,
+  } as const;
 
   const [showAwardsModal, setShowAwardsModal] = useState(false);
   const [selectedAwards, setSelectedAwards] = useState<string[]>([]);
@@ -127,16 +141,11 @@ export default function StudentProfile() {
   const [newAwardName, setNewAwardName] = useState("");
   const [newAwardAmount, setNewAwardAmount] = useState("");
   const [showNotificationModal, setShowNotificationModal] = useState(false);
-  const [pendingStatusData, setPendingStatusData] = useState<{ 
-    status: WorkflowStatus; 
-    totalAmount?: number; 
-    awardCount?: number 
+  const [pendingStatusData, setPendingStatusData] = useState<{
+    status: WorkflowStatus;
+    totalAmount?: number;
+    awardCount?: number;
   } | null>(null);
-
-  // Calculate prev/next student IDs
-  const currentIndex = allApplicants.findIndex(a => a.id === studentId);
-  const prevStudent = currentIndex > 0 ? allApplicants[currentIndex - 1] : null;
-  const nextStudent = currentIndex < allApplicants.length - 1 ? allApplicants[currentIndex + 1] : null;
 
   const handleStatusChange = (status: WorkflowStatus) => {
     if (status === "WINNER") {
@@ -147,7 +156,6 @@ export default function StudentProfile() {
       setShowNotificationModal(true);
     }
   };
-
   const toggleAwardSelection = (awardId: string) => {
     setSelectedAwards(prev =>
       prev.includes(awardId) ? prev.filter(id => id !== awardId) : [...prev, awardId]
@@ -445,30 +453,33 @@ export default function StudentProfile() {
                 <TabsTrigger value="lor1">LOR 1</TabsTrigger>
                 <TabsTrigger value="lor2">LOR 2</TabsTrigger>
               </TabsList>
-              {Object.entries(student.documents).map(([key, doc]) => (
-                <TabsContent key={key} value={key} className="mt-4">
-                  {doc.uploaded ? (
-                    <div className="border rounded-lg p-6 text-center">
-                      <FileText className="h-12 w-12 mx-auto text-muted-foreground" />
-                      <p className="mt-2 text-sm font-medium">{doc.filename}</p>
-                      <div className="flex justify-center gap-2 mt-4">
-                        <Button variant="outline" size="sm">
-                          View
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <Download className="h-3.5 w-3.5 mr-1" />
-                          Download
-                        </Button>
+              {Object.entries(student.documents).map(([key, doc]) => {
+                const typedDoc = doc as { uploaded: boolean; filename: string | null };
+                return (
+                  <TabsContent key={key} value={key} className="mt-4">
+                    {typedDoc.uploaded ? (
+                      <div className="border rounded-lg p-6 text-center">
+                        <FileText className="h-12 w-12 mx-auto text-muted-foreground" />
+                        <p className="mt-2 text-sm font-medium">{typedDoc.filename}</p>
+                        <div className="flex justify-center gap-2 mt-4">
+                          <Button variant="outline" size="sm">
+                            View
+                          </Button>
+                          <Button variant="outline" size="sm">
+                            <Download className="h-3.5 w-3.5 mr-1" />
+                            Download
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="border border-dashed rounded-lg p-6 text-center">
-                      <FileText className="h-12 w-12 mx-auto text-muted-foreground/50" />
-                      <p className="mt-2 text-sm text-muted-foreground">Not Uploaded</p>
-                    </div>
-                  )}
-                </TabsContent>
-              ))}
+                    ) : (
+                      <div className="border border-dashed rounded-lg p-6 text-center">
+                        <FileText className="h-12 w-12 mx-auto text-muted-foreground/50" />
+                        <p className="mt-2 text-sm text-muted-foreground">Not Uploaded</p>
+                      </div>
+                    )}
+                  </TabsContent>
+                );
+              })}
             </Tabs>
           </CardContent>
         </Card>
