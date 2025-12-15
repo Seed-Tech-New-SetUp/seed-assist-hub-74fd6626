@@ -122,20 +122,25 @@ export default function VirtualMeetups() {
 
   const handleDownloadAll = async () => {
     try {
-      const allData = meetupEvents.map(event => ({
-        'Event Name': event.eventName,
-        'Date': event.date,
-        'Region': event.region,
-        'Attendees': event.attendees,
-        'Connections': event.connections,
-      }));
-      exportToXLSX(allData, {
-        filename: 'all-meetup-reports',
-        sheetName: 'MeetUp Reports'
+      // Fetch all student records from all events
+      const allStudentData: Record<string, unknown>[] = [];
+      for (const event of meetupEvents) {
+        const students = await fetchMeetupReportData(event.id);
+        students.forEach(student => {
+          allStudentData.push({
+            ...student,
+            'Event Name': event.eventName,
+            'Event Date': event.date,
+          });
+        });
+      }
+      exportToXLSX(allStudentData, {
+        filename: 'all-meetup-attendees',
+        sheetName: 'All Attendees'
       });
-      toast.success("All reports downloaded");
+      toast.success("All attendee records downloaded");
     } catch (error) {
-      toast.error("Failed to download reports");
+      toast.error("Failed to download records");
     }
   };
 
