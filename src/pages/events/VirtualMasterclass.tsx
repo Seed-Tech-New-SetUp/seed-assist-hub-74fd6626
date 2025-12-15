@@ -28,53 +28,122 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Video, Users, Link2, Download, MoreHorizontal, Search, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
+import { exportToXLSX } from "@/lib/utils/xlsx-export";
 
-// Mock data
-const masterclassEvents = [
-  {
-    id: "1",
-    eventName: "MBA Admissions Masterclass",
-    date: "2024-03-18",
-    attendees: 245,
-    connections: 89,
-    recordingAvailable: true,
-    lastDownloadedBy: { name: "John Smith", date: "2024-03-20" },
-  },
-  {
-    id: "2",
-    eventName: "Executive MBA Overview",
-    date: "2024-03-10",
-    attendees: 180,
-    connections: 65,
-    recordingAvailable: true,
-  },
-  {
-    id: "3",
-    eventName: "Scholarship Application Tips",
-    date: "2024-02-25",
-    attendees: 320,
-    connections: 112,
-    recordingAvailable: true,
-    lastDownloadedBy: { name: "Sarah Johnson", date: "2024-02-28" },
-  },
-];
+// TODO: Replace with actual API call
+// import { fetchMasterclassReports } from "@/lib/api/reports";
+const fetchMasterclassReports = async () => {
+  // Simulated API delay
+  await new Promise(resolve => setTimeout(resolve, 100));
+  
+  return [
+    {
+      id: "1",
+      eventName: "MBA Admissions Masterclass",
+      date: "2024-03-18",
+      attendees: 245,
+      connections: 89,
+      recordingAvailable: true,
+      lastDownloadedBy: { name: "John Smith", date: "2024-03-20" },
+    },
+    {
+      id: "2",
+      eventName: "Executive MBA Overview",
+      date: "2024-03-10",
+      attendees: 180,
+      connections: 65,
+      recordingAvailable: true,
+    },
+    {
+      id: "3",
+      eventName: "Scholarship Application Tips",
+      date: "2024-02-25",
+      attendees: 320,
+      connections: 112,
+      recordingAvailable: true,
+      lastDownloadedBy: { name: "Sarah Johnson", date: "2024-02-28" },
+    },
+  ];
+};
+
+// TODO: Replace with actual API call for individual report data
+const fetchMasterclassReportData = async (eventId: string) => {
+  // Simulated API delay
+  await new Promise(resolve => setTimeout(resolve, 100));
+  
+  // Return mock attendee data for the report
+  return [
+    { name: "Alice Brown", email: "alice@example.com", company: "StartUp Inc", registeredAt: "2024-03-15", attended: "Yes" },
+    { name: "Charlie Wilson", email: "charlie@example.com", company: "Big Corp", registeredAt: "2024-03-14", attended: "Yes" },
+    { name: "Diana Ross", email: "diana@example.com", company: "Media Co", registeredAt: "2024-03-13", attended: "Yes" },
+  ];
+};
 
 export default function VirtualMasterclass() {
   const [searchQuery, setSearchQuery] = useState("");
   const [yearFilter, setYearFilter] = useState<string>("all");
+  const [masterclassEvents, setMasterclassEvents] = useState<Awaited<ReturnType<typeof fetchMasterclassReports>>>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch data on mount
+  useState(() => {
+    fetchMasterclassReports().then(data => {
+      setMasterclassEvents(data);
+      setIsLoading(false);
+    });
+  });
 
   // Calculate stats
   const totalEvents = masterclassEvents.length;
   const totalAttendees = masterclassEvents.reduce((sum, e) => sum + e.attendees, 0);
   const totalConnections = masterclassEvents.reduce((sum, e) => sum + e.connections, 0);
 
+  const handleDownloadReport = async (event: typeof masterclassEvents[0]) => {
+    try {
+      const reportData = await fetchMasterclassReportData(event.id);
+      exportToXLSX(reportData, {
+        filename: `masterclass-report-${event.eventName.replace(/\s+/g, '-').toLowerCase()}`,
+        sheetName: 'Attendees'
+      });
+      toast.success(`Report downloaded: ${event.eventName}`);
+    } catch (error) {
+      toast.error("Failed to download report");
+    }
+  };
+
+  const handleDownloadAll = async () => {
+    try {
+      const allData = masterclassEvents.map(event => ({
+        'Event Name': event.eventName,
+        'Date': event.date,
+        'Attendees': event.attendees,
+        'Connections': event.connections,
+        'Recording Available': event.recordingAvailable ? 'Yes' : 'No',
+      }));
+      exportToXLSX(allData, {
+        filename: 'all-masterclass-reports',
+        sheetName: 'Masterclass Reports'
+      });
+      toast.success("All reports downloaded");
+    } catch (error) {
+      toast.error("Failed to download reports");
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">Virtual Event Reports</h1>
-          <p className="text-muted-foreground mt-1">View reports from your virtual masterclass and meetup events</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-display font-bold text-foreground">Virtual Event Reports</h1>
+            <p className="text-muted-foreground mt-1">View reports from your virtual masterclass and meetup events</p>
+          </div>
+          <Button onClick={handleDownloadAll} className="gap-2">
+            <Download className="h-4 w-4" />
+            Download All
+          </Button>
         </div>
 
         {/* Tabs */}
@@ -214,7 +283,7 @@ export default function VirtualMasterclass() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleDownloadReport(event)}>
                                 <Download className="h-4 w-4 mr-2" />
                                 Download Report
                               </DropdownMenuItem>

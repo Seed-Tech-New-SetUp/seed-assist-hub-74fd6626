@@ -28,61 +28,130 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Video, Users, Link2, Download, MoreHorizontal, Search, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
+import { exportToXLSX } from "@/lib/utils/xlsx-export";
 
-// Mock data
-const meetupEvents = [
-  {
-    id: "1",
-    eventName: "Asia MBA Meetup - Singapore",
-    date: "2024-03-22",
-    region: "Asia",
-    attendees: 45,
-    connections: 28,
-    lastDownloadedBy: { name: "John Smith", date: "2024-03-24" },
-  },
-  {
-    id: "2",
-    eventName: "Europe MBA Meetup - London",
-    date: "2024-03-15",
-    region: "Europe",
-    attendees: 62,
-    connections: 35,
-  },
-  {
-    id: "3",
-    eventName: "North America Meetup - New York",
-    date: "2024-03-08",
-    region: "North America",
-    attendees: 78,
-    connections: 42,
-    lastDownloadedBy: { name: "Sarah Johnson", date: "2024-03-10" },
-  },
-  {
-    id: "4",
-    eventName: "Middle East MBA Meetup - Dubai",
-    date: "2024-02-28",
-    region: "Middle East",
-    attendees: 38,
-    connections: 22,
-  },
-];
+// TODO: Replace with actual API call
+// import { fetchMeetupReports } from "@/lib/api/reports";
+const fetchMeetupReports = async () => {
+  // Simulated API delay
+  await new Promise(resolve => setTimeout(resolve, 100));
+  
+  return [
+    {
+      id: "1",
+      eventName: "Asia MBA Meetup - Singapore",
+      date: "2024-03-22",
+      region: "Asia",
+      attendees: 45,
+      connections: 28,
+      lastDownloadedBy: { name: "John Smith", date: "2024-03-24" },
+    },
+    {
+      id: "2",
+      eventName: "Europe MBA Meetup - London",
+      date: "2024-03-15",
+      region: "Europe",
+      attendees: 62,
+      connections: 35,
+    },
+    {
+      id: "3",
+      eventName: "North America Meetup - New York",
+      date: "2024-03-08",
+      region: "North America",
+      attendees: 78,
+      connections: 42,
+      lastDownloadedBy: { name: "Sarah Johnson", date: "2024-03-10" },
+    },
+    {
+      id: "4",
+      eventName: "Middle East MBA Meetup - Dubai",
+      date: "2024-02-28",
+      region: "Middle East",
+      attendees: 38,
+      connections: 22,
+    },
+  ];
+};
+
+// TODO: Replace with actual API call for individual report data
+const fetchMeetupReportData = async (eventId: string) => {
+  // Simulated API delay
+  await new Promise(resolve => setTimeout(resolve, 100));
+  
+  // Return mock attendee data for the report
+  return [
+    { name: "John Doe", email: "john@example.com", company: "Tech Corp", registeredAt: "2024-03-20", attended: "Yes" },
+    { name: "Jane Smith", email: "jane@example.com", company: "Finance Inc", registeredAt: "2024-03-19", attended: "Yes" },
+    { name: "Bob Johnson", email: "bob@example.com", company: "Consulting LLC", registeredAt: "2024-03-18", attended: "No" },
+  ];
+};
 
 export default function VirtualMeetups() {
   const [searchQuery, setSearchQuery] = useState("");
   const [yearFilter, setYearFilter] = useState<string>("all");
+  const [meetupEvents, setMeetupEvents] = useState<Awaited<ReturnType<typeof fetchMeetupReports>>>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch data on mount
+  useState(() => {
+    fetchMeetupReports().then(data => {
+      setMeetupEvents(data);
+      setIsLoading(false);
+    });
+  });
 
   // Calculate stats
   const totalEvents = meetupEvents.length;
   const totalAttendees = meetupEvents.reduce((sum, e) => sum + e.attendees, 0);
   const totalConnections = meetupEvents.reduce((sum, e) => sum + e.connections, 0);
 
+  const handleDownloadReport = async (event: typeof meetupEvents[0]) => {
+    try {
+      const reportData = await fetchMeetupReportData(event.id);
+      exportToXLSX(reportData, {
+        filename: `meetup-report-${event.eventName.replace(/\s+/g, '-').toLowerCase()}`,
+        sheetName: 'Attendees'
+      });
+      toast.success(`Report downloaded: ${event.eventName}`);
+    } catch (error) {
+      toast.error("Failed to download report");
+    }
+  };
+
+  const handleDownloadAll = async () => {
+    try {
+      const allData = meetupEvents.map(event => ({
+        'Event Name': event.eventName,
+        'Date': event.date,
+        'Region': event.region,
+        'Attendees': event.attendees,
+        'Connections': event.connections,
+      }));
+      exportToXLSX(allData, {
+        filename: 'all-meetup-reports',
+        sheetName: 'MeetUp Reports'
+      });
+      toast.success("All reports downloaded");
+    } catch (error) {
+      toast.error("Failed to download reports");
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">Virtual Event Reports</h1>
-          <p className="text-muted-foreground mt-1">View reports from your virtual masterclass and meetup events</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-display font-bold text-foreground">Virtual Event Reports</h1>
+            <p className="text-muted-foreground mt-1">View reports from your virtual masterclass and meetup events</p>
+          </div>
+          <Button onClick={handleDownloadAll} className="gap-2">
+            <Download className="h-4 w-4" />
+            Download All
+          </Button>
         </div>
 
         {/* Tabs */}
@@ -216,7 +285,7 @@ export default function VirtualMeetups() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleDownloadReport(event)}>
                                 <Download className="h-4 w-4 mr-2" />
                                 Download Report
                               </DropdownMenuItem>
