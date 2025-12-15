@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
@@ -117,11 +117,38 @@ const navigation: NavItem[] = [
 
 export function AppSidebar() {
   const { collapsed, toggleCollapsed } = useSidebarState();
-  const [openSections, setOpenSections] = useState<string[]>([]);
-  const [openSubSections, setOpenSubSections] = useState<string[]>([]);
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut } = useAuth();
+
+  // Find which section and subsection contain the current route
+  const findActiveSection = () => {
+    for (const item of navigation) {
+      if (item.children) {
+        for (const group of item.children) {
+          if (group.items.some(subItem => location.pathname.startsWith(subItem.href))) {
+            return { section: item.title, subSection: group.title };
+          }
+        }
+      }
+    }
+    return { section: "", subSection: "" };
+  };
+
+  const { section: activeSection, subSection: activeSubSection } = findActiveSection();
+
+  const [openSections, setOpenSections] = useState<string[]>(activeSection ? [activeSection] : []);
+  const [openSubSections, setOpenSubSections] = useState<string[]>(activeSubSection ? [activeSubSection] : []);
+
+  // Auto-expand section containing active route when route changes
+  useEffect(() => {
+    if (activeSection && !openSections.includes(activeSection)) {
+      setOpenSections([activeSection]);
+    }
+    if (activeSubSection && !openSubSections.includes(activeSubSection)) {
+      setOpenSubSections([activeSubSection]);
+    }
+  }, [location.pathname]);
 
   const toggleSection = (title: string) => {
     setOpenSections(prev =>
