@@ -8,7 +8,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import {
   Search,
@@ -24,15 +23,119 @@ import {
   Star,
   ChevronRight,
   Building2,
-  MapPin,
   Clock,
   DollarSign,
+  Pencil,
+  Trash2,
+  Save,
+  X,
 } from "lucide-react";
 import { useAdminStatus } from "@/hooks/useAdminStatus";
 import { toast } from "sonner";
+import { z } from "zod";
+
+// Validation schemas
+const programInfoSchema = z.object({
+  description: z.string().trim().min(10, "Description must be at least 10 characters").max(2000),
+  applicationDeadline: z.string().min(1, "Application deadline is required"),
+  intake: z.string().min(1, "Intake is required"),
+});
+
+const facultySchema = z.object({
+  name: z.string().trim().min(2, "Name must be at least 2 characters").max(100),
+  title: z.string().trim().min(2, "Title is required").max(100),
+  expertise: z.string().trim().min(2, "Expertise is required").max(100),
+});
+
+const alumniSchema = z.object({
+  name: z.string().trim().min(2, "Name is required").max(100),
+  position: z.string().trim().min(2, "Position is required").max(150),
+  graduationYear: z.number().min(1950).max(new Date().getFullYear()),
+});
+
+const faqSchema = z.object({
+  question: z.string().trim().min(5, "Question must be at least 5 characters").max(500),
+  answer: z.string().trim().min(10, "Answer must be at least 10 characters").max(2000),
+});
+
+const pocSchema = z.object({
+  name: z.string().trim().min(2, "Name is required").max(100),
+  role: z.string().trim().min(2, "Role is required").max(100),
+  email: z.string().trim().email("Invalid email address"),
+  phone: z.string().trim().min(5, "Phone is required").max(20),
+});
+
+// Types
+interface Faculty {
+  name: string;
+  title: string;
+  expertise: string;
+}
+
+interface Alumni {
+  name: string;
+  position: string;
+  graduationYear: number;
+}
+
+interface Ranking {
+  source: string;
+  rank: number;
+  year: number;
+}
+
+interface JobRole {
+  title: string;
+  avgSalary: string;
+}
+
+interface FAQ {
+  question: string;
+  answer: string;
+}
+
+interface POC {
+  name: string;
+  role: string;
+  email: string;
+  phone: string;
+}
+
+interface Program {
+  id: string;
+  name: string;
+  type: string;
+  duration: string;
+  mode: string;
+  intake: string;
+  tuition: string;
+  status: string;
+  applicationDeadline: string;
+  info: {
+    description: string;
+    highlights: string[];
+  };
+  features: string[];
+  faculty: Faculty[];
+  currentStudents: {
+    totalEnrollment: number;
+    demographics: { international: string; women: string; avgAge: number };
+    topCountries: string[];
+  };
+  alumni: {
+    totalCount: number;
+    notableAlumni: Alumni[];
+    avgSalaryIncrease: string;
+  };
+  rankings: Ranking[];
+  recruiters: string[];
+  jobRoles: JobRole[];
+  faqs: FAQ[];
+  pocs: POC[];
+}
 
 // Mock data for programs - TODO: Replace with API call
-const mockPrograms = [
+const initialMockPrograms: Program[] = [
   {
     id: "1",
     name: "Master of Business Administration (MBA)",
@@ -77,9 +180,7 @@ const mockPrograms = [
       { source: "US News", rank: 18, year: 2024 },
       { source: "The Economist", rank: 12, year: 2024 },
     ],
-    recruiters: [
-      "Amazon", "Google", "McKinsey", "Goldman Sachs", "Apple", "Microsoft", "Bain & Company", "JP Morgan"
-    ],
+    recruiters: ["Amazon", "Google", "McKinsey", "Goldman Sachs", "Apple", "Microsoft", "Bain & Company", "JP Morgan"],
     jobRoles: [
       { title: "Strategy Consultant", avgSalary: "$175,000" },
       { title: "Product Manager", avgSalary: "$165,000" },
@@ -151,21 +252,32 @@ const mockPrograms = [
 
 export default function Programs() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedProgram, setSelectedProgram] = useState<typeof mockPrograms[0] | null>(null);
+  const [programs, setPrograms] = useState<Program[]>(initialMockPrograms);
+  const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
   const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
   const [newProgramRequest, setNewProgramRequest] = useState({ name: "", description: "", justification: "" });
   const { isAdmin } = useAdminStatus();
 
-  const filteredPrograms = mockPrograms.filter(program =>
+  const filteredPrograms = programs.filter(program =>
     program.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     program.type.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleRequestProgram = () => {
+    if (!newProgramRequest.name.trim() || !newProgramRequest.description.trim()) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
     // TODO: Implement API call to submit program request
     toast.success("Program request submitted successfully");
     setIsRequestDialogOpen(false);
     setNewProgramRequest({ name: "", description: "", justification: "" });
+  };
+
+  const handleUpdateProgram = (updatedProgram: Program) => {
+    setPrograms(prev => prev.map(p => p.id === updatedProgram.id ? updatedProgram : p));
+    setSelectedProgram(updatedProgram);
+    toast.success("Program updated successfully");
   };
 
   return (
@@ -196,21 +308,23 @@ export default function Programs() {
                 </DialogHeader>
                 <div className="space-y-4 pt-4">
                   <div className="space-y-2">
-                    <Label htmlFor="program-name">Program Name</Label>
+                    <Label htmlFor="program-name">Program Name *</Label>
                     <Input
                       id="program-name"
                       placeholder="e.g., Master of Science in AI"
                       value={newProgramRequest.name}
                       onChange={(e) => setNewProgramRequest(prev => ({ ...prev, name: e.target.value }))}
+                      maxLength={200}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="program-description">Program Description</Label>
+                    <Label htmlFor="program-description">Program Description *</Label>
                     <Textarea
                       id="program-description"
                       placeholder="Brief description of the program..."
                       value={newProgramRequest.description}
                       onChange={(e) => setNewProgramRequest(prev => ({ ...prev, description: e.target.value }))}
+                      maxLength={1000}
                     />
                   </div>
                   <div className="space-y-2">
@@ -220,6 +334,7 @@ export default function Programs() {
                       placeholder="Why should this program be added?"
                       value={newProgramRequest.justification}
                       onChange={(e) => setNewProgramRequest(prev => ({ ...prev, justification: e.target.value }))}
+                      maxLength={1000}
                     />
                   </div>
                   <div className="flex justify-end gap-2 pt-4">
@@ -249,7 +364,12 @@ export default function Programs() {
 
         {/* Programs Grid or Detail View */}
         {selectedProgram ? (
-          <ProgramDetail program={selectedProgram} onBack={() => setSelectedProgram(null)} />
+          <ProgramDetail 
+            program={selectedProgram} 
+            onBack={() => setSelectedProgram(null)} 
+            onUpdate={handleUpdateProgram}
+            isAdmin={isAdmin}
+          />
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filteredPrograms.map((program) => (
@@ -312,8 +432,263 @@ export default function Programs() {
   );
 }
 
+// Editable Field Component
+function EditableField({ 
+  value, 
+  onSave, 
+  isAdmin,
+  type = "text",
+  placeholder = "",
+  multiline = false,
+}: { 
+  value: string; 
+  onSave: (value: string) => void;
+  isAdmin: boolean;
+  type?: string;
+  placeholder?: string;
+  multiline?: boolean;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(value);
+
+  const handleSave = () => {
+    onSave(editValue);
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setEditValue(value);
+    setIsEditing(false);
+  };
+
+  if (!isAdmin) {
+    return <span>{value}</span>;
+  }
+
+  if (isEditing) {
+    return (
+      <div className="flex items-start gap-2">
+        {multiline ? (
+          <Textarea
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            placeholder={placeholder}
+            className="text-sm"
+            maxLength={2000}
+          />
+        ) : (
+          <Input
+            type={type}
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            placeholder={placeholder}
+            className="text-sm h-8"
+            maxLength={200}
+          />
+        )}
+        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={handleSave}>
+          <Save className="h-4 w-4 text-green-600" />
+        </Button>
+        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={handleCancel}>
+          <X className="h-4 w-4 text-destructive" />
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="group flex items-start gap-2">
+      <span className="flex-1">{value || <span className="text-muted-foreground italic">{placeholder}</span>}</span>
+      <Button 
+        size="icon" 
+        variant="ghost" 
+        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" 
+        onClick={() => setIsEditing(true)}
+      >
+        <Pencil className="h-3 w-3" />
+      </Button>
+    </div>
+  );
+}
+
 // Program Detail Component
-function ProgramDetail({ program, onBack }: { program: typeof mockPrograms[0]; onBack: () => void }) {
+function ProgramDetail({ 
+  program, 
+  onBack, 
+  onUpdate,
+  isAdmin 
+}: { 
+  program: Program; 
+  onBack: () => void; 
+  onUpdate: (program: Program) => void;
+  isAdmin: boolean;
+}) {
+  const [editingSection, setEditingSection] = useState<string | null>(null);
+  const [localProgram, setLocalProgram] = useState(program);
+
+  // Feature editing
+  const [newFeature, setNewFeature] = useState("");
+  const addFeature = () => {
+    if (newFeature.trim()) {
+      const updated = { ...localProgram, features: [...localProgram.features, newFeature.trim()] };
+      setLocalProgram(updated);
+      onUpdate(updated);
+      setNewFeature("");
+    }
+  };
+  const removeFeature = (index: number) => {
+    const updated = { ...localProgram, features: localProgram.features.filter((_, i) => i !== index) };
+    setLocalProgram(updated);
+    onUpdate(updated);
+  };
+
+  // Faculty editing
+  const [newFaculty, setNewFaculty] = useState<Faculty>({ name: "", title: "", expertise: "" });
+  const addFaculty = () => {
+    const result = facultySchema.safeParse(newFaculty);
+    if (!result.success) {
+      toast.error(result.error.errors[0].message);
+      return;
+    }
+    const updated = { ...localProgram, faculty: [...localProgram.faculty, newFaculty] };
+    setLocalProgram(updated);
+    onUpdate(updated);
+    setNewFaculty({ name: "", title: "", expertise: "" });
+  };
+  const removeFaculty = (index: number) => {
+    const updated = { ...localProgram, faculty: localProgram.faculty.filter((_, i) => i !== index) };
+    setLocalProgram(updated);
+    onUpdate(updated);
+  };
+
+  // Alumni editing
+  const [newAlumni, setNewAlumni] = useState<Alumni>({ name: "", position: "", graduationYear: new Date().getFullYear() });
+  const addAlumni = () => {
+    const result = alumniSchema.safeParse(newAlumni);
+    if (!result.success) {
+      toast.error(result.error.errors[0].message);
+      return;
+    }
+    const updated = { 
+      ...localProgram, 
+      alumni: { ...localProgram.alumni, notableAlumni: [...localProgram.alumni.notableAlumni, newAlumni] } 
+    };
+    setLocalProgram(updated);
+    onUpdate(updated);
+    setNewAlumni({ name: "", position: "", graduationYear: new Date().getFullYear() });
+  };
+  const removeAlumni = (index: number) => {
+    const updated = { 
+      ...localProgram, 
+      alumni: { ...localProgram.alumni, notableAlumni: localProgram.alumni.notableAlumni.filter((_, i) => i !== index) } 
+    };
+    setLocalProgram(updated);
+    onUpdate(updated);
+  };
+
+  // Ranking editing
+  const [newRanking, setNewRanking] = useState<Ranking>({ source: "", rank: 1, year: new Date().getFullYear() });
+  const addRanking = () => {
+    if (!newRanking.source.trim()) {
+      toast.error("Source is required");
+      return;
+    }
+    const updated = { ...localProgram, rankings: [...localProgram.rankings, newRanking] };
+    setLocalProgram(updated);
+    onUpdate(updated);
+    setNewRanking({ source: "", rank: 1, year: new Date().getFullYear() });
+  };
+  const removeRanking = (index: number) => {
+    const updated = { ...localProgram, rankings: localProgram.rankings.filter((_, i) => i !== index) };
+    setLocalProgram(updated);
+    onUpdate(updated);
+  };
+
+  // Recruiter editing
+  const [newRecruiter, setNewRecruiter] = useState("");
+  const addRecruiter = () => {
+    if (newRecruiter.trim()) {
+      const updated = { ...localProgram, recruiters: [...localProgram.recruiters, newRecruiter.trim()] };
+      setLocalProgram(updated);
+      onUpdate(updated);
+      setNewRecruiter("");
+    }
+  };
+  const removeRecruiter = (index: number) => {
+    const updated = { ...localProgram, recruiters: localProgram.recruiters.filter((_, i) => i !== index) };
+    setLocalProgram(updated);
+    onUpdate(updated);
+  };
+
+  // Job Role editing
+  const [newJobRole, setNewJobRole] = useState<JobRole>({ title: "", avgSalary: "" });
+  const addJobRole = () => {
+    if (!newJobRole.title.trim()) {
+      toast.error("Job title is required");
+      return;
+    }
+    const updated = { ...localProgram, jobRoles: [...localProgram.jobRoles, newJobRole] };
+    setLocalProgram(updated);
+    onUpdate(updated);
+    setNewJobRole({ title: "", avgSalary: "" });
+  };
+  const removeJobRole = (index: number) => {
+    const updated = { ...localProgram, jobRoles: localProgram.jobRoles.filter((_, i) => i !== index) };
+    setLocalProgram(updated);
+    onUpdate(updated);
+  };
+
+  // FAQ editing
+  const [newFaq, setNewFaq] = useState<FAQ>({ question: "", answer: "" });
+  const addFaq = () => {
+    const result = faqSchema.safeParse(newFaq);
+    if (!result.success) {
+      toast.error(result.error.errors[0].message);
+      return;
+    }
+    const updated = { ...localProgram, faqs: [...localProgram.faqs, newFaq] };
+    setLocalProgram(updated);
+    onUpdate(updated);
+    setNewFaq({ question: "", answer: "" });
+  };
+  const removeFaq = (index: number) => {
+    const updated = { ...localProgram, faqs: localProgram.faqs.filter((_, i) => i !== index) };
+    setLocalProgram(updated);
+    onUpdate(updated);
+  };
+
+  // POC editing
+  const [newPoc, setNewPoc] = useState<POC>({ name: "", role: "", email: "", phone: "" });
+  const addPoc = () => {
+    const result = pocSchema.safeParse(newPoc);
+    if (!result.success) {
+      toast.error(result.error.errors[0].message);
+      return;
+    }
+    const updated = { ...localProgram, pocs: [...localProgram.pocs, newPoc] };
+    setLocalProgram(updated);
+    onUpdate(updated);
+    setNewPoc({ name: "", role: "", email: "", phone: "" });
+  };
+  const removePoc = (index: number) => {
+    const updated = { ...localProgram, pocs: localProgram.pocs.filter((_, i) => i !== index) };
+    setLocalProgram(updated);
+    onUpdate(updated);
+  };
+
+  // Update info
+  const updateInfo = (field: string, value: string) => {
+    const updated = { ...localProgram, info: { ...localProgram.info, [field]: value } };
+    setLocalProgram(updated);
+    onUpdate(updated);
+  };
+
+  const updateField = (field: string, value: string) => {
+    const updated = { ...localProgram, [field]: value };
+    setLocalProgram(updated);
+    onUpdate(updated);
+  };
+
   return (
     <div className="space-y-6">
       {/* Back Button & Header */}
@@ -331,14 +706,14 @@ function ProgramDetail({ program, onBack }: { program: typeof mockPrograms[0]; o
               <GraduationCap className="h-8 w-8 text-primary" />
             </div>
             <div className="flex-1">
-              <h2 className="text-xl font-display font-bold text-foreground">{program.name}</h2>
+              <h2 className="text-xl font-display font-bold text-foreground">{localProgram.name}</h2>
               <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
-                <span className="flex items-center gap-1"><Clock className="h-4 w-4" /> {program.duration}</span>
-                <span className="flex items-center gap-1"><Building2 className="h-4 w-4" /> {program.mode}</span>
-                <span className="flex items-center gap-1"><DollarSign className="h-4 w-4" /> {program.tuition}</span>
+                <span className="flex items-center gap-1"><Clock className="h-4 w-4" /> {localProgram.duration}</span>
+                <span className="flex items-center gap-1"><Building2 className="h-4 w-4" /> {localProgram.mode}</span>
+                <span className="flex items-center gap-1"><DollarSign className="h-4 w-4" /> {localProgram.tuition}</span>
               </div>
               <div className="flex gap-2 mt-3">
-                {program.info.highlights.map((highlight, i) => (
+                {localProgram.info.highlights.map((highlight, i) => (
                   <Badge key={i} variant="secondary" className="text-xs">{highlight}</Badge>
                 ))}
               </div>
@@ -362,47 +737,93 @@ function ProgramDetail({ program, onBack }: { program: typeof mockPrograms[0]; o
           <TabsTrigger value="pocs" className="gap-1.5 text-xs"><Phone className="h-3.5 w-3.5" /> POCs</TabsTrigger>
         </TabsList>
 
+        {/* Info Tab */}
         <TabsContent value="info">
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Program Information</CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground leading-relaxed">{program.info.description}</p>
-              <div className="grid grid-cols-2 gap-4 mt-6">
+            <CardContent className="space-y-4">
+              <div>
+                <Label className="text-xs text-muted-foreground">Description</Label>
+                <div className="mt-1">
+                  <EditableField 
+                    value={localProgram.info.description} 
+                    onSave={(v) => updateInfo("description", v)}
+                    isAdmin={isAdmin}
+                    multiline
+                    placeholder="Enter program description..."
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 rounded-lg bg-muted/50">
-                  <p className="text-xs text-muted-foreground">Application Deadline</p>
-                  <p className="font-medium mt-1">{program.applicationDeadline}</p>
+                  <p className="text-xs text-muted-foreground mb-1">Application Deadline</p>
+                  <EditableField 
+                    value={localProgram.applicationDeadline} 
+                    onSave={(v) => updateField("applicationDeadline", v)}
+                    isAdmin={isAdmin}
+                    placeholder="e.g., March 15, 2025"
+                  />
                 </div>
                 <div className="p-4 rounded-lg bg-muted/50">
-                  <p className="text-xs text-muted-foreground">Next Intake</p>
-                  <p className="font-medium mt-1">{program.intake}</p>
+                  <p className="text-xs text-muted-foreground mb-1">Next Intake</p>
+                  <EditableField 
+                    value={localProgram.intake} 
+                    onSave={(v) => updateField("intake", v)}
+                    isAdmin={isAdmin}
+                    placeholder="e.g., Fall 2025"
+                  />
                 </div>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* Features Tab */}
         <TabsContent value="features">
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-base">Program Features</CardTitle>
             </CardHeader>
             <CardContent>
               <ul className="space-y-3">
-                {program.features.map((feature, i) => (
-                  <li key={i} className="flex items-start gap-3">
+                {localProgram.features.map((feature, i) => (
+                  <li key={i} className="flex items-start gap-3 group">
                     <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                       <Star className="h-3 w-3 text-primary" />
                     </div>
-                    <span className="text-sm">{feature}</span>
+                    <span className="text-sm flex-1">{feature}</span>
+                    {isAdmin && (
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        className="h-6 w-6 opacity-0 group-hover:opacity-100 text-destructive"
+                        onClick={() => removeFeature(i)}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    )}
                   </li>
                 ))}
               </ul>
+              {isAdmin && (
+                <div className="flex gap-2 mt-4 pt-4 border-t">
+                  <Input 
+                    placeholder="Add new feature..." 
+                    value={newFeature}
+                    onChange={(e) => setNewFeature(e.target.value)}
+                    className="text-sm"
+                    maxLength={200}
+                  />
+                  <Button size="sm" onClick={addFeature}><Plus className="h-4 w-4" /></Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* Faculty Tab */}
         <TabsContent value="faculty">
           <Card>
             <CardHeader>
@@ -410,8 +831,18 @@ function ProgramDetail({ program, onBack }: { program: typeof mockPrograms[0]; o
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {program.faculty.map((member, i) => (
-                  <div key={i} className="p-4 rounded-lg border bg-card">
+                {localProgram.faculty.map((member, i) => (
+                  <div key={i} className="p-4 rounded-lg border bg-card relative group">
+                    {isAdmin && (
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100 text-destructive"
+                        onClick={() => removeFaculty(i)}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    )}
                     <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mb-3">
                       <Users className="h-5 w-5 text-primary" />
                     </div>
@@ -421,10 +852,37 @@ function ProgramDetail({ program, onBack }: { program: typeof mockPrograms[0]; o
                   </div>
                 ))}
               </div>
+              {isAdmin && (
+                <div className="mt-4 pt-4 border-t space-y-3">
+                  <p className="text-sm font-medium">Add Faculty Member</p>
+                  <div className="grid gap-2 md:grid-cols-3">
+                    <Input 
+                      placeholder="Name" 
+                      value={newFaculty.name}
+                      onChange={(e) => setNewFaculty(prev => ({ ...prev, name: e.target.value }))}
+                      maxLength={100}
+                    />
+                    <Input 
+                      placeholder="Title" 
+                      value={newFaculty.title}
+                      onChange={(e) => setNewFaculty(prev => ({ ...prev, title: e.target.value }))}
+                      maxLength={100}
+                    />
+                    <Input 
+                      placeholder="Expertise" 
+                      value={newFaculty.expertise}
+                      onChange={(e) => setNewFaculty(prev => ({ ...prev, expertise: e.target.value }))}
+                      maxLength={100}
+                    />
+                  </div>
+                  <Button size="sm" onClick={addFaculty}><Plus className="h-4 w-4 mr-1" /> Add Faculty</Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* Students Tab */}
         <TabsContent value="students">
           <Card>
             <CardHeader>
@@ -433,26 +891,26 @@ function ProgramDetail({ program, onBack }: { program: typeof mockPrograms[0]; o
             <CardContent>
               <div className="grid gap-4 md:grid-cols-4 mb-6">
                 <div className="p-4 rounded-lg bg-muted/50 text-center">
-                  <p className="text-2xl font-bold text-primary">{program.currentStudents.totalEnrollment}</p>
+                  <p className="text-2xl font-bold text-primary">{localProgram.currentStudents.totalEnrollment}</p>
                   <p className="text-xs text-muted-foreground mt-1">Total Enrollment</p>
                 </div>
                 <div className="p-4 rounded-lg bg-muted/50 text-center">
-                  <p className="text-2xl font-bold text-primary">{program.currentStudents.demographics.international}</p>
+                  <p className="text-2xl font-bold text-primary">{localProgram.currentStudents.demographics.international}</p>
                   <p className="text-xs text-muted-foreground mt-1">International</p>
                 </div>
                 <div className="p-4 rounded-lg bg-muted/50 text-center">
-                  <p className="text-2xl font-bold text-primary">{program.currentStudents.demographics.women}</p>
+                  <p className="text-2xl font-bold text-primary">{localProgram.currentStudents.demographics.women}</p>
                   <p className="text-xs text-muted-foreground mt-1">Women</p>
                 </div>
                 <div className="p-4 rounded-lg bg-muted/50 text-center">
-                  <p className="text-2xl font-bold text-primary">{program.currentStudents.demographics.avgAge}</p>
+                  <p className="text-2xl font-bold text-primary">{localProgram.currentStudents.demographics.avgAge}</p>
                   <p className="text-xs text-muted-foreground mt-1">Avg Age</p>
                 </div>
               </div>
               <div>
                 <p className="text-sm font-medium mb-2">Top Countries</p>
                 <div className="flex flex-wrap gap-2">
-                  {program.currentStudents.topCountries.map((country, i) => (
+                  {localProgram.currentStudents.topCountries.map((country, i) => (
                     <Badge key={i} variant="secondary">{country}</Badge>
                   ))}
                 </div>
@@ -461,6 +919,7 @@ function ProgramDetail({ program, onBack }: { program: typeof mockPrograms[0]; o
           </Card>
         </TabsContent>
 
+        {/* Alumni Tab */}
         <TabsContent value="alumni">
           <Card>
             <CardHeader>
@@ -469,34 +928,73 @@ function ProgramDetail({ program, onBack }: { program: typeof mockPrograms[0]; o
             <CardContent>
               <div className="grid gap-4 md:grid-cols-2 mb-6">
                 <div className="p-4 rounded-lg bg-muted/50 text-center">
-                  <p className="text-2xl font-bold text-primary">{program.alumni.totalCount.toLocaleString()}</p>
+                  <p className="text-2xl font-bold text-primary">{localProgram.alumni.totalCount.toLocaleString()}</p>
                   <p className="text-xs text-muted-foreground mt-1">Total Alumni</p>
                 </div>
                 <div className="p-4 rounded-lg bg-muted/50 text-center">
-                  <p className="text-2xl font-bold text-primary">{program.alumni.avgSalaryIncrease}</p>
+                  <p className="text-2xl font-bold text-primary">{localProgram.alumni.avgSalaryIncrease}</p>
                   <p className="text-xs text-muted-foreground mt-1">Avg Salary Increase</p>
                 </div>
               </div>
               <div>
                 <p className="text-sm font-medium mb-3">Notable Alumni</p>
                 <div className="space-y-3">
-                  {program.alumni.notableAlumni.map((alum, i) => (
-                    <div key={i} className="flex items-center gap-3 p-3 rounded-lg border">
+                  {localProgram.alumni.notableAlumni.map((alum, i) => (
+                    <div key={i} className="flex items-center gap-3 p-3 rounded-lg border group">
                       <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
                         <Award className="h-5 w-5 text-primary" />
                       </div>
-                      <div>
+                      <div className="flex-1">
                         <p className="font-medium text-sm">{alum.name}</p>
                         <p className="text-xs text-muted-foreground">{alum.position} · Class of {alum.graduationYear}</p>
                       </div>
+                      {isAdmin && (
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100 text-destructive"
+                          onClick={() => removeAlumni(i)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
                     </div>
                   ))}
                 </div>
+                {isAdmin && (
+                  <div className="mt-4 pt-4 border-t space-y-3">
+                    <p className="text-sm font-medium">Add Notable Alumni</p>
+                    <div className="grid gap-2 md:grid-cols-3">
+                      <Input 
+                        placeholder="Name" 
+                        value={newAlumni.name}
+                        onChange={(e) => setNewAlumni(prev => ({ ...prev, name: e.target.value }))}
+                        maxLength={100}
+                      />
+                      <Input 
+                        placeholder="Position" 
+                        value={newAlumni.position}
+                        onChange={(e) => setNewAlumni(prev => ({ ...prev, position: e.target.value }))}
+                        maxLength={150}
+                      />
+                      <Input 
+                        type="number"
+                        placeholder="Graduation Year" 
+                        value={newAlumni.graduationYear}
+                        onChange={(e) => setNewAlumni(prev => ({ ...prev, graduationYear: parseInt(e.target.value) || new Date().getFullYear() }))}
+                        min={1950}
+                        max={new Date().getFullYear()}
+                      />
+                    </div>
+                    <Button size="sm" onClick={addAlumni}><Plus className="h-4 w-4 mr-1" /> Add Alumni</Button>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* Rankings Tab */}
         <TabsContent value="rankings">
           <Card>
             <CardHeader>
@@ -504,18 +1002,58 @@ function ProgramDetail({ program, onBack }: { program: typeof mockPrograms[0]; o
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 md:grid-cols-3">
-                {program.rankings.map((ranking, i) => (
-                  <div key={i} className="p-4 rounded-lg border bg-card text-center">
+                {localProgram.rankings.map((ranking, i) => (
+                  <div key={i} className="p-4 rounded-lg border bg-card text-center relative group">
+                    {isAdmin && (
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100 text-destructive"
+                        onClick={() => removeRanking(i)}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    )}
                     <p className="text-3xl font-bold text-primary">#{ranking.rank}</p>
                     <p className="font-medium text-sm mt-2">{ranking.source}</p>
                     <p className="text-xs text-muted-foreground">{ranking.year}</p>
                   </div>
                 ))}
               </div>
+              {isAdmin && (
+                <div className="mt-4 pt-4 border-t space-y-3">
+                  <p className="text-sm font-medium">Add Ranking</p>
+                  <div className="grid gap-2 md:grid-cols-3">
+                    <Input 
+                      placeholder="Source (e.g., US News)" 
+                      value={newRanking.source}
+                      onChange={(e) => setNewRanking(prev => ({ ...prev, source: e.target.value }))}
+                      maxLength={100}
+                    />
+                    <Input 
+                      type="number"
+                      placeholder="Rank" 
+                      value={newRanking.rank}
+                      onChange={(e) => setNewRanking(prev => ({ ...prev, rank: parseInt(e.target.value) || 1 }))}
+                      min={1}
+                    />
+                    <Input 
+                      type="number"
+                      placeholder="Year" 
+                      value={newRanking.year}
+                      onChange={(e) => setNewRanking(prev => ({ ...prev, year: parseInt(e.target.value) || new Date().getFullYear() }))}
+                      min={2000}
+                      max={new Date().getFullYear() + 1}
+                    />
+                  </div>
+                  <Button size="sm" onClick={addRanking}><Plus className="h-4 w-4 mr-1" /> Add Ranking</Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* Recruiters Tab */}
         <TabsContent value="recruiters">
           <Card>
             <CardHeader>
@@ -523,17 +1061,40 @@ function ProgramDetail({ program, onBack }: { program: typeof mockPrograms[0]; o
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-3">
-                {program.recruiters.map((recruiter, i) => (
-                  <div key={i} className="px-4 py-3 rounded-lg border bg-card flex items-center gap-2">
+                {localProgram.recruiters.map((recruiter, i) => (
+                  <div key={i} className="px-4 py-3 rounded-lg border bg-card flex items-center gap-2 group">
                     <Building2 className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm font-medium">{recruiter}</span>
+                    {isAdmin && (
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        className="h-5 w-5 opacity-0 group-hover:opacity-100 text-destructive ml-1"
+                        onClick={() => removeRecruiter(i)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    )}
                   </div>
                 ))}
               </div>
+              {isAdmin && (
+                <div className="flex gap-2 mt-4 pt-4 border-t">
+                  <Input 
+                    placeholder="Add recruiter company..." 
+                    value={newRecruiter}
+                    onChange={(e) => setNewRecruiter(e.target.value)}
+                    className="text-sm max-w-xs"
+                    maxLength={100}
+                  />
+                  <Button size="sm" onClick={addRecruiter}><Plus className="h-4 w-4" /></Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* Job Roles Tab */}
         <TabsContent value="jobs">
           <Card>
             <CardHeader>
@@ -541,20 +1102,53 @@ function ProgramDetail({ program, onBack }: { program: typeof mockPrograms[0]; o
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 md:grid-cols-2">
-                {program.jobRoles.map((job, i) => (
-                  <div key={i} className="p-4 rounded-lg border bg-card flex items-center justify-between">
+                {localProgram.jobRoles.map((job, i) => (
+                  <div key={i} className="p-4 rounded-lg border bg-card flex items-center justify-between group">
                     <div className="flex items-center gap-3">
                       <Briefcase className="h-5 w-5 text-primary" />
                       <span className="text-sm font-medium">{job.title}</span>
                     </div>
-                    <Badge variant="outline">{job.avgSalary}</Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">{job.avgSalary}</Badge>
+                      {isAdmin && (
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100 text-destructive"
+                          onClick={() => removeJobRole(i)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
+              {isAdmin && (
+                <div className="mt-4 pt-4 border-t space-y-3">
+                  <p className="text-sm font-medium">Add Job Role</p>
+                  <div className="grid gap-2 md:grid-cols-2">
+                    <Input 
+                      placeholder="Job Title" 
+                      value={newJobRole.title}
+                      onChange={(e) => setNewJobRole(prev => ({ ...prev, title: e.target.value }))}
+                      maxLength={100}
+                    />
+                    <Input 
+                      placeholder="Avg Salary (e.g., $150,000)" 
+                      value={newJobRole.avgSalary}
+                      onChange={(e) => setNewJobRole(prev => ({ ...prev, avgSalary: e.target.value }))}
+                      maxLength={50}
+                    />
+                  </div>
+                  <Button size="sm" onClick={addJobRole}><Plus className="h-4 w-4 mr-1" /> Add Job Role</Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* FAQs Tab */}
         <TabsContent value="faqs">
           <Card>
             <CardHeader>
@@ -562,17 +1156,50 @@ function ProgramDetail({ program, onBack }: { program: typeof mockPrograms[0]; o
             </CardHeader>
             <CardContent>
               <Accordion type="single" collapsible className="w-full">
-                {program.faqs.map((faq, i) => (
+                {localProgram.faqs.map((faq, i) => (
                   <AccordionItem key={i} value={`faq-${i}`}>
-                    <AccordionTrigger className="text-sm text-left">{faq.question}</AccordionTrigger>
+                    <div className="flex items-center">
+                      <AccordionTrigger className="text-sm text-left flex-1">{faq.question}</AccordionTrigger>
+                      {isAdmin && (
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className="h-6 w-6 text-destructive mr-2"
+                          onClick={(e) => { e.stopPropagation(); removeFaq(i); }}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
                     <AccordionContent className="text-sm text-muted-foreground">{faq.answer}</AccordionContent>
                   </AccordionItem>
                 ))}
               </Accordion>
+              {isAdmin && (
+                <div className="mt-4 pt-4 border-t space-y-3">
+                  <p className="text-sm font-medium">Add FAQ</p>
+                  <div className="space-y-2">
+                    <Input 
+                      placeholder="Question" 
+                      value={newFaq.question}
+                      onChange={(e) => setNewFaq(prev => ({ ...prev, question: e.target.value }))}
+                      maxLength={500}
+                    />
+                    <Textarea 
+                      placeholder="Answer" 
+                      value={newFaq.answer}
+                      onChange={(e) => setNewFaq(prev => ({ ...prev, answer: e.target.value }))}
+                      maxLength={2000}
+                    />
+                  </div>
+                  <Button size="sm" onClick={addFaq}><Plus className="h-4 w-4 mr-1" /> Add FAQ</Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* POCs Tab */}
         <TabsContent value="pocs">
           <Card>
             <CardHeader>
@@ -580,8 +1207,18 @@ function ProgramDetail({ program, onBack }: { program: typeof mockPrograms[0]; o
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 md:grid-cols-2">
-                {program.pocs.map((poc, i) => (
-                  <div key={i} className="p-4 rounded-lg border bg-card">
+                {localProgram.pocs.map((poc, i) => (
+                  <div key={i} className="p-4 rounded-lg border bg-card relative group">
+                    {isAdmin && (
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100 text-destructive"
+                        onClick={() => removePoc(i)}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    )}
                     <div className="flex items-center gap-3 mb-3">
                       <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
                         <Phone className="h-5 w-5 text-primary" />
@@ -598,6 +1235,39 @@ function ProgramDetail({ program, onBack }: { program: typeof mockPrograms[0]; o
                   </div>
                 ))}
               </div>
+              {isAdmin && (
+                <div className="mt-4 pt-4 border-t space-y-3">
+                  <p className="text-sm font-medium">Add Point of Contact</p>
+                  <div className="grid gap-2 md:grid-cols-2">
+                    <Input 
+                      placeholder="Name" 
+                      value={newPoc.name}
+                      onChange={(e) => setNewPoc(prev => ({ ...prev, name: e.target.value }))}
+                      maxLength={100}
+                    />
+                    <Input 
+                      placeholder="Role" 
+                      value={newPoc.role}
+                      onChange={(e) => setNewPoc(prev => ({ ...prev, role: e.target.value }))}
+                      maxLength={100}
+                    />
+                    <Input 
+                      type="email"
+                      placeholder="Email" 
+                      value={newPoc.email}
+                      onChange={(e) => setNewPoc(prev => ({ ...prev, email: e.target.value }))}
+                      maxLength={255}
+                    />
+                    <Input 
+                      placeholder="Phone" 
+                      value={newPoc.phone}
+                      onChange={(e) => setNewPoc(prev => ({ ...prev, phone: e.target.value }))}
+                      maxLength={20}
+                    />
+                  </div>
+                  <Button size="sm" onClick={addPoc}><Plus className="h-4 w-4 mr-1" /> Add Contact</Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

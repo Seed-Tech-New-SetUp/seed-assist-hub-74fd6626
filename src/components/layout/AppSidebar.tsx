@@ -13,10 +13,7 @@ import {
   LogOut,
   Settings,
   MapPin,
-  BarChart3,
   Video,
-  FileText,
-  CalendarDays,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -29,15 +26,18 @@ interface NavSubItem {
   href: string;
 }
 
+interface NavSubGroup {
+  title: string;
+  icon?: React.ElementType;
+  items: NavSubItem[];
+}
+
 interface NavItem {
   title: string;
   href?: string;
   icon: React.ElementType;
   badge?: number;
-  children?: {
-    title: string;
-    items: NavSubItem[];
-  }[];
+  children?: NavSubGroup[];
 }
 
 const navigation: NavItem[] = [
@@ -52,6 +52,7 @@ const navigation: NavItem[] = [
     children: [
       {
         title: "In Person",
+        icon: MapPin,
         items: [
           { title: "BSF Reports", href: "/events/in-person/bsf" },
           { title: "Campus Tour Reports", href: "/events/in-person/campus-tour" },
@@ -60,6 +61,7 @@ const navigation: NavItem[] = [
       },
       {
         title: "Virtual",
+        icon: Video,
         items: [
           { title: "Masterclass Reports", href: "/events/virtual/masterclass" },
           { title: "MeetUps Reports", href: "/events/virtual/meetups" },
@@ -103,12 +105,21 @@ const navigation: NavItem[] = [
 export function AppSidebar() {
   const { collapsed, toggleCollapsed } = useSidebarState();
   const [openSections, setOpenSections] = useState<string[]>(["Events", "Scholarships", "School Profile"]);
+  const [openSubSections, setOpenSubSections] = useState<string[]>(["In Person", "Virtual"]);
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut } = useAuth();
 
   const toggleSection = (title: string) => {
     setOpenSections(prev =>
+      prev.includes(title)
+        ? prev.filter(t => t !== title)
+        : [...prev, title]
+    );
+  };
+
+  const toggleSubSection = (title: string) => {
+    setOpenSubSections(prev =>
       prev.includes(title)
         ? prev.filter(t => t !== title)
         : [...prev, title]
@@ -123,6 +134,10 @@ export function AppSidebar() {
       );
     }
     return false;
+  };
+
+  const isSubGroupActive = (group: NavSubGroup) => {
+    return group.items.some(subItem => location.pathname.startsWith(subItem.href));
   };
 
   const handleLogout = async () => {
@@ -200,32 +215,85 @@ export function AppSidebar() {
                     </button>
                   </CollapsibleTrigger>
                   <CollapsibleContent className="space-y-0.5">
-                    {item.children?.map((group, groupIndex) => (
-                      <div key={groupIndex} className="ml-4 pl-2 border-l border-sidebar-border/50 space-y-0.5 mt-1">
-                        {group.title && (
-                          <span className="block px-2 py-1 text-[10px] font-medium text-sidebar-foreground/50 uppercase tracking-wider">
-                            {group.title}
-                          </span>
-                        )}
-                        {group.items.map((subItem) => {
-                          const subActive = isPathActive(subItem.href);
-                          return (
-                            <NavLink
-                              key={subItem.href}
-                              to={subItem.href}
-                              className={cn(
-                                "flex items-center gap-2 px-2 py-1.5 rounded-md text-[12px] transition-colors",
-                                subActive
-                                  ? "bg-sidebar-primary text-sidebar-primary-foreground font-medium"
-                                  : "text-sidebar-foreground/80 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent"
-                              )}
-                            >
-                              <span className="truncate">{subItem.title}</span>
-                            </NavLink>
-                          );
-                        })}
-                      </div>
-                    ))}
+                    {item.children?.map((group, groupIndex) => {
+                      // If group has a title, make it a collapsible sub-section
+                      if (group.title) {
+                        const isSubOpen = openSubSections.includes(group.title);
+                        const subActive = isSubGroupActive(group);
+                        
+                        return (
+                          <Collapsible
+                            key={groupIndex}
+                            open={isSubOpen}
+                            onOpenChange={() => toggleSubSection(group.title)}
+                          >
+                            <div className="ml-4 pl-2 border-l border-sidebar-border/50 mt-1">
+                              <CollapsibleTrigger asChild>
+                                <button
+                                  className={cn(
+                                    "flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-[11px] font-medium transition-colors",
+                                    subActive
+                                      ? "text-sidebar-accent-foreground"
+                                      : "text-sidebar-foreground/70 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent"
+                                  )}
+                                >
+                                  {group.icon && <group.icon className="h-3.5 w-3.5" />}
+                                  <span className="flex-1 text-left">{group.title}</span>
+                                  <ChevronDown
+                                    className={cn(
+                                      "h-3 w-3 transition-transform",
+                                      isSubOpen && "rotate-180"
+                                    )}
+                                  />
+                                </button>
+                              </CollapsibleTrigger>
+                              <CollapsibleContent className="space-y-0.5 mt-0.5">
+                                {group.items.map((subItem) => {
+                                  const subItemActive = isPathActive(subItem.href);
+                                  return (
+                                    <NavLink
+                                      key={subItem.href}
+                                      to={subItem.href}
+                                      className={cn(
+                                        "flex items-center gap-2 px-2 py-1.5 rounded-md text-[11px] transition-colors ml-2",
+                                        subItemActive
+                                          ? "bg-sidebar-primary text-sidebar-primary-foreground font-medium"
+                                          : "text-sidebar-foreground/70 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent"
+                                      )}
+                                    >
+                                      <span className="truncate">{subItem.title}</span>
+                                    </NavLink>
+                                  );
+                                })}
+                              </CollapsibleContent>
+                            </div>
+                          </Collapsible>
+                        );
+                      }
+
+                      // No title - render items directly
+                      return (
+                        <div key={groupIndex} className="ml-4 pl-2 border-l border-sidebar-border/50 space-y-0.5 mt-1">
+                          {group.items.map((subItem) => {
+                            const subActive = isPathActive(subItem.href);
+                            return (
+                              <NavLink
+                                key={subItem.href}
+                                to={subItem.href}
+                                className={cn(
+                                  "flex items-center gap-2 px-2 py-1.5 rounded-md text-[12px] transition-colors",
+                                  subActive
+                                    ? "bg-sidebar-primary text-sidebar-primary-foreground font-medium"
+                                    : "text-sidebar-foreground/80 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent"
+                                )}
+                              >
+                                <span className="truncate">{subItem.title}</span>
+                              </NavLink>
+                            );
+                          })}
+                        </div>
+                      );
+                    })}
                   </CollapsibleContent>
                 </Collapsible>
               );
