@@ -114,20 +114,25 @@ export default function VirtualMasterclass() {
 
   const handleDownloadAll = async () => {
     try {
-      const allData = masterclassEvents.map(event => ({
-        'Event Name': event.eventName,
-        'Date': event.date,
-        'Attendees': event.attendees,
-        'Connections': event.connections,
-        'Recording Available': event.recordingAvailable ? 'Yes' : 'No',
-      }));
-      exportToXLSX(allData, {
-        filename: 'all-masterclass-reports',
-        sheetName: 'Masterclass Reports'
+      // Fetch all student records from all events
+      const allStudentData: Record<string, unknown>[] = [];
+      for (const event of masterclassEvents) {
+        const students = await fetchMasterclassReportData(event.id);
+        students.forEach(student => {
+          allStudentData.push({
+            ...student,
+            'Event Name': event.eventName,
+            'Event Date': event.date,
+          });
+        });
+      }
+      exportToXLSX(allStudentData, {
+        filename: 'all-masterclass-attendees',
+        sheetName: 'All Attendees'
       });
-      toast.success("All reports downloaded");
+      toast.success("All attendee records downloaded");
     } catch (error) {
-      toast.error("Failed to download reports");
+      toast.error("Failed to download records");
     }
   };
 
