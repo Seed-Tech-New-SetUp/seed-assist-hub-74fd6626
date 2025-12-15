@@ -101,6 +101,18 @@ interface POC {
   phone: string;
 }
 
+interface CurrentStudents {
+  totalEnrollment: number;
+  demographics: { international: string; women: string; avgAge: number };
+  topCountries: string[];
+}
+
+interface AlumniData {
+  totalCount: number;
+  notableAlumni: Alumni[];
+  avgSalaryIncrease: string;
+}
+
 interface Program {
   id: string;
   name: string;
@@ -117,16 +129,8 @@ interface Program {
   };
   features: string[];
   faculty: Faculty[];
-  currentStudents: {
-    totalEnrollment: number;
-    demographics: { international: string; women: string; avgAge: number };
-    topCountries: string[];
-  };
-  alumni: {
-    totalCount: number;
-    notableAlumni: Alumni[];
-    avgSalaryIncrease: string;
-  };
+  currentStudents: CurrentStudents;
+  alumni: AlumniData;
   rankings: Ranking[];
   recruiters: string[];
   jobRoles: JobRole[];
@@ -689,6 +693,151 @@ function ProgramDetail({
     onUpdate(updated);
   };
 
+  // Highlight editing
+  const [newHighlight, setNewHighlight] = useState("");
+  const addHighlight = () => {
+    if (newHighlight.trim()) {
+      const updated = { 
+        ...localProgram, 
+        info: { ...localProgram.info, highlights: [...localProgram.info.highlights, newHighlight.trim()] } 
+      };
+      setLocalProgram(updated);
+      onUpdate(updated);
+      setNewHighlight("");
+    }
+  };
+  const removeHighlight = (index: number) => {
+    const updated = { 
+      ...localProgram, 
+      info: { ...localProgram.info, highlights: localProgram.info.highlights.filter((_, i) => i !== index) } 
+    };
+    setLocalProgram(updated);
+    onUpdate(updated);
+  };
+  const updateHighlight = (index: number, value: string) => {
+    const newHighlights = [...localProgram.info.highlights];
+    newHighlights[index] = value;
+    const updated = { ...localProgram, info: { ...localProgram.info, highlights: newHighlights } };
+    setLocalProgram(updated);
+    onUpdate(updated);
+  };
+
+  // Students editing
+  const updateStudentsDemographics = (field: string, value: string | number) => {
+    const updated = {
+      ...localProgram,
+      currentStudents: {
+        ...localProgram.currentStudents,
+        demographics: { ...localProgram.currentStudents.demographics, [field]: value }
+      }
+    };
+    setLocalProgram(updated);
+    onUpdate(updated);
+  };
+  const updateStudentsEnrollment = (value: number) => {
+    const updated = {
+      ...localProgram,
+      currentStudents: { ...localProgram.currentStudents, totalEnrollment: value }
+    };
+    setLocalProgram(updated);
+    onUpdate(updated);
+  };
+  const [newCountry, setNewCountry] = useState("");
+  const addCountry = () => {
+    if (newCountry.trim()) {
+      const updated = {
+        ...localProgram,
+        currentStudents: { ...localProgram.currentStudents, topCountries: [...localProgram.currentStudents.topCountries, newCountry.trim()] }
+      };
+      setLocalProgram(updated);
+      onUpdate(updated);
+      setNewCountry("");
+    }
+  };
+  const removeCountry = (index: number) => {
+    const updated = {
+      ...localProgram,
+      currentStudents: { ...localProgram.currentStudents, topCountries: localProgram.currentStudents.topCountries.filter((_, i) => i !== index) }
+    };
+    setLocalProgram(updated);
+    onUpdate(updated);
+  };
+
+  // Alumni stats editing
+  const updateAlumniStats = (field: string, value: string | number) => {
+    const updated = {
+      ...localProgram,
+      alumni: { ...localProgram.alumni, [field]: value }
+    };
+    setLocalProgram(updated);
+    onUpdate(updated);
+  };
+
+  // Inline editing for existing items
+  const updateFeature = (index: number, value: string) => {
+    const newFeatures = [...localProgram.features];
+    newFeatures[index] = value;
+    const updated = { ...localProgram, features: newFeatures };
+    setLocalProgram(updated);
+    onUpdate(updated);
+  };
+
+  const updateFaculty = (index: number, field: keyof Faculty, value: string) => {
+    const newFaculty = [...localProgram.faculty];
+    newFaculty[index] = { ...newFaculty[index], [field]: value };
+    const updated = { ...localProgram, faculty: newFaculty };
+    setLocalProgram(updated);
+    onUpdate(updated);
+  };
+
+  const updateAlumni = (index: number, field: keyof Alumni, value: string | number) => {
+    const newAlumni = [...localProgram.alumni.notableAlumni];
+    newAlumni[index] = { ...newAlumni[index], [field]: value };
+    const updated = { ...localProgram, alumni: { ...localProgram.alumni, notableAlumni: newAlumni } };
+    setLocalProgram(updated);
+    onUpdate(updated);
+  };
+
+  const updateRanking = (index: number, field: keyof Ranking, value: string | number) => {
+    const newRankings = [...localProgram.rankings];
+    newRankings[index] = { ...newRankings[index], [field]: value };
+    const updated = { ...localProgram, rankings: newRankings };
+    setLocalProgram(updated);
+    onUpdate(updated);
+  };
+
+  const updateRecruiter = (index: number, value: string) => {
+    const newRecruiters = [...localProgram.recruiters];
+    newRecruiters[index] = value;
+    const updated = { ...localProgram, recruiters: newRecruiters };
+    setLocalProgram(updated);
+    onUpdate(updated);
+  };
+
+  const updateJobRole = (index: number, field: keyof JobRole, value: string) => {
+    const newJobRoles = [...localProgram.jobRoles];
+    newJobRoles[index] = { ...newJobRoles[index], [field]: value };
+    const updated = { ...localProgram, jobRoles: newJobRoles };
+    setLocalProgram(updated);
+    onUpdate(updated);
+  };
+
+  const updateFaq = (index: number, field: keyof FAQ, value: string) => {
+    const newFaqs = [...localProgram.faqs];
+    newFaqs[index] = { ...newFaqs[index], [field]: value };
+    const updated = { ...localProgram, faqs: newFaqs };
+    setLocalProgram(updated);
+    onUpdate(updated);
+  };
+
+  const updatePoc = (index: number, field: keyof POC, value: string) => {
+    const newPocs = [...localProgram.pocs];
+    newPocs[index] = { ...newPocs[index], [field]: value };
+    const updated = { ...localProgram, pocs: newPocs };
+    setLocalProgram(updated);
+    onUpdate(updated);
+  };
+
   return (
     <div className="space-y-6">
       {/* Back Button & Header */}
@@ -706,16 +855,53 @@ function ProgramDetail({
               <GraduationCap className="h-8 w-8 text-primary" />
             </div>
             <div className="flex-1">
-              <h2 className="text-xl font-display font-bold text-foreground">{localProgram.name}</h2>
+              <EditableField 
+                value={localProgram.name} 
+                onSave={(v) => updateField("name", v)}
+                isAdmin={isAdmin}
+                placeholder="Program name"
+              />
               <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
-                <span className="flex items-center gap-1"><Clock className="h-4 w-4" /> {localProgram.duration}</span>
-                <span className="flex items-center gap-1"><Building2 className="h-4 w-4" /> {localProgram.mode}</span>
-                <span className="flex items-center gap-1"><DollarSign className="h-4 w-4" /> {localProgram.tuition}</span>
+                <span className="flex items-center gap-1"><Clock className="h-4 w-4" /> 
+                  <EditableField value={localProgram.duration} onSave={(v) => updateField("duration", v)} isAdmin={isAdmin} placeholder="Duration" />
+                </span>
+                <span className="flex items-center gap-1"><Building2 className="h-4 w-4" /> 
+                  <EditableField value={localProgram.mode} onSave={(v) => updateField("mode", v)} isAdmin={isAdmin} placeholder="Mode" />
+                </span>
+                <span className="flex items-center gap-1"><DollarSign className="h-4 w-4" /> 
+                  <EditableField value={localProgram.tuition} onSave={(v) => updateField("tuition", v)} isAdmin={isAdmin} placeholder="Tuition" />
+                </span>
               </div>
-              <div className="flex gap-2 mt-3">
+              <div className="flex flex-wrap gap-2 mt-3">
                 {localProgram.info.highlights.map((highlight, i) => (
-                  <Badge key={i} variant="secondary" className="text-xs">{highlight}</Badge>
+                  <div key={i} className="group flex items-center gap-1">
+                    <Badge variant="secondary" className="text-xs">{highlight}</Badge>
+                    {isAdmin && (
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        className="h-4 w-4 opacity-0 group-hover:opacity-100 text-destructive"
+                        onClick={() => removeHighlight(i)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
                 ))}
+                {isAdmin && (
+                  <div className="flex items-center gap-1">
+                    <Input 
+                      placeholder="Add highlight..." 
+                      value={newHighlight}
+                      onChange={(e) => setNewHighlight(e.target.value)}
+                      className="h-6 text-xs w-32"
+                      maxLength={50}
+                    />
+                    <Button size="icon" variant="ghost" className="h-6 w-6" onClick={addHighlight}>
+                      <Plus className="h-3 w-3" />
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -793,7 +979,14 @@ function ProgramDetail({
                     <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                       <Star className="h-3 w-3 text-primary" />
                     </div>
-                    <span className="text-sm flex-1">{feature}</span>
+                    <div className="flex-1">
+                      <EditableField 
+                        value={feature} 
+                        onSave={(v) => updateFeature(i, v)}
+                        isAdmin={isAdmin}
+                        placeholder="Feature description"
+                      />
+                    </div>
                     {isAdmin && (
                       <Button 
                         size="icon" 
@@ -846,9 +1039,15 @@ function ProgramDetail({
                     <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mb-3">
                       <Users className="h-5 w-5 text-primary" />
                     </div>
-                    <p className="font-medium text-sm">{member.name}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{member.title}</p>
-                    <Badge variant="outline" className="mt-2 text-xs">{member.expertise}</Badge>
+                    <div className="font-medium text-sm">
+                      <EditableField value={member.name} onSave={(v) => updateFaculty(i, "name", v)} isAdmin={isAdmin} placeholder="Name" />
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      <EditableField value={member.title} onSave={(v) => updateFaculty(i, "title", v)} isAdmin={isAdmin} placeholder="Title" />
+                    </div>
+                    <div className="mt-2">
+                      <EditableField value={member.expertise} onSave={(v) => updateFaculty(i, "expertise", v)} isAdmin={isAdmin} placeholder="Expertise" />
+                    </div>
                   </div>
                 ))}
               </div>
@@ -891,19 +1090,55 @@ function ProgramDetail({
             <CardContent>
               <div className="grid gap-4 md:grid-cols-4 mb-6">
                 <div className="p-4 rounded-lg bg-muted/50 text-center">
-                  <p className="text-2xl font-bold text-primary">{localProgram.currentStudents.totalEnrollment}</p>
+                  {isAdmin ? (
+                    <Input 
+                      type="number"
+                      value={localProgram.currentStudents.totalEnrollment}
+                      onChange={(e) => updateStudentsEnrollment(parseInt(e.target.value) || 0)}
+                      className="text-2xl font-bold text-primary text-center h-auto py-0 border-0 bg-transparent"
+                    />
+                  ) : (
+                    <p className="text-2xl font-bold text-primary">{localProgram.currentStudents.totalEnrollment}</p>
+                  )}
                   <p className="text-xs text-muted-foreground mt-1">Total Enrollment</p>
                 </div>
                 <div className="p-4 rounded-lg bg-muted/50 text-center">
-                  <p className="text-2xl font-bold text-primary">{localProgram.currentStudents.demographics.international}</p>
+                  {isAdmin ? (
+                    <Input 
+                      value={localProgram.currentStudents.demographics.international}
+                      onChange={(e) => updateStudentsDemographics("international", e.target.value)}
+                      className="text-2xl font-bold text-primary text-center h-auto py-0 border-0 bg-transparent"
+                      placeholder="e.g., 45%"
+                    />
+                  ) : (
+                    <p className="text-2xl font-bold text-primary">{localProgram.currentStudents.demographics.international}</p>
+                  )}
                   <p className="text-xs text-muted-foreground mt-1">International</p>
                 </div>
                 <div className="p-4 rounded-lg bg-muted/50 text-center">
-                  <p className="text-2xl font-bold text-primary">{localProgram.currentStudents.demographics.women}</p>
+                  {isAdmin ? (
+                    <Input 
+                      value={localProgram.currentStudents.demographics.women}
+                      onChange={(e) => updateStudentsDemographics("women", e.target.value)}
+                      className="text-2xl font-bold text-primary text-center h-auto py-0 border-0 bg-transparent"
+                      placeholder="e.g., 42%"
+                    />
+                  ) : (
+                    <p className="text-2xl font-bold text-primary">{localProgram.currentStudents.demographics.women}</p>
+                  )}
                   <p className="text-xs text-muted-foreground mt-1">Women</p>
                 </div>
                 <div className="p-4 rounded-lg bg-muted/50 text-center">
-                  <p className="text-2xl font-bold text-primary">{localProgram.currentStudents.demographics.avgAge}</p>
+                  {isAdmin ? (
+                    <Input 
+                      type="number"
+                      value={localProgram.currentStudents.demographics.avgAge}
+                      onChange={(e) => updateStudentsDemographics("avgAge", parseInt(e.target.value) || 0)}
+                      className="text-2xl font-bold text-primary text-center h-auto py-0 border-0 bg-transparent"
+                    />
+                  ) : (
+                    <p className="text-2xl font-bold text-primary">{localProgram.currentStudents.demographics.avgAge}</p>
+                  )}
                   <p className="text-xs text-muted-foreground mt-1">Avg Age</p>
                 </div>
               </div>
@@ -911,8 +1146,34 @@ function ProgramDetail({
                 <p className="text-sm font-medium mb-2">Top Countries</p>
                 <div className="flex flex-wrap gap-2">
                   {localProgram.currentStudents.topCountries.map((country, i) => (
-                    <Badge key={i} variant="secondary">{country}</Badge>
+                    <div key={i} className="group flex items-center gap-1">
+                      <Badge variant="secondary">{country}</Badge>
+                      {isAdmin && (
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className="h-4 w-4 opacity-0 group-hover:opacity-100 text-destructive"
+                          onClick={() => removeCountry(i)}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
                   ))}
+                  {isAdmin && (
+                    <div className="flex items-center gap-1">
+                      <Input 
+                        placeholder="Add country..." 
+                        value={newCountry}
+                        onChange={(e) => setNewCountry(e.target.value)}
+                        className="h-6 text-xs w-24"
+                        maxLength={50}
+                      />
+                      <Button size="icon" variant="ghost" className="h-6 w-6" onClick={addCountry}>
+                        <Plus className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -928,11 +1189,29 @@ function ProgramDetail({
             <CardContent>
               <div className="grid gap-4 md:grid-cols-2 mb-6">
                 <div className="p-4 rounded-lg bg-muted/50 text-center">
-                  <p className="text-2xl font-bold text-primary">{localProgram.alumni.totalCount.toLocaleString()}</p>
+                  {isAdmin ? (
+                    <Input 
+                      type="number"
+                      value={localProgram.alumni.totalCount}
+                      onChange={(e) => updateAlumniStats("totalCount", parseInt(e.target.value) || 0)}
+                      className="text-2xl font-bold text-primary text-center h-auto py-0 border-0 bg-transparent"
+                    />
+                  ) : (
+                    <p className="text-2xl font-bold text-primary">{localProgram.alumni.totalCount.toLocaleString()}</p>
+                  )}
                   <p className="text-xs text-muted-foreground mt-1">Total Alumni</p>
                 </div>
                 <div className="p-4 rounded-lg bg-muted/50 text-center">
-                  <p className="text-2xl font-bold text-primary">{localProgram.alumni.avgSalaryIncrease}</p>
+                  {isAdmin ? (
+                    <Input 
+                      value={localProgram.alumni.avgSalaryIncrease}
+                      onChange={(e) => updateAlumniStats("avgSalaryIncrease", e.target.value)}
+                      className="text-2xl font-bold text-primary text-center h-auto py-0 border-0 bg-transparent"
+                      placeholder="e.g., 85%"
+                    />
+                  ) : (
+                    <p className="text-2xl font-bold text-primary">{localProgram.alumni.avgSalaryIncrease}</p>
+                  )}
                   <p className="text-xs text-muted-foreground mt-1">Avg Salary Increase</p>
                 </div>
               </div>
@@ -945,8 +1224,26 @@ function ProgramDetail({
                         <Award className="h-5 w-5 text-primary" />
                       </div>
                       <div className="flex-1">
-                        <p className="font-medium text-sm">{alum.name}</p>
-                        <p className="text-xs text-muted-foreground">{alum.position} · Class of {alum.graduationYear}</p>
+                        <div className="font-medium text-sm">
+                          <EditableField value={alum.name} onSave={(v) => updateAlumni(i, "name", v)} isAdmin={isAdmin} placeholder="Name" />
+                        </div>
+                        <div className="text-xs text-muted-foreground flex items-center gap-1">
+                          <EditableField value={alum.position} onSave={(v) => updateAlumni(i, "position", v)} isAdmin={isAdmin} placeholder="Position" />
+                          <span>·</span>
+                          <span>Class of </span>
+                          {isAdmin ? (
+                            <Input 
+                              type="number"
+                              value={alum.graduationYear}
+                              onChange={(e) => updateAlumni(i, "graduationYear", parseInt(e.target.value) || new Date().getFullYear())}
+                              className="w-16 h-5 text-xs px-1"
+                              min={1950}
+                              max={new Date().getFullYear()}
+                            />
+                          ) : (
+                            <span>{alum.graduationYear}</span>
+                          )}
+                        </div>
                       </div>
                       {isAdmin && (
                         <Button 
@@ -1014,9 +1311,32 @@ function ProgramDetail({
                         <Trash2 className="h-3 w-3" />
                       </Button>
                     )}
-                    <p className="text-3xl font-bold text-primary">#{ranking.rank}</p>
-                    <p className="font-medium text-sm mt-2">{ranking.source}</p>
-                    <p className="text-xs text-muted-foreground">{ranking.year}</p>
+                    <div className="text-3xl font-bold text-primary">
+                      #{isAdmin ? (
+                        <Input 
+                          type="number"
+                          value={ranking.rank}
+                          onChange={(e) => updateRanking(i, "rank", parseInt(e.target.value) || 1)}
+                          className="w-16 inline-block text-center h-auto py-0 border-0 bg-transparent text-3xl font-bold text-primary"
+                          min={1}
+                        />
+                      ) : ranking.rank}
+                    </div>
+                    <div className="font-medium text-sm mt-2">
+                      <EditableField value={ranking.source} onSave={(v) => updateRanking(i, "source", v)} isAdmin={isAdmin} placeholder="Source" />
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {isAdmin ? (
+                        <Input 
+                          type="number"
+                          value={ranking.year}
+                          onChange={(e) => updateRanking(i, "year", parseInt(e.target.value) || new Date().getFullYear())}
+                          className="w-16 text-center h-5 text-xs"
+                          min={2000}
+                          max={new Date().getFullYear() + 1}
+                        />
+                      ) : ranking.year}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -1064,7 +1384,9 @@ function ProgramDetail({
                 {localProgram.recruiters.map((recruiter, i) => (
                   <div key={i} className="px-4 py-3 rounded-lg border bg-card flex items-center gap-2 group">
                     <Building2 className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium">{recruiter}</span>
+                    <div className="text-sm font-medium">
+                      <EditableField value={recruiter} onSave={(v) => updateRecruiter(i, v)} isAdmin={isAdmin} placeholder="Company name" />
+                    </div>
                     {isAdmin && (
                       <Button 
                         size="icon" 
@@ -1104,12 +1426,16 @@ function ProgramDetail({
               <div className="grid gap-4 md:grid-cols-2">
                 {localProgram.jobRoles.map((job, i) => (
                   <div key={i} className="p-4 rounded-lg border bg-card flex items-center justify-between group">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 flex-1">
                       <Briefcase className="h-5 w-5 text-primary" />
-                      <span className="text-sm font-medium">{job.title}</span>
+                      <div className="text-sm font-medium flex-1">
+                        <EditableField value={job.title} onSave={(v) => updateJobRole(i, "title", v)} isAdmin={isAdmin} placeholder="Job title" />
+                      </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline">{job.avgSalary}</Badge>
+                      <div>
+                        <EditableField value={job.avgSalary} onSave={(v) => updateJobRole(i, "avgSalary", v)} isAdmin={isAdmin} placeholder="Salary" />
+                      </div>
                       {isAdmin && (
                         <Button 
                           size="icon" 
@@ -1159,7 +1485,13 @@ function ProgramDetail({
                 {localProgram.faqs.map((faq, i) => (
                   <AccordionItem key={i} value={`faq-${i}`}>
                     <div className="flex items-center">
-                      <AccordionTrigger className="text-sm text-left flex-1">{faq.question}</AccordionTrigger>
+                      <AccordionTrigger className="text-sm text-left flex-1">
+                        {isAdmin ? (
+                          <div className="flex-1 pr-2" onClick={(e) => e.stopPropagation()}>
+                            <EditableField value={faq.question} onSave={(v) => updateFaq(i, "question", v)} isAdmin={isAdmin} placeholder="Question" />
+                          </div>
+                        ) : faq.question}
+                      </AccordionTrigger>
                       {isAdmin && (
                         <Button 
                           size="icon" 
@@ -1171,7 +1503,11 @@ function ProgramDetail({
                         </Button>
                       )}
                     </div>
-                    <AccordionContent className="text-sm text-muted-foreground">{faq.answer}</AccordionContent>
+                    <AccordionContent className="text-sm text-muted-foreground">
+                      {isAdmin ? (
+                        <EditableField value={faq.answer} onSave={(v) => updateFaq(i, "answer", v)} isAdmin={isAdmin} placeholder="Answer" multiline />
+                      ) : faq.answer}
+                    </AccordionContent>
                   </AccordionItem>
                 ))}
               </Accordion>
@@ -1224,13 +1560,21 @@ function ProgramDetail({
                         <Phone className="h-5 w-5 text-primary" />
                       </div>
                       <div>
-                        <p className="font-medium text-sm">{poc.name}</p>
-                        <p className="text-xs text-muted-foreground">{poc.role}</p>
+                        <div className="font-medium text-sm">
+                          <EditableField value={poc.name} onSave={(v) => updatePoc(i, "name", v)} isAdmin={isAdmin} placeholder="Name" />
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          <EditableField value={poc.role} onSave={(v) => updatePoc(i, "role", v)} isAdmin={isAdmin} placeholder="Role" />
+                        </div>
                       </div>
                     </div>
                     <div className="space-y-1 text-xs text-muted-foreground">
-                      <p>{poc.email}</p>
-                      <p>{poc.phone}</p>
+                      <div>
+                        <EditableField value={poc.email} onSave={(v) => updatePoc(i, "email", v)} isAdmin={isAdmin} placeholder="Email" />
+                      </div>
+                      <div>
+                        <EditableField value={poc.phone} onSave={(v) => updatePoc(i, "phone", v)} isAdmin={isAdmin} placeholder="Phone" />
+                      </div>
                     </div>
                   </div>
                 ))}
