@@ -75,14 +75,10 @@ const navigation: NavItem[] = [
         title: "",
         items: [
           { title: "Applications", href: "/scholarships/applications" },
+          { title: "Analytics", href: "/scholarships/analytics" },
         ],
       },
     ],
-  },
-  { 
-    title: "Analytics", 
-    href: "/analytics", 
-    icon: BarChart3 
   },
   {
     title: "School Profile",
@@ -92,6 +88,7 @@ const navigation: NavItem[] = [
         title: "",
         items: [
           { title: "Edit Information", href: "/school-profile/edit" },
+          { title: "Programs", href: "/school-profile/programs" },
         ],
       },
     ],

@@ -24,9 +24,11 @@ import VirtualMeetups from "./pages/events/VirtualMeetups";
 // Scholarships
 import ScholarshipApplications from "./pages/scholarships/ScholarshipApplications";
 import StudentProfile from "./pages/scholarships/StudentProfile";
+import ScholarshipAnalytics from "./pages/scholarships/ScholarshipAnalytics";
 
 // School
 import SchoolProfileEdit from "./pages/school/SchoolProfileEdit";
+import Programs from "./pages/school/Programs";
 
 // Other
 import Analytics from "./pages/Analytics";
@@ -65,9 +67,11 @@ const App = () => (
                 {/* Scholarships */}
                 <Route path="/scholarships/applications" element={<ProtectedRoute><ScholarshipApplications /></ProtectedRoute>} />
                 <Route path="/scholarships/applications/:studentId" element={<ProtectedRoute><StudentProfile /></ProtectedRoute>} />
+                <Route path="/scholarships/analytics" element={<ProtectedRoute><ScholarshipAnalytics /></ProtectedRoute>} />
 
                 {/* School Profile */}
                 <Route path="/school-profile/edit" element={<ProtectedRoute><SchoolProfileEdit /></ProtectedRoute>} />
+                <Route path="/school-profile/programs" element={<ProtectedRoute><Programs /></ProtectedRoute>} />
 
                 {/* Analytics */}
                 <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
