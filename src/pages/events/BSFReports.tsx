@@ -1,56 +1,70 @@
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { FileText, MapPin, Users, Calendar, Download } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-
-const mockBSFReports = [
-  { id: "1", eventName: "BSF Lagos 2024", city: "Lagos", date: "2024-03-15", registrants: 245, attendees: 198, connections: 156 },
-  { id: "2", eventName: "BSF Nairobi 2024", city: "Nairobi", date: "2024-04-20", registrants: 312, attendees: 267, connections: 201 },
-  { id: "3", eventName: "BSF Accra 2024", city: "Accra", date: "2024-05-10", registrants: 189, attendees: 145, connections: 112 },
-  { id: "4", eventName: "BSF Mumbai 2024", city: "Mumbai", date: "2024-06-08", registrants: 278, attendees: 234, connections: 189 },
-  { id: "5", eventName: "BSF Dubai 2024", city: "Dubai", date: "2024-07-12", registrants: 221, attendees: 198, connections: 134 },
-];
+import { fetchBSFReports, fetchBSFReportById, type BSFReport } from "@/lib/api/reports";
+import { exportToXLSX } from "@/lib/utils/xlsx-export";
 
 const BSFReports = () => {
-  const handleDownload = (reportId: string, eventName: string) => {
-    // Create CSV content
-    const report = mockBSFReports.find(r => r.id === reportId);
+  const [reports, setReports] = useState<BSFReport[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchBSFReports()
+      .then(setReports)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleDownload = async (reportId: string, eventName: string) => {
+    const report = await fetchBSFReportById(reportId);
     if (!report) return;
     
-    const csvContent = `Event Name,City,Date,Registrants,Attendees,Connections\n${report.eventName},${report.city},${report.date},${report.registrants},${report.attendees},${report.connections}`;
-    
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${eventName.replace(/\s+/g, "_")}_Report.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
+    exportToXLSX(
+      [{
+        "Event Name": report.eventName,
+        "City": report.city,
+        "Date": report.date,
+        "Registrants": report.registrants,
+        "Attendees": report.attendees,
+        "Connections": report.connections,
+      }],
+      { filename: `${eventName.replace(/\s+/g, "_")}_Report`, sheetName: "BSF Report" }
+    );
     
     toast({ title: "Report Downloaded", description: `${eventName} report has been downloaded.` });
   };
 
   const handleDownloadAll = () => {
-    const headers = "Event Name,City,Date,Registrants,Attendees,Connections\n";
-    const rows = mockBSFReports.map(r => `${r.eventName},${r.city},${r.date},${r.registrants},${r.attendees},${r.connections}`).join("\n");
+    const exportData = reports.map(r => ({
+      "Event Name": r.eventName,
+      "City": r.city,
+      "Date": r.date,
+      "Registrants": r.registrants,
+      "Attendees": r.attendees,
+      "Connections": r.connections,
+    }));
     
-    const blob = new Blob([headers + rows], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "BSF_Reports_All.csv";
-    a.click();
-    window.URL.revokeObjectURL(url);
-    
+    exportToXLSX(exportData, { filename: "BSF_Reports_All", sheetName: "BSF Reports" });
     toast({ title: "All Reports Downloaded", description: "All BSF reports have been downloaded." });
   };
 
-  const totalEvents = mockBSFReports.length;
-  const uniqueCities = new Set(mockBSFReports.map(r => r.city)).size;
-  const totalRegistrants = mockBSFReports.reduce((sum, r) => sum + r.registrants, 0);
-  const totalConnections = mockBSFReports.reduce((sum, r) => sum + r.connections, 0);
+  const totalEvents = reports.length;
+  const uniqueCities = new Set(reports.map(r => r.city)).size;
+  const totalRegistrants = reports.reduce((sum, r) => sum + r.registrants, 0);
+  const totalConnections = reports.reduce((sum, r) => sum + r.connections, 0);
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <p className="text-muted-foreground">Loading reports...</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -116,7 +130,7 @@ const BSFReports = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mockBSFReports.map((report) => (
+                {reports.map((report) => (
                   <TableRow key={report.id}>
                     <TableCell className="font-medium">{report.eventName}</TableCell>
                     <TableCell>{report.city}</TableCell>

@@ -1,58 +1,70 @@
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { FileText, Building2, Users, UserCheck, Download } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-
-const mockCampusTourReports = [
-  { id: "1", eventName: "IIT Delhi Tour", campus: "IIT Delhi", date: "2024-02-20", campusesReached: 1, attendees: 450, studentsConnected: 280 },
-  { id: "2", eventName: "BITS Pilani Tour", campus: "BITS Pilani", date: "2024-03-05", campusesReached: 1, attendees: 380, studentsConnected: 245 },
-  { id: "3", eventName: "IIM Bangalore Tour", campus: "IIM Bangalore", date: "2024-03-18", campusesReached: 1, attendees: 520, studentsConnected: 356 },
-  { id: "4", eventName: "NUS Singapore Tour", campus: "NUS", date: "2024-04-10", campusesReached: 1, attendees: 290, studentsConnected: 198 },
-  { id: "5", eventName: "University of Lagos Tour", campus: "UNILAG", date: "2024-05-02", campusesReached: 1, attendees: 680, studentsConnected: 445 },
-  { id: "6", eventName: "Ashesi University Tour", campus: "Ashesi", date: "2024-05-15", campusesReached: 1, attendees: 340, studentsConnected: 212 },
-  { id: "7", eventName: "Strathmore Tour", campus: "Strathmore", date: "2024-06-01", campusesReached: 1, attendees: 410, studentsConnected: 278 },
-  { id: "8", eventName: "Makerere University Tour", campus: "Makerere", date: "2024-06-20", campusesReached: 1, attendees: 350, studentsConnected: 198 },
-];
+import { fetchCampusTourReports, fetchCampusTourReportById, type CampusTourReport } from "@/lib/api/reports";
+import { exportToXLSX } from "@/lib/utils/xlsx-export";
 
 const CampusTourReports = () => {
-  const handleDownload = (reportId: string, eventName: string) => {
-    const report = mockCampusTourReports.find(r => r.id === reportId);
+  const [reports, setReports] = useState<CampusTourReport[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchCampusTourReports()
+      .then(setReports)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleDownload = async (reportId: string, eventName: string) => {
+    const report = await fetchCampusTourReportById(reportId);
     if (!report) return;
     
-    const csvContent = `Event Name,Campus,Date,Campuses Reached,Attendees,Students Connected\n${report.eventName},${report.campus},${report.date},${report.campusesReached},${report.attendees},${report.studentsConnected}`;
-    
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${eventName.replace(/\s+/g, "_")}_Report.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
+    exportToXLSX(
+      [{
+        "Event Name": report.eventName,
+        "Campus": report.campus,
+        "Date": report.date,
+        "Campuses Reached": report.campusesReached,
+        "Attendees": report.attendees,
+        "Students Connected": report.studentsConnected,
+      }],
+      { filename: `${eventName.replace(/\s+/g, "_")}_Report`, sheetName: "Campus Tour Report" }
+    );
     
     toast({ title: "Report Downloaded", description: `${eventName} report has been downloaded.` });
   };
 
   const handleDownloadAll = () => {
-    const headers = "Event Name,Campus,Date,Campuses Reached,Attendees,Students Connected\n";
-    const rows = mockCampusTourReports.map(r => `${r.eventName},${r.campus},${r.date},${r.campusesReached},${r.attendees},${r.studentsConnected}`).join("\n");
+    const exportData = reports.map(r => ({
+      "Event Name": r.eventName,
+      "Campus": r.campus,
+      "Date": r.date,
+      "Campuses Reached": r.campusesReached,
+      "Attendees": r.attendees,
+      "Students Connected": r.studentsConnected,
+    }));
     
-    const blob = new Blob([headers + rows], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "Campus_Tour_Reports_All.csv";
-    a.click();
-    window.URL.revokeObjectURL(url);
-    
+    exportToXLSX(exportData, { filename: "Campus_Tour_Reports_All", sheetName: "Campus Tour Reports" });
     toast({ title: "All Reports Downloaded", description: "All Campus Tour reports have been downloaded." });
   };
 
-  const totalEvents = mockCampusTourReports.length;
-  const totalCampuses = mockCampusTourReports.reduce((sum, r) => sum + r.campusesReached, 0);
-  const totalAttendees = mockCampusTourReports.reduce((sum, r) => sum + r.attendees, 0);
-  const totalStudents = mockCampusTourReports.reduce((sum, r) => sum + r.studentsConnected, 0);
+  const totalEvents = reports.length;
+  const totalCampuses = reports.reduce((sum, r) => sum + r.campusesReached, 0);
+  const totalAttendees = reports.reduce((sum, r) => sum + r.attendees, 0);
+  const totalStudents = reports.reduce((sum, r) => sum + r.studentsConnected, 0);
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <p className="text-muted-foreground">Loading reports...</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -117,7 +129,7 @@ const CampusTourReports = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mockCampusTourReports.map((report) => (
+                {reports.map((report) => (
                   <TableRow key={report.id}>
                     <TableCell className="font-medium">{report.eventName}</TableCell>
                     <TableCell>{report.campus}</TableCell>
