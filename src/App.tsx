@@ -30,6 +30,9 @@ import ScholarshipAnalytics from "./pages/scholarships/ScholarshipAnalytics";
 import SchoolProfileEdit from "./pages/school/SchoolProfileEdit";
 import Programs from "./pages/school/Programs";
 
+// University Applications
+import UniversityApplications from "./pages/applications/UniversityApplications";
+
 // Other
 import Analytics from "./pages/Analytics";
 import UserManagement from "./pages/UserManagement";
@@ -72,6 +75,9 @@ const App = () => (
                 {/* School Profile */}
                 <Route path="/school-profile/edit" element={<ProtectedRoute><SchoolProfileEdit /></ProtectedRoute>} />
                 <Route path="/school-profile/programs" element={<ProtectedRoute><Programs /></ProtectedRoute>} />
+
+                {/* University Applications */}
+                <Route path="/university-applications/all" element={<ProtectedRoute><UniversityApplications /></ProtectedRoute>} />
 
                 {/* Analytics */}
                 <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
