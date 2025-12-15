@@ -237,60 +237,56 @@ function ProgramInfoSection() {
 
   return (
     <div className="space-y-6">
-      {/* Program Name */}
+      {/* Row 1: Program Name (full width) */}
       <div>
         <Label>Program Name</Label>
         <Input defaultValue="MBA Full-Time" className="mt-1.5" placeholder="Enter program name..." />
       </div>
 
-      {/* Class Size */}
-      <div>
-        <Label>Class Size</Label>
-        <Input type="number" defaultValue="120" className="mt-1.5" placeholder="Enter class size..." />
+      {/* Row 2: Class Size, Average Age, Avg Work Exp */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <Label>Class Size</Label>
+          <Input type="number" defaultValue="120" className="mt-1.5" placeholder="Enter class size..." />
+        </div>
+        <div>
+          <Label>Average Age</Label>
+          <Input type="number" defaultValue="28" className="mt-1.5" placeholder="Enter average age..." />
+        </div>
+        <div>
+          <Label>Average Work Experience (Years)</Label>
+          <Input type="number" defaultValue="5" className="mt-1.5" placeholder="Enter avg work exp..." />
+        </div>
       </div>
 
-      {/* Average Age */}
-      <div>
-        <Label>Average Age</Label>
-        <Input type="number" defaultValue="28" className="mt-1.5" placeholder="Enter average age..." />
-      </div>
-
-      {/* Average Work Experience */}
-      <div>
-        <Label>Average Work Experience (Years)</Label>
-        <Input type="number" defaultValue="5" className="mt-1.5" placeholder="Enter average work experience..." />
-      </div>
-
-      {/* Median Earnings */}
-      <div>
-        <Label>Median Earnings After Graduation (USD/Year)</Label>
-        <Input type="number" defaultValue="150000" className="mt-1.5" placeholder="Enter median earnings..." />
-      </div>
-
-      {/* Graduation Rate */}
-      <div>
-        <Label>Graduation Rate (%)</Label>
-        <Input type="number" defaultValue="95" className="mt-1.5" placeholder="Enter graduation rate..." min="0" max="100" />
+      {/* Row 3: Median Earnings, Graduation Rate, Hero Program */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <Label>Median Earnings After Graduation (USD/Year)</Label>
+          <Input type="number" defaultValue="150000" className="mt-1.5" placeholder="Enter median earnings..." />
+        </div>
+        <div>
+          <Label>Graduation Rate (%)</Label>
+          <Input type="number" defaultValue="95" className="mt-1.5" placeholder="Enter graduation rate..." min="0" max="100" />
+        </div>
+        <div>
+          <Label>Is this a Hero Program?</Label>
+          <Select defaultValue="no">
+            <SelectTrigger className="mt-1.5">
+              <SelectValue placeholder="Select..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="yes">Yes</SelectItem>
+              <SelectItem value="no">No</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Program Brochure Link */}
       <div>
         <Label>Program Brochure Link</Label>
         <Input type="url" defaultValue="https://example.com/brochure.pdf" className="mt-1.5" placeholder="Enter brochure URL..." />
-      </div>
-
-      {/* Is Hero Program */}
-      <div>
-        <Label>Is this a Hero Program?</Label>
-        <Select defaultValue="no">
-          <SelectTrigger className="mt-1.5">
-            <SelectValue placeholder="Select..." />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="yes">Yes</SelectItem>
-            <SelectItem value="no">No</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
 
       {/* Program Diversity */}
@@ -344,70 +340,97 @@ function ProgramInfoSection() {
 
 function ProgramFeaturesSection() {
   const [features, setFeatures] = useState([
-    { title: "Global Immersion", description: "Study abroad opportunities in 3 countries" },
-    { title: "Leadership Lab", description: "Hands-on leadership development program" },
+    { title: "Global Immersion", description: "Study abroad opportunities in 3 countries", photo: "" },
+    { title: "Leadership Lab", description: "Hands-on leadership development program", photo: "" },
   ]);
+  const [newFeature, setNewFeature] = useState({ title: "", description: "", photo: "" });
 
-  const addFeature = () => setFeatures([...features, { title: "", description: "" }]);
-  const removeFeature = (index: number) => setFeatures(features.filter((_, i) => i !== index));
-  const updateFeature = (index: number, field: string, value: string) => {
-    const newFeatures = [...features];
-    newFeatures[index] = { ...newFeatures[index], [field]: value };
-    setFeatures(newFeatures);
+  const addFeature = () => {
+    if (newFeature.title.trim()) {
+      setFeatures([...features, { ...newFeature }]);
+      setNewFeature({ title: "", description: "", photo: "" });
+    }
   };
+  const removeFeature = (index: number) => setFeatures(features.filter((_, i) => i !== index));
 
   return (
-    <div className="space-y-4">
-      <Button onClick={addFeature} variant="outline" size="sm">
-        <Plus className="h-4 w-4 mr-2" />
-        Add Feature
-      </Button>
-      {features.map((feature, index) => (
-        <Card key={index}>
-          <CardContent className="p-4 space-y-3">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1 space-y-3">
-                <div>
-                  <Label>Feature Title</Label>
-                  <Input 
-                    value={feature.title}
-                    onChange={(e) => updateFeature(index, "title", e.target.value)}
-                    placeholder="Enter feature title..." 
-                    className="mt-1.5" 
-                  />
-                </div>
-                <div>
-                  <Label>Description</Label>
-                  <Textarea 
-                    value={feature.description}
-                    onChange={(e) => updateFeature(index, "description", e.target.value)}
-                    placeholder="Enter feature description..." 
-                    className="mt-1.5" 
-                  />
-                </div>
-                <div>
-                  <Label>Feature Image</Label>
-                  <div className="mt-1.5 border-2 border-dashed rounded-lg p-4 text-center">
-                    <Image className="h-6 w-6 mx-auto text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground mt-1">Click to upload</p>
-                  </div>
-                </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-destructive"
-                onClick={() => removeFeature(index)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+    <div className="space-y-6">
+      {/* Add New Feature Form */}
+      <Card className="border-dashed">
+        <CardContent className="p-4 space-y-4">
+          <h4 className="font-medium text-sm text-muted-foreground">Add New Feature</h4>
+          <div>
+            <Label>Program Title</Label>
+            <Input 
+              value={newFeature.title}
+              onChange={(e) => setNewFeature({ ...newFeature, title: e.target.value })}
+              placeholder="Enter feature title..." 
+              className="mt-1.5" 
+            />
+          </div>
+          <div>
+            <Label>Program Description</Label>
+            <Textarea 
+              value={newFeature.description}
+              onChange={(e) => setNewFeature({ ...newFeature, description: e.target.value })}
+              placeholder="Enter feature description..." 
+              className="mt-1.5" 
+              rows={3}
+            />
+          </div>
+          <div>
+            <Label>Feature Photo</Label>
+            <div className="mt-1.5 border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:bg-muted/50 transition-colors">
+              <Image className="h-8 w-8 mx-auto text-muted-foreground" />
+              <p className="text-sm text-muted-foreground mt-2">Click to upload photo</p>
             </div>
-          </CardContent>
-        </Card>
-      ))}
-      {features.length === 0 && (
-        <p className="text-sm text-muted-foreground text-center py-4">No features added yet</p>
-      )}
+          </div>
+          <Button onClick={addFeature} disabled={!newFeature.title.trim()}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Feature
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Added Features List */}
+      <div>
+        <h4 className="font-medium text-sm text-muted-foreground mb-3">Added Features ({features.length})</h4>
+        {features.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4 border rounded-lg">No features added yet</p>
+        ) : (
+          <div className="space-y-3">
+            {features.map((feature, index) => (
+              <Card key={index}>
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex gap-4 flex-1">
+                      {feature.photo ? (
+                        <img src={feature.photo} alt={feature.title} className="w-16 h-16 rounded-lg object-cover" />
+                      ) : (
+                        <div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                          <Image className="h-6 w-6 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <h5 className="font-medium text-foreground">{feature.title}</h5>
+                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{feature.description}</p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive shrink-0"
+                      onClick={() => removeFeature(index)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
