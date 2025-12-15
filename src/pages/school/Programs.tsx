@@ -221,120 +221,122 @@ export default function Programs() {
 }
 
 function ProgramInfoSection() {
-  const [highlights, setHighlights] = useState([
-    "Global Network Access",
-    "Career Services",
-    "Industry Connections",
+  const [diversity, setDiversity] = useState([
+    { country: "India", percentage: 35 },
+    { country: "USA", percentage: 20 },
+    { country: "China", percentage: 15 },
   ]);
 
-  const addHighlight = () => setHighlights([...highlights, ""]);
-  const removeHighlight = (index: number) => setHighlights(highlights.filter((_, i) => i !== index));
-  const updateHighlight = (index: number, value: string) => {
-    const newHighlights = [...highlights];
-    newHighlights[index] = value;
-    setHighlights(newHighlights);
+  const addDiversity = () => setDiversity([...diversity, { country: "", percentage: 0 }]);
+  const removeDiversity = (index: number) => setDiversity(diversity.filter((_, i) => i !== index));
+  const updateDiversity = (index: number, field: string, value: string | number) => {
+    const newDiversity = [...diversity];
+    newDiversity[index] = { ...newDiversity[index], [field]: value };
+    setDiversity(newDiversity);
   };
 
   return (
     <div className="space-y-6">
+      {/* Program Name */}
       <div>
         <Label>Program Name</Label>
-        <Input defaultValue="MBA Full-Time" className="mt-1.5" />
+        <Input defaultValue="MBA Full-Time" className="mt-1.5" placeholder="Enter program name..." />
       </div>
+
+      {/* Class Size */}
       <div>
-        <Label>Program Type</Label>
-        <Select defaultValue="mba">
+        <Label>Class Size</Label>
+        <Input type="number" defaultValue="120" className="mt-1.5" placeholder="Enter class size..." />
+      </div>
+
+      {/* Average Age */}
+      <div>
+        <Label>Average Age</Label>
+        <Input type="number" defaultValue="28" className="mt-1.5" placeholder="Enter average age..." />
+      </div>
+
+      {/* Average Work Experience */}
+      <div>
+        <Label>Average Work Experience (Years)</Label>
+        <Input type="number" defaultValue="5" className="mt-1.5" placeholder="Enter average work experience..." />
+      </div>
+
+      {/* Median Earnings */}
+      <div>
+        <Label>Median Earnings After Graduation (USD/Year)</Label>
+        <Input type="number" defaultValue="150000" className="mt-1.5" placeholder="Enter median earnings..." />
+      </div>
+
+      {/* Graduation Rate */}
+      <div>
+        <Label>Graduation Rate (%)</Label>
+        <Input type="number" defaultValue="95" className="mt-1.5" placeholder="Enter graduation rate..." min="0" max="100" />
+      </div>
+
+      {/* Program Brochure Link */}
+      <div>
+        <Label>Program Brochure Link</Label>
+        <Input type="url" defaultValue="https://example.com/brochure.pdf" className="mt-1.5" placeholder="Enter brochure URL..." />
+      </div>
+
+      {/* Is Hero Program */}
+      <div>
+        <Label>Is this a Hero Program?</Label>
+        <Select defaultValue="no">
           <SelectTrigger className="mt-1.5">
-            <SelectValue placeholder="Select type" />
+            <SelectValue placeholder="Select..." />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="mba">MBA</SelectItem>
-            <SelectItem value="emba">Executive MBA</SelectItem>
-            <SelectItem value="mif">Master in Finance</SelectItem>
-            <SelectItem value="mim">Master in Management</SelectItem>
+            <SelectItem value="yes">Yes</SelectItem>
+            <SelectItem value="no">No</SelectItem>
           </SelectContent>
         </Select>
       </div>
-      <div>
-        <Label>Program Description</Label>
-        <Textarea 
-          placeholder="Describe the program..." 
-          className="mt-1.5 min-h-[120px]"
-          defaultValue="A transformative 2-year program designed for ambitious professionals..."
-        />
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label>Duration</Label>
-          <Input defaultValue="2 Years" className="mt-1.5" />
-        </div>
-        <div>
-          <Label>Format</Label>
-          <Select defaultValue="fulltime">
-            <SelectTrigger className="mt-1.5">
-              <SelectValue placeholder="Select format" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="fulltime">Full-Time</SelectItem>
-              <SelectItem value="parttime">Part-Time</SelectItem>
-              <SelectItem value="online">Online</SelectItem>
-              <SelectItem value="hybrid">Hybrid</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      <div className="grid grid-cols-3 gap-4">
-        <div>
-          <Label>Total Credits</Label>
-          <Input type="number" defaultValue="60" className="mt-1.5" />
-        </div>
-        <div>
-          <Label>Tuition Fee</Label>
-          <Input type="number" defaultValue="150000" className="mt-1.5" />
-        </div>
-        <div>
-          <Label>Currency</Label>
-          <Select defaultValue="usd">
-            <SelectTrigger className="mt-1.5">
-              <SelectValue placeholder="Select currency" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="usd">USD</SelectItem>
-              <SelectItem value="eur">EUR</SelectItem>
-              <SelectItem value="gbp">GBP</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
 
-      {/* Highlights */}
+      {/* Program Diversity */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <Label>Program Highlights</Label>
-          <Button variant="outline" size="sm" onClick={addHighlight}>
+          <Label>Program Diversity (Country-wise)</Label>
+          <Button variant="outline" size="sm" onClick={addDiversity}>
             <Plus className="h-4 w-4 mr-2" />
-            Add Highlight
+            Add Country
           </Button>
         </div>
         <div className="space-y-2">
-          {highlights.map((highlight, index) => (
-            <div key={index} className="flex gap-2">
+          {diversity.map((item, index) => (
+            <div key={index} className="flex gap-2 items-center">
               <Input
-                value={highlight}
-                onChange={(e) => updateHighlight(index, e.target.value)}
-                placeholder="Enter highlight..."
+                value={item.country}
+                onChange={(e) => updateDiversity(index, "country", e.target.value)}
+                placeholder="Country name..."
+                className="flex-1"
               />
+              <div className="flex items-center gap-1">
+                <Input
+                  type="number"
+                  value={item.percentage}
+                  onChange={(e) => updateDiversity(index, "percentage", parseFloat(e.target.value) || 0)}
+                  placeholder="%"
+                  className="w-20"
+                  min="0"
+                  max="100"
+                />
+                <span className="text-muted-foreground">%</span>
+              </div>
               <Button
                 variant="ghost"
                 size="icon"
                 className="text-destructive shrink-0"
-                onClick={() => removeHighlight(index)}
+                onClick={() => removeDiversity(index)}
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
           ))}
         </div>
+        {diversity.length === 0 && (
+          <p className="text-sm text-muted-foreground text-center py-2">No diversity data added yet</p>
+        )}
       </div>
     </div>
   );
