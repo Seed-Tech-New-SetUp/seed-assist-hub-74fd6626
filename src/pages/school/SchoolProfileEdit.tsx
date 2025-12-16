@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ImageUpload } from "@/components/ui/image-upload";
 import { 
   Building2, 
   Globe, 
@@ -167,6 +168,8 @@ export default function SchoolProfileEdit() {
 }
 
 function SchoolInfoSection() {
+  const [backgroundImage, setBackgroundImage] = useState("");
+
   return (
     <div className="space-y-4">
       <div>
@@ -214,12 +217,13 @@ function SchoolInfoSection() {
       </div>
       <div>
         <Label>Background Image</Label>
-        <div className="mt-1.5 border-2 border-dashed rounded-lg p-8 text-center">
-          <Image className="h-8 w-8 mx-auto text-muted-foreground" />
-          <p className="mt-2 text-sm text-muted-foreground">
-            Drag and drop or click to upload
-          </p>
-        </div>
+        <ImageUpload
+          value={backgroundImage}
+          onChange={setBackgroundImage}
+          placeholder="Click to upload background image"
+          aspectRatio="video"
+          className="mt-1.5"
+        />
       </div>
       <div className="grid grid-cols-3 gap-4">
         <div>
@@ -309,6 +313,20 @@ function FAQsSection() {
 }
 
 function FeaturesSection() {
+  const [features, setFeatures] = useState<{title: string; description: string; image: string}[]>([]);
+  const [newFeature, setNewFeature] = useState({ title: "", description: "", image: "" });
+
+  const addFeature = () => {
+    if (newFeature.title.trim()) {
+      setFeatures([...features, { ...newFeature }]);
+      setNewFeature({ title: "", description: "", image: "" });
+    }
+  };
+
+  const removeFeature = (index: number) => {
+    setFeatures(features.filter((_, i) => i !== index));
+  };
+
   return (
     <div className="space-y-4">
       <Card>
@@ -318,48 +336,94 @@ function FeaturesSection() {
         <CardContent className="space-y-4">
           <div>
             <Label>Title</Label>
-            <Input placeholder="Feature title" className="mt-1.5" />
+            <Input 
+              value={newFeature.title}
+              onChange={(e) => setNewFeature({ ...newFeature, title: e.target.value })}
+              placeholder="Feature title" 
+              className="mt-1.5" 
+            />
           </div>
           <div>
             <Label>Description</Label>
-            <Textarea placeholder="Feature description" className="mt-1.5" />
+            <Textarea 
+              value={newFeature.description}
+              onChange={(e) => setNewFeature({ ...newFeature, description: e.target.value })}
+              placeholder="Feature description" 
+              className="mt-1.5" 
+            />
           </div>
           <div>
             <Label>Image</Label>
-            <div className="mt-1.5 border-2 border-dashed rounded-lg p-4 text-center">
-              <p className="text-sm text-muted-foreground">Click to upload</p>
-            </div>
+            <ImageUpload
+              value={newFeature.image}
+              onChange={(url) => setNewFeature({ ...newFeature, image: url })}
+              placeholder="Click to upload feature image"
+              aspectRatio="video"
+              className="mt-1.5"
+            />
           </div>
-          <Button>Add Feature</Button>
+          <Button onClick={addFeature} disabled={!newFeature.title.trim()}>Add Feature</Button>
         </CardContent>
       </Card>
-      <div className="text-sm text-muted-foreground text-center py-4">
-        No features added yet
-      </div>
+      {features.length === 0 ? (
+        <div className="text-sm text-muted-foreground text-center py-4">
+          No features added yet
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {features.map((feature, index) => (
+            <Card key={index}>
+              <CardContent className="p-4 flex items-start justify-between gap-4">
+                <div className="flex gap-4 flex-1">
+                  {feature.image ? (
+                    <img src={feature.image} alt={feature.title} className="w-16 h-16 rounded-lg object-cover" />
+                  ) : (
+                    <div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                      <Image className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div>
+                    <h5 className="font-medium">{feature.title}</h5>
+                    <p className="text-sm text-muted-foreground">{feature.description}</p>
+                  </div>
+                </div>
+                <Button variant="ghost" size="icon" className="text-destructive" onClick={() => removeFeature(index)}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 function LogosSection() {
+  const [logo1x1, setLogo1x1] = useState("");
+  const [logo3x1, setLogo3x1] = useState("");
+
   return (
     <div className="grid grid-cols-2 gap-4">
       <div>
         <Label>Logo (1:1 ratio)</Label>
-        <div className="mt-1.5 border-2 border-dashed rounded-lg p-8 text-center aspect-square flex items-center justify-center">
-          <div>
-            <Image className="h-8 w-8 mx-auto text-muted-foreground" />
-            <p className="mt-2 text-sm text-muted-foreground">Upload 1:1 logo</p>
-          </div>
-        </div>
+        <ImageUpload
+          value={logo1x1}
+          onChange={setLogo1x1}
+          placeholder="Upload 1:1 logo"
+          aspectRatio="square"
+          className="mt-1.5"
+        />
       </div>
       <div>
         <Label>Logo (3:1 ratio)</Label>
-        <div className="mt-1.5 border-2 border-dashed rounded-lg p-8 text-center aspect-[3/1] flex items-center justify-center">
-          <div>
-            <Image className="h-8 w-8 mx-auto text-muted-foreground" />
-            <p className="mt-2 text-sm text-muted-foreground">Upload 3:1 logo</p>
-          </div>
-        </div>
+        <ImageUpload
+          value={logo3x1}
+          onChange={setLogo3x1}
+          placeholder="Upload 3:1 logo"
+          aspectRatio="wide"
+          className="mt-1.5"
+        />
       </div>
     </div>
   );

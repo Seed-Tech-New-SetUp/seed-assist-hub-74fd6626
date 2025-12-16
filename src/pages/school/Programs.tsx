@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { ImageUpload } from "@/components/ui/image-upload";
 import {
   Select,
   SelectContent,
@@ -383,10 +384,13 @@ function ProgramFeaturesSection() {
           </div>
           <div>
             <Label>Feature Photo</Label>
-            <div className="mt-1.5 border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:bg-muted/50 transition-colors">
-              <Image className="h-8 w-8 mx-auto text-muted-foreground" />
-              <p className="text-sm text-muted-foreground mt-2">Click to upload photo</p>
-            </div>
+            <ImageUpload
+              value={newFeature.photo}
+              onChange={(url) => setNewFeature({ ...newFeature, photo: url })}
+              placeholder="Click to upload feature photo"
+              aspectRatio="video"
+              className="mt-1.5"
+            />
           </div>
           <Button onClick={addFeature} disabled={!newFeature.title.trim()}>
             <Plus className="h-4 w-4 mr-2" />
@@ -581,10 +585,13 @@ function PersonFormSection({ title, defaultCategory, persons, setPersons, addBut
             </div>
             <div>
               <Label>Profile Image</Label>
-              <div className="mt-1.5 border-2 border-dashed rounded-lg p-3 text-center cursor-pointer hover:bg-muted/50 transition-colors">
-                <User className="h-5 w-5 mx-auto text-muted-foreground" />
-                <p className="text-xs text-muted-foreground mt-1">Upload photo</p>
-              </div>
+              <ImageUpload
+                value={newPerson.profileImage}
+                onChange={(url) => setNewPerson({ ...newPerson, profileImage: url })}
+                placeholder="Upload photo"
+                aspectRatio="square"
+                className="mt-1.5 h-[80px] w-[80px]"
+              />
             </div>
           </div>
 
