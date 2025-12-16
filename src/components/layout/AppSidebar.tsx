@@ -48,68 +48,68 @@ const navigation: NavItem[] = [
     icon: LayoutDashboard 
   },
   {
-    title: "Events",
+    title: "Engagement",
     icon: Calendar,
     children: [
       {
-        title: "In Person",
+        title: "On-Campus",
         icon: MapPin,
         items: [
           { title: "BSF Reports", href: "/events/in-person/bsf" },
-          { title: "Campus Tour Reports", href: "/events/in-person/campus-tour" },
-          { title: "Upcoming Events", href: "/events/in-person/upcoming" },
+          { title: "Campus Tours", href: "/events/in-person/campus-tour" },
+          { title: "Scheduled Events", href: "/events/in-person/upcoming" },
         ],
       },
       {
         title: "Virtual",
         icon: Video,
         items: [
-          { title: "Masterclass Reports", href: "/events/virtual/masterclass" },
-          { title: "MeetUps Reports", href: "/events/virtual/meetups" },
+          { title: "Masterclass", href: "/events/virtual/masterclass" },
+          { title: "Webinars", href: "/events/virtual/meetups" },
         ],
       },
     ],
   },
   {
-    title: "Scholarships",
+    title: "Scholarship Portal",
     icon: GraduationCap,
     children: [
       {
         title: "",
         items: [
-          { title: "Applications", href: "/scholarships/applications" },
-          { title: "Analytics", href: "/scholarships/analytics" },
+          { title: "Applicant Pool", href: "/scholarships/applications" },
+          { title: "Insights", href: "/scholarships/analytics" },
         ],
       },
     ],
   },
   {
-    title: "School Profile",
+    title: "Institution Profile",
     icon: Building2,
     children: [
       {
         title: "",
         items: [
-          { title: "Edit Information", href: "/school-profile/edit" },
-          { title: "Programs", href: "/school-profile/programs" },
+          { title: "Overview", href: "/school-profile/edit" },
+          { title: "Academic Programs", href: "/school-profile/programs" },
         ],
       },
     ],
   },
   {
-    title: "University Applications",
+    title: "Admissions",
     icon: FileText,
     children: [
       {
         title: "",
         items: [
-          { title: "All Applications via SEED", href: "/university-applications/all" },
+          { title: "Application Pipeline", href: "/university-applications/all" },
         ],
       },
     ],
   },
   {
-    title: "User Management",
+    title: "Team Management",
     href: "/user-management",
     icon: Users,
   },
