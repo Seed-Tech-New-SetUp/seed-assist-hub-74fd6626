@@ -84,13 +84,13 @@ const navigation: NavItem[] = [
     ],
   },
   {
-    title: "Institution Profile",
+    title: "Organisation Profile",
     icon: Building2,
     children: [
       {
         title: "",
         items: [
-          { title: "Overview", href: "/school-profile/edit" },
+          { title: "General Information", href: "/school-profile/edit" },
           { title: "Academic Programs", href: "/school-profile/programs" },
         ],
       },

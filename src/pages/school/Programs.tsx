@@ -39,16 +39,16 @@ import { cn } from "@/lib/utils";
 import { useAdminStatus } from "@/hooks/useAdminStatus";
 
 const programSections = [
-  { id: "info", label: "Program Info", icon: Info },
-  { id: "features", label: "Program Features", icon: Sparkles },
-  { id: "faculty", label: "Program Faculty", icon: Users },
-  { id: "students", label: "Current Students", icon: GraduationCap },
-  { id: "alumni", label: "Program Alumni", icon: GraduationCap },
-  { id: "rankings", label: "Program Rankings", icon: Trophy },
-  { id: "recruiters", label: "Program Recruiters", icon: Building2 },
-  { id: "jobroles", label: "Program Job Roles", icon: Briefcase },
-  { id: "faqs", label: "Program FAQs", icon: HelpCircle },
-  { id: "pocs", label: "Program POCs", icon: Phone },
+  { id: "info", label: "Core Details", icon: Info },
+  { id: "features", label: "Key Highlights", icon: Sparkles },
+  { id: "faculty", label: "Faculty Members", icon: Users },
+  { id: "students", label: "Current Cohort", icon: GraduationCap },
+  { id: "alumni", label: "Alumni Network", icon: GraduationCap },
+  { id: "rankings", label: "Accreditations & Rankings", icon: Trophy },
+  { id: "recruiters", label: "Recruiting Partners", icon: Building2 },
+  { id: "jobroles", label: "Career Outcomes", icon: Briefcase },
+  { id: "faqs", label: "Knowledge Base", icon: HelpCircle },
+  { id: "pocs", label: "Key Contacts", icon: Phone },
 ];
 
 // Mock programs data
@@ -105,8 +105,8 @@ export default function Programs() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-display font-bold text-foreground">Programs</h1>
-            <p className="text-muted-foreground mt-1">Manage your program information and settings</p>
+            <h1 className="text-2xl font-display font-bold text-foreground">Academic Programs</h1>
+            <p className="text-muted-foreground mt-1">Manage your program portfolio and settings</p>
           </div>
           {isAdmin && (
             <Button onClick={handleRequestNewProgram}>

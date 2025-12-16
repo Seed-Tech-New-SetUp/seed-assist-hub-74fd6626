@@ -33,14 +33,14 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 const sections = [
-  { id: "info", label: "School Information", icon: Building2 },
-  { id: "social", label: "Social Media", icon: Globe },
-  { id: "faqs", label: "FAQs", icon: HelpCircle },
-  { id: "features", label: "Features", icon: Star },
-  { id: "logos", label: "Logos", icon: Image },
-  { id: "rankings", label: "Rankings", icon: Trophy },
-  { id: "contact", label: "Contact Details", icon: Phone },
-  { id: "programs", label: "Program Information", icon: GraduationCap },
+  { id: "info", label: "Organisation Details", icon: Building2 },
+  { id: "social", label: "Digital Presence", icon: Globe },
+  { id: "faqs", label: "Knowledge Base", icon: HelpCircle },
+  { id: "features", label: "Key Highlights", icon: Star },
+  { id: "logos", label: "Brand Assets", icon: Image },
+  { id: "rankings", label: "Accreditations & Rankings", icon: Trophy },
+  { id: "contact", label: "Key Contacts", icon: Phone },
+  { id: "programs", label: "Program Portfolio", icon: GraduationCap },
 ];
 
 export default function SchoolProfileEdit() {
@@ -81,8 +81,8 @@ export default function SchoolProfileEdit() {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">Edit School Profile</h1>
-          <p className="text-muted-foreground mt-1">Update your school's information and settings</p>
+          <h1 className="text-2xl font-display font-bold text-foreground">Organisation Profile</h1>
+          <p className="text-muted-foreground mt-1">Manage your organisation's information and settings</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
