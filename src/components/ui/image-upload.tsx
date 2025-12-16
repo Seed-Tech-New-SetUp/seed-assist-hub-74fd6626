@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Image, X, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -22,6 +22,11 @@ export function ImageUpload({
 }: ImageUploadProps) {
   const [preview, setPreview] = useState<string>(value || "");
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Sync preview with value prop changes
+  useEffect(() => {
+    setPreview(value || "");
+  }, [value]);
 
   const handleClick = () => {
     inputRef.current?.click();
