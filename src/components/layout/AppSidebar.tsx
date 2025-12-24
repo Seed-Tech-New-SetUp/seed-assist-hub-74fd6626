@@ -56,7 +56,8 @@ const navigation: NavItem[] = [
         icon: MapPin,
         items: [
           { title: "Overview", href: "/events/in-person" },
-          { title: "All Events", href: "/events/in-person/all" },
+          { title: "BSF Reports", href: "/events/in-person/bsf" },
+          { title: "Campus Tours", href: "/events/in-person/campus-tours" },
         ],
       },
       {
@@ -64,7 +65,8 @@ const navigation: NavItem[] = [
         icon: Video,
         items: [
           { title: "Overview", href: "/events/virtual" },
-          { title: "All Events", href: "/events/virtual/all" },
+          { title: "Masterclass", href: "/events/virtual/masterclass" },
+          { title: "Meetups", href: "/events/virtual/meetups" },
         ],
       },
     ],

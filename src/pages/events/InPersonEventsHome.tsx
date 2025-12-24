@@ -13,7 +13,9 @@ import {
   Clock, 
   ArrowRight,
   FileText,
-  CalendarClock
+  CalendarClock,
+  Globe,
+  Building2
 } from "lucide-react";
 
 // Mock data for stats
@@ -21,6 +23,8 @@ const totalStats = {
   registrations: 1335,
   attended: 770,
   connections: 353,
+  citiesCovered: 12,
+  countriesCovered: 3,
 };
 
 // Latest published report
@@ -118,7 +122,7 @@ export default function InPersonEventsHome() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
@@ -126,7 +130,7 @@ export default function InPersonEventsHome() {
                   <Users className="h-6 w-6 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Registrations</p>
+                  <p className="text-sm text-muted-foreground">Registrations</p>
                   <p className="text-2xl font-bold">{totalStats.registrations.toLocaleString()}</p>
                 </div>
               </div>
@@ -140,7 +144,7 @@ export default function InPersonEventsHome() {
                   <UserCheck className="h-6 w-6 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Attended</p>
+                  <p className="text-sm text-muted-foreground">Attended</p>
                   <p className="text-2xl font-bold">{totalStats.attended.toLocaleString()}</p>
                 </div>
               </div>
@@ -154,8 +158,36 @@ export default function InPersonEventsHome() {
                   <Handshake className="h-6 w-6 text-purple-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Connections</p>
+                  <p className="text-sm text-muted-foreground">Connections</p>
                   <p className="text-2xl font-bold">{totalStats.connections.toLocaleString()}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl bg-orange-100 dark:bg-orange-900/30">
+                  <Building2 className="h-6 w-6 text-orange-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Cities Covered</p>
+                  <p className="text-2xl font-bold">{totalStats.citiesCovered}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl bg-teal-100 dark:bg-teal-900/30">
+                  <Globe className="h-6 w-6 text-teal-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Countries</p>
+                  <p className="text-2xl font-bold">{totalStats.countriesCovered}</p>
                 </div>
               </div>
             </CardContent>

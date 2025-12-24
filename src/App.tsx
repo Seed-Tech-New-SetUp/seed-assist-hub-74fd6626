@@ -14,11 +14,15 @@ import SchoolSelector from "./pages/SchoolSelector";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 
-// Events
+// Events - In Person
 import InPersonEventsHome from "./pages/events/InPersonEventsHome";
-import InPersonAllEvents from "./pages/events/InPersonAllEvents";
+import BSFReports from "./pages/events/BSFReports";
+import CampusTourReports from "./pages/events/CampusTourReports";
+
+// Events - Virtual
 import VirtualEventsHome from "./pages/events/VirtualEventsHome";
-import VirtualAllEvents from "./pages/events/VirtualAllEvents";
+import VirtualMasterclass from "./pages/events/VirtualMasterclass";
+import VirtualMeetups from "./pages/events/VirtualMeetups";
 
 // Scholarships
 import ScholarshipApplications from "./pages/scholarships/ScholarshipApplications";
@@ -59,11 +63,13 @@ const App = () => (
 
                 {/* Events - In Person */}
                 <Route path="/events/in-person" element={<ProtectedRoute><InPersonEventsHome /></ProtectedRoute>} />
-                <Route path="/events/in-person/all" element={<ProtectedRoute><InPersonAllEvents /></ProtectedRoute>} />
+                <Route path="/events/in-person/bsf" element={<ProtectedRoute><BSFReports /></ProtectedRoute>} />
+                <Route path="/events/in-person/campus-tours" element={<ProtectedRoute><CampusTourReports /></ProtectedRoute>} />
 
                 {/* Events - Virtual */}
                 <Route path="/events/virtual" element={<ProtectedRoute><VirtualEventsHome /></ProtectedRoute>} />
-                <Route path="/events/virtual/all" element={<ProtectedRoute><VirtualAllEvents /></ProtectedRoute>} />
+                <Route path="/events/virtual/masterclass" element={<ProtectedRoute><VirtualMasterclass /></ProtectedRoute>} />
+                <Route path="/events/virtual/meetups" element={<ProtectedRoute><VirtualMeetups /></ProtectedRoute>} />
 
                 {/* Scholarships */}
                 <Route path="/scholarships/applications" element={<ProtectedRoute><ScholarshipApplications /></ProtectedRoute>} />
