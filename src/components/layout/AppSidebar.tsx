@@ -52,20 +52,19 @@ const navigation: NavItem[] = [
     icon: Calendar,
     children: [
       {
-        title: "On-Campus",
+        title: "In-Person Events",
         icon: MapPin,
         items: [
-          { title: "BSF Reports", href: "/events/in-person/bsf" },
-          { title: "Campus Tours", href: "/events/in-person/campus-tour" },
-          { title: "Scheduled Events", href: "/events/in-person/upcoming" },
+          { title: "Overview", href: "/events/in-person" },
+          { title: "All Events", href: "/events/in-person/all" },
         ],
       },
       {
-        title: "Virtual",
+        title: "Virtual Events",
         icon: Video,
         items: [
-          { title: "Masterclass", href: "/events/virtual/masterclass" },
-          { title: "Webinars", href: "/events/virtual/meetups" },
+          { title: "Overview", href: "/events/virtual" },
+          { title: "All Events", href: "/events/virtual/all" },
         ],
       },
     ],
