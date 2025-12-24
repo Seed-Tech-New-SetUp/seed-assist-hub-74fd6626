@@ -1,22 +1,145 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FileText, MapPin, Users, Calendar, Download } from "lucide-react";
+import { 
+  Calendar, 
+  MapPin, 
+  Clock, 
+  ArrowRight,
+  Users,
+  Sparkles,
+  Radio,
+  FileText,
+  Download
+} from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { fetchBSFReports, fetchBSFReportById, type BSFReport } from "@/lib/api/reports";
 import { exportToXLSX } from "@/lib/utils/xlsx-export";
 
+// Mock data for BSF events (combining with API data)
+const mockBsfEvents = [
+  {
+    id: "bsf-upcoming-1",
+    eventName: "BSF Mumbai 2025",
+    city: "Mumbai",
+    date: "2025-01-15",
+    venue: "Jio Convention Centre, Mumbai",
+    registrants: 450,
+    attendees: 0,
+    connections: 0,
+  },
+  {
+    id: "bsf-upcoming-2",
+    eventName: "BSF Delhi 2025",
+    city: "Delhi",
+    date: "2025-02-20",
+    venue: "Pragati Maidan, New Delhi",
+    registrants: 320,
+    attendees: 0,
+    connections: 0,
+  },
+  {
+    id: "bsf-live-1",
+    eventName: "BSF Pune 2024",
+    city: "Pune",
+    date: "2024-12-24",
+    venue: "Pune Convention Center",
+    registrants: 280,
+    attendees: 245,
+    connections: 0,
+  },
+];
+
+const formatDate = (dateStr: string) => {
+  return new Date(dateStr).toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
+
+const getEventStatus = (dateStr: string): "upcoming" | "live" | "completed" => {
+  const eventDate = new Date(dateStr);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  eventDate.setHours(0, 0, 0, 0);
+  
+  const diffDays = Math.floor((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  
+  if (diffDays > 0) return "upcoming";
+  if (diffDays === 0) return "live";
+  return "completed";
+};
+
+const useCountdown = (targetDate: string) => {
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const difference = new Date(targetDate).getTime() - new Date().getTime();
+      if (difference > 0) {
+        setTimeLeft({
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+          minutes: Math.floor((difference / 1000 / 60) % 60),
+          seconds: Math.floor((difference / 1000) % 60),
+        });
+      }
+    };
+
+    calculateTimeLeft();
+    const timer = setInterval(calculateTimeLeft, 1000);
+    return () => clearInterval(timer);
+  }, [targetDate]);
+
+  return timeLeft;
+};
+
+const CountdownTimer = ({ targetDate }: { targetDate: string }) => {
+  const { days, hours, minutes, seconds } = useCountdown(targetDate);
+
+  return (
+    <div className="flex gap-2">
+      {[
+        { value: days, label: "D" },
+        { value: hours, label: "H" },
+        { value: minutes, label: "M" },
+        { value: seconds, label: "S" },
+      ].map((item) => (
+        <div key={item.label} className="flex items-center gap-0.5">
+          <span className="bg-primary/10 text-primary font-bold text-sm px-2 py-1 rounded">
+            {String(item.value).padStart(2, "0")}
+          </span>
+          <span className="text-xs text-muted-foreground">{item.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 const BSFReports = () => {
-  const [reports, setReports] = useState<BSFReport[]>([]);
+  const navigate = useNavigate();
+  const [apiReports, setApiReports] = useState<BSFReport[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchBSFReports()
-      .then(setReports)
+      .then(setApiReports)
       .finally(() => setLoading(false));
   }, []);
+
+  // Combine mock data with API data and categorize
+  const allEvents = [...mockBsfEvents, ...apiReports];
+  
+  const upcomingEvents = allEvents.filter(e => getEventStatus(e.date) === "upcoming");
+  const liveEvents = allEvents.filter(e => getEventStatus(e.date) === "live");
+  const completedEvents = allEvents.filter(e => getEventStatus(e.date) === "completed");
+  
+  const nextUpcoming = upcomingEvents.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
 
   const handleDownload = async (reportId: string, eventName: string) => {
     const report = await fetchBSFReportById(reportId);
@@ -37,30 +160,11 @@ const BSFReports = () => {
     toast({ title: "Report Downloaded", description: `${eventName} report has been downloaded.` });
   };
 
-  const handleDownloadAll = () => {
-    const exportData = reports.map(r => ({
-      "Event Name": r.eventName,
-      "City": r.city,
-      "Date": r.date,
-      "Registrants": r.registrants,
-      "Attendees": r.attendees,
-      "Connections": r.connections,
-    }));
-    
-    exportToXLSX(exportData, { filename: "BSF_Reports_All", sheetName: "BSF Reports" });
-    toast({ title: "All Reports Downloaded", description: "All BSF reports have been downloaded." });
-  };
-
-  const totalEvents = reports.length;
-  const uniqueCities = new Set(reports.map(r => r.city)).size;
-  const totalRegistrants = reports.reduce((sum, r) => sum + r.registrants, 0);
-  const totalConnections = reports.reduce((sum, r) => sum + r.connections, 0);
-
   if (loading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-64">
-          <p className="text-muted-foreground">Loading reports...</p>
+          <p className="text-muted-foreground">Loading events...</p>
         </div>
       </DashboardLayout>
     );
@@ -69,86 +173,197 @@ const BSFReports = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        {/* Header */}
         <div>
           <h1 className="text-2xl font-display font-bold text-foreground">Business School Festivals</h1>
           <p className="text-muted-foreground mt-1">All BSF events - upcoming, ongoing, and past</p>
         </div>
-          <Button onClick={handleDownloadAll} className="gap-2">
-            <Download className="h-4 w-4" /> Download All
-          </Button>
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="bg-card/50 backdrop-blur-sm border-border/50">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10"><FileText className="h-5 w-5 text-primary" /></div>
-                <div><p className="text-2xl font-bold text-foreground">{totalEvents}</p><p className="text-xs text-muted-foreground">Total Events</p></div>
-              </div>
+        {/* Live Events */}
+        {liveEvents.length > 0 && (
+          <Card className="border-red-500/30 bg-gradient-to-r from-red-500/5 to-transparent">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Radio className="h-5 w-5 text-red-500 animate-pulse" />
+                Live Now
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {liveEvents.map((event) => (
+                <div
+                  key={event.id}
+                  className="flex items-center justify-between p-4 rounded-lg border bg-red-50/50 dark:bg-red-950/20 border-red-200 dark:border-red-900"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="p-2.5 rounded-lg bg-red-100 dark:bg-red-900/50">
+                      <Radio className="h-5 w-5 text-red-600 animate-pulse" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-medium">{event.eventName}</h4>
+                        <Badge className="bg-red-500 text-white border-0">
+                          Live Now
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3.5 w-3.5" />
+                          {formatDate(event.date)}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3.5 w-3.5" />
+                          {'venue' in event ? String(event.venue) : event.city}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <p className="text-sm font-medium flex items-center gap-1">
+                        <Users className="h-3.5 w-3.5" />
+                        {event.attendees} / {event.registrants} attending
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </CardContent>
           </Card>
-          <Card className="bg-card/50 backdrop-blur-sm border-border/50">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-accent/10"><MapPin className="h-5 w-5 text-accent-foreground" /></div>
-                <div><p className="text-2xl font-bold text-foreground">{uniqueCities}</p><p className="text-xs text-muted-foreground">Unique Cities</p></div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-card/50 backdrop-blur-sm border-border/50">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-secondary/50"><Users className="h-5 w-5 text-secondary-foreground" /></div>
-                <div><p className="text-2xl font-bold text-foreground">{totalRegistrants.toLocaleString()}</p><p className="text-xs text-muted-foreground">Total Registrants</p></div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-card/50 backdrop-blur-sm border-border/50">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10"><Calendar className="h-5 w-5 text-primary" /></div>
-                <div><p className="text-2xl font-bold text-foreground">{totalConnections.toLocaleString()}</p><p className="text-xs text-muted-foreground">Connections</p></div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        )}
 
-        <Card className="border-border/50">
-          <CardHeader><CardTitle className="text-lg font-display">BSF Event Reports</CardTitle></CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Event Name</TableHead>
-                  <TableHead>City</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Registrants</TableHead>
-                  <TableHead className="text-right">Attendees</TableHead>
-                  <TableHead className="text-right">Connections</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {reports.map((report) => (
-                  <TableRow key={report.id}>
-                    <TableCell className="font-medium">{report.eventName}</TableCell>
-                    <TableCell>{report.city}</TableCell>
-                    <TableCell>{new Date(report.date).toLocaleDateString()}</TableCell>
-                    <TableCell className="text-right">{report.registrants}</TableCell>
-                    <TableCell className="text-right">{report.attendees}</TableCell>
-                    <TableCell className="text-right">{report.connections}</TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" onClick={() => handleDownload(report.id, report.eventName)}>
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        {/* Upcoming Events */}
+        {upcomingEvents.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-blue-500" />
+                Upcoming Events
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {upcomingEvents
+                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                .map((event, index) => (
+                <div
+                  key={event.id}
+                  className="flex items-center justify-between p-4 rounded-lg border bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="p-2.5 rounded-lg bg-blue-100 dark:bg-blue-900/50">
+                      <Calendar className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-medium">{event.eventName}</h4>
+                        <Badge variant="outline" className="border-blue-500 text-blue-600 bg-blue-50 dark:bg-blue-950">
+                          Upcoming
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3.5 w-3.5" />
+                          {formatDate(event.date)}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3.5 w-3.5" />
+                          {'venue' in event ? String(event.venue) : event.city}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    {index === 0 && <CountdownTimer targetDate={event.date} />}
+                    <div className="text-right">
+                      <p className="text-sm font-medium flex items-center gap-1">
+                        <Users className="h-3.5 w-3.5" />
+                        {event.registrants} registered
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Completed Events with Reports */}
+        {completedEvents.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <FileText className="h-5 w-5 text-muted-foreground" />
+                Past Events & Reports
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {completedEvents
+                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                .map((event) => (
+                <div
+                  key={event.id}
+                  className="flex items-center justify-between p-4 rounded-lg border transition-colors hover:bg-muted/50 cursor-pointer"
+                  onClick={() => navigate(`/reports/${event.id}`)}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="p-2.5 rounded-lg bg-muted">
+                      <FileText className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-medium">{event.eventName}</h4>
+                        <Badge variant="secondary">Completed</Badge>
+                      </div>
+                      <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3.5 w-3.5" />
+                          {formatDate(event.date)}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3.5 w-3.5" />
+                          {'venue' in event ? String(event.venue) : event.city}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-6">
+                    <div className="hidden md:flex items-center gap-6 text-sm">
+                      <div className="text-center">
+                        <p className="font-semibold">{event.registrants}</p>
+                        <p className="text-muted-foreground text-xs">Registered</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="font-semibold">{event.attendees}</p>
+                        <p className="text-muted-foreground text-xs">Attended</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="font-semibold">{event.connections}</p>
+                        <p className="text-muted-foreground text-xs">Connections</p>
+                      </div>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={(e) => {
+                      e.stopPropagation();
+                      handleDownload(event.id, event.eventName);
+                    }}>
+                      <Download className="h-4 w-4 mr-1" />
+                      Report
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Empty state */}
+        {allEvents.length === 0 && (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium">No events yet</h3>
+              <p className="text-muted-foreground mt-1">Business School Festival events will appear here</p>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </DashboardLayout>
   );
