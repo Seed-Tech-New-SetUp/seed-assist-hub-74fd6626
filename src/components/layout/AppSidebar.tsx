@@ -56,7 +56,7 @@ const navigation: NavItem[] = [
         icon: MapPin,
         items: [
           { title: "Overview", href: "/events/in-person" },
-          { title: "BSF Reports", href: "/events/in-person/bsf" },
+          { title: "Business School Festivals", href: "/events/in-person/bsf" },
           { title: "Campus Tours", href: "/events/in-person/campus-tours" },
         ],
       },

@@ -70,10 +70,10 @@ const BSFReports = () => {
     <DashboardLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-display font-bold text-foreground">Business School Festival Reports</h1>
-            <p className="text-muted-foreground mt-1">View and download reports from BSF events</p>
-          </div>
+        <div>
+          <h1 className="text-2xl font-display font-bold text-foreground">Business School Festivals</h1>
+          <p className="text-muted-foreground mt-1">All BSF events - upcoming, ongoing, and past</p>
+        </div>
           <Button onClick={handleDownloadAll} className="gap-2">
             <Download className="h-4 w-4" /> Download All
           </Button>
