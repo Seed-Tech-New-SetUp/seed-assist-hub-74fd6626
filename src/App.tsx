@@ -15,11 +15,8 @@ import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 
 // Events
-import BSFReports from "./pages/events/BSFReports";
-import CampusTourReports from "./pages/events/CampusTourReports";
-import UpcomingEvents from "./pages/events/UpcomingEvents";
-import VirtualMasterclass from "./pages/events/VirtualMasterclass";
-import VirtualMeetups from "./pages/events/VirtualMeetups";
+import InPersonEventsHome from "./pages/events/InPersonEventsHome";
+import VirtualEventsHome from "./pages/events/VirtualEventsHome";
 
 // Scholarships
 import ScholarshipApplications from "./pages/scholarships/ScholarshipApplications";
@@ -59,13 +56,12 @@ const App = () => (
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
 
                 {/* Events - In Person */}
-                <Route path="/events/in-person/bsf" element={<ProtectedRoute><BSFReports /></ProtectedRoute>} />
-                <Route path="/events/in-person/campus-tour" element={<ProtectedRoute><CampusTourReports /></ProtectedRoute>} />
-                <Route path="/events/in-person/upcoming" element={<ProtectedRoute><UpcomingEvents /></ProtectedRoute>} />
+                <Route path="/events/in-person" element={<ProtectedRoute><InPersonEventsHome /></ProtectedRoute>} />
+                <Route path="/events/in-person/all" element={<ProtectedRoute><InPersonEventsHome /></ProtectedRoute>} />
 
                 {/* Events - Virtual */}
-                <Route path="/events/virtual/masterclass" element={<ProtectedRoute><VirtualMasterclass /></ProtectedRoute>} />
-                <Route path="/events/virtual/meetups" element={<ProtectedRoute><VirtualMeetups /></ProtectedRoute>} />
+                <Route path="/events/virtual" element={<ProtectedRoute><VirtualEventsHome /></ProtectedRoute>} />
+                <Route path="/events/virtual/all" element={<ProtectedRoute><VirtualEventsHome /></ProtectedRoute>} />
 
                 {/* Scholarships */}
                 <Route path="/scholarships/applications" element={<ProtectedRoute><ScholarshipApplications /></ProtectedRoute>} />
