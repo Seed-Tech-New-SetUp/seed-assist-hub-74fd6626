@@ -16,7 +16,9 @@ import NotFound from "./pages/NotFound";
 
 // Events
 import InPersonEventsHome from "./pages/events/InPersonEventsHome";
+import InPersonAllEvents from "./pages/events/InPersonAllEvents";
 import VirtualEventsHome from "./pages/events/VirtualEventsHome";
+import VirtualAllEvents from "./pages/events/VirtualAllEvents";
 
 // Scholarships
 import ScholarshipApplications from "./pages/scholarships/ScholarshipApplications";
@@ -57,11 +59,11 @@ const App = () => (
 
                 {/* Events - In Person */}
                 <Route path="/events/in-person" element={<ProtectedRoute><InPersonEventsHome /></ProtectedRoute>} />
-                <Route path="/events/in-person/all" element={<ProtectedRoute><InPersonEventsHome /></ProtectedRoute>} />
+                <Route path="/events/in-person/all" element={<ProtectedRoute><InPersonAllEvents /></ProtectedRoute>} />
 
                 {/* Events - Virtual */}
                 <Route path="/events/virtual" element={<ProtectedRoute><VirtualEventsHome /></ProtectedRoute>} />
-                <Route path="/events/virtual/all" element={<ProtectedRoute><VirtualEventsHome /></ProtectedRoute>} />
+                <Route path="/events/virtual/all" element={<ProtectedRoute><VirtualAllEvents /></ProtectedRoute>} />
 
                 {/* Scholarships */}
                 <Route path="/scholarships/applications" element={<ProtectedRoute><ScholarshipApplications /></ProtectedRoute>} />
