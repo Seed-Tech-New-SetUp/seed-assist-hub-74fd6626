@@ -1,1 +1,4 @@
 project_id = "fqabfxqdnsuivnuudecf"
+
+[functions.portal-auth]
+verify_jwt = false
