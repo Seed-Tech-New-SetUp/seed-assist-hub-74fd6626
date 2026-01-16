@@ -19,7 +19,7 @@ serve(async (req) => {
 
     if (action === 'select-school') {
       // Step 2: Select school and get final token
-      const { email, client_id, school_id, tempToken } = await req.json();
+      const { email, school_id, tempToken } = await req.json();
       
       console.log(`Selecting school for email: ${email}, school_id: ${school_id}`);
 
@@ -29,7 +29,7 @@ serve(async (req) => {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
-        body: JSON.stringify({ email, client_id, school_id, tempToken }),
+        body: JSON.stringify({ email, school_id, tempToken }),
       });
 
       const data = await response.json();
