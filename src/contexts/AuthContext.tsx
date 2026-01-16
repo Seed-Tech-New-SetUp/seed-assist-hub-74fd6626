@@ -37,12 +37,16 @@ interface SelectedSchool {
 }
 
 // Permissions structure
-interface Permissions {
+export interface Permissions {
   engagement: {
     enabled: boolean;
     subModules: {
       inPersonEvents: boolean;
       virtualEvents: boolean;
+      bsf: boolean;
+      campusTours: boolean;
+      masterclasses: boolean;
+      meetups: boolean;
     };
   };
   scholarshipPortal: {
@@ -53,15 +57,18 @@ interface Permissions {
   };
   orgProfile: {
     enabled: boolean;
+    isPremium?: boolean;
     subModules: {
       generalInfo: boolean;
       academicPrograms: boolean;
+      accessLeads: boolean;
     };
   };
   admissions: {
     enabled: boolean;
     subModules: {
       applicationPipeline: boolean;
+      laeAssignments: boolean;
     };
   };
   teamManagement: {
@@ -69,7 +76,10 @@ interface Permissions {
   };
   icr: {
     enabled: boolean;
-    note?: string;
+    subModules?: {
+      viewAnalytics: boolean;
+      addReport: boolean;
+    };
   };
 }
 

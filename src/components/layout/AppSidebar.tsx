@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
@@ -19,18 +19,20 @@ import {
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth, Permissions } from "@/contexts/AuthContext";
 import { useSidebarState } from "@/contexts/SidebarContext";
 
 interface NavSubItem {
   title: string;
   href: string;
+  permissionKey?: string; // Maps to subModules permission
 }
 
 interface NavSubGroup {
   title: string;
   icon?: React.ElementType;
   items: NavSubItem[];
+  permissionKey?: string; // Maps to subModules permission for the group
 }
 
 interface NavItem {
@@ -39,9 +41,10 @@ interface NavItem {
   icon: React.ElementType;
   badge?: number;
   children?: NavSubGroup[];
+  permissionKey?: string; // Maps to top-level permission
 }
 
-const navigation: NavItem[] = [
+const baseNavigation: NavItem[] = [
   { 
     title: "Dashboard", 
     href: "/dashboard", 
@@ -50,23 +53,26 @@ const navigation: NavItem[] = [
   {
     title: "Engagement",
     icon: Calendar,
+    permissionKey: "engagement",
     children: [
       {
         title: "In-Person Events",
         icon: MapPin,
+        permissionKey: "inPersonEvents",
         items: [
           { title: "Overview", href: "/events/in-person" },
-          { title: "Business School Festivals", href: "/events/in-person/bsf" },
-          { title: "Campus Tours", href: "/events/in-person/campus-tours" },
+          { title: "Business School Festivals", href: "/events/in-person/bsf", permissionKey: "bsf" },
+          { title: "Campus Tours", href: "/events/in-person/campus-tours", permissionKey: "campusTours" },
         ],
       },
       {
         title: "Virtual Events",
         icon: Video,
+        permissionKey: "virtualEvents",
         items: [
           { title: "Overview", href: "/events/virtual" },
-          { title: "Masterclass", href: "/events/virtual/masterclass" },
-          { title: "Meetups", href: "/events/virtual/meetups" },
+          { title: "Masterclass", href: "/events/virtual/masterclass", permissionKey: "masterclasses" },
+          { title: "Meetups", href: "/events/virtual/meetups", permissionKey: "meetups" },
         ],
       },
     ],
@@ -74,11 +80,12 @@ const navigation: NavItem[] = [
   {
     title: "Scholarship Portal",
     icon: GraduationCap,
+    permissionKey: "scholarshipPortal",
     children: [
       {
         title: "",
         items: [
-          { title: "Applicant Pool", href: "/scholarships/applications" },
+          { title: "Applicant Pool", href: "/scholarships/applications", permissionKey: "applicantPools" },
           { title: "Insights", href: "/scholarships/analytics" },
         ],
       },
@@ -87,12 +94,13 @@ const navigation: NavItem[] = [
   {
     title: "Organisation Profile",
     icon: Building2,
+    permissionKey: "orgProfile",
     children: [
       {
         title: "",
         items: [
-          { title: "General Information", href: "/school-profile/edit" },
-          { title: "Academic Programs", href: "/school-profile/programs" },
+          { title: "General Information", href: "/school-profile/edit", permissionKey: "generalInfo" },
+          { title: "Academic Programs", href: "/school-profile/programs", permissionKey: "academicPrograms" },
         ],
       },
     ],
@@ -100,11 +108,12 @@ const navigation: NavItem[] = [
   {
     title: "Admissions",
     icon: FileText,
+    permissionKey: "admissions",
     children: [
       {
         title: "",
         items: [
-          { title: "Application Pipeline", href: "/university-applications/all" },
+          { title: "Application Pipeline", href: "/university-applications/all", permissionKey: "applicationPipeline" },
         ],
       },
     ],
@@ -113,14 +122,69 @@ const navigation: NavItem[] = [
     title: "Team Management",
     href: "/user-management",
     icon: Users,
+    permissionKey: "teamManagement",
   },
 ];
+
+// Helper function to filter navigation based on permissions
+const filterNavigation = (navigation: NavItem[], permissions: Permissions | null): NavItem[] => {
+  if (!permissions) return navigation;
+
+  return navigation
+    .filter((item) => {
+      // Dashboard is always visible
+      if (!item.permissionKey) return true;
+
+      // Check top-level permission
+      const permModule = permissions[item.permissionKey as keyof Permissions];
+      if (!permModule || (typeof permModule === 'object' && 'enabled' in permModule && !permModule.enabled)) {
+        return false;
+      }
+      return true;
+    })
+    .map((item) => {
+      if (!item.children) return item;
+
+      const permModule = permissions[item.permissionKey as keyof Permissions];
+      const subModules = permModule && typeof permModule === 'object' && 'subModules' in permModule 
+        ? permModule.subModules 
+        : null;
+
+      // Filter children (sub-groups)
+      const filteredChildren = item.children
+        .filter((group) => {
+          // If group has a permissionKey, check it
+          if (group.permissionKey && subModules) {
+            return subModules[group.permissionKey as keyof typeof subModules] !== false;
+          }
+          return true;
+        })
+        .map((group) => {
+          // Filter items within the group
+          const filteredItems = group.items.filter((subItem) => {
+            if (subItem.permissionKey && subModules) {
+              return subModules[subItem.permissionKey as keyof typeof subModules] !== false;
+            }
+            return true;
+          });
+
+          return { ...group, items: filteredItems };
+        })
+        .filter((group) => group.items.length > 0); // Remove empty groups
+
+      return { ...item, children: filteredChildren };
+    })
+    .filter((item) => !item.children || item.children.length > 0); // Remove sections with no children
+};
 
 export function AppSidebar() {
   const { collapsed, toggleCollapsed } = useSidebarState();
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const { signOut, permissions } = useAuth();
+
+  // Filter navigation based on permissions
+  const navigation = useMemo(() => filterNavigation(baseNavigation, permissions), [permissions]);
 
   // Find which section and subsection contain the current route
   const findActiveSection = () => {
