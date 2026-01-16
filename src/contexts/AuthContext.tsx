@@ -261,17 +261,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: new Error('No temp token available. Please login again.') };
       }
 
-      const { data, error } = await supabase.functions.invoke('portal-auth', {
-        body: { 
-          email: currentUser.email,
-          client_id: school.client_id,
-          school_id: school.school_id,
-          tempToken: currentTempToken,
-        },
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      // Note: We're using fetch directly with query param instead of supabase.functions.invoke
 
       // Add query param for action
       const response = await fetch(
@@ -284,7 +274,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           },
           body: JSON.stringify({
             email: currentUser.email,
-            client_id: school.client_id,
             school_id: school.school_id,
             tempToken: currentTempToken,
           }),
