@@ -62,10 +62,12 @@ export function SchoolProvider({ children }: { children: ReactNode }) {
         setNeedsSchoolSelection(false);
       } else if (tempToken) {
         // User logged in but hasn't selected a school yet
+        // For single school users, the AuthContext auto-selects, so wait for that
         if (transformedSchools.length === 1) {
-          // Auto-select if only one school
-          setNeedsSchoolSelection(true); // Still need to call select-school API
+          // Single school user - don't set needsSchoolSelection, wait for auto-select to complete
+          setNeedsSchoolSelection(false);
         } else {
+          // Multi-school user needs to manually select
           setNeedsSchoolSelection(true);
         }
       }

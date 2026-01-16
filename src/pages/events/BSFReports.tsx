@@ -16,42 +16,10 @@ import {
   Download
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { fetchBSFReports, fetchBSFReportById, type BSFReport } from "@/lib/api/reports";
 import { exportToXLSX } from "@/lib/utils/xlsx-export";
+import { useAuth } from "@/contexts/AuthContext";
 
-// Mock data for BSF events (combining with API data)
-const mockBsfEvents = [
-  {
-    id: "bsf-upcoming-1",
-    eventName: "BSF Mumbai 2025",
-    city: "Mumbai",
-    date: "2025-01-15",
-    venue: "Jio Convention Centre, Mumbai",
-    registrants: 450,
-    attendees: 0,
-    connections: 0,
-  },
-  {
-    id: "bsf-upcoming-2",
-    eventName: "BSF Delhi 2025",
-    city: "Delhi",
-    date: "2025-02-20",
-    venue: "Pragati Maidan, New Delhi",
-    registrants: 320,
-    attendees: 0,
-    connections: 0,
-  },
-  {
-    id: "bsf-live-1",
-    eventName: "BSF Pune 2024",
-    city: "Pune",
-    date: "2024-12-24",
-    venue: "Pune Convention Center",
-    registrants: 280,
-    attendees: 245,
-    connections: 0,
-  },
-];
+// Mock data removed - using real API data now
 
 const formatDate = (dateStr: string) => {
   return new Date(dateStr).toLocaleDateString("en-US", {
@@ -123,17 +91,70 @@ const CountdownTimer = ({ targetDate }: { targetDate: string }) => {
 
 const BSFReports = () => {
   const navigate = useNavigate();
-  const [apiReports, setApiReports] = useState<BSFReport[]>([]);
+  const { portalToken } = useAuth();
+  const [apiEvents, setApiEvents] = useState<Array<{
+    id: string;
+    eventName: string;
+    city: string;
+    date: string;
+    venue: string;
+    registrants: number;
+    attendees: number;
+    connections: number;
+    event_type?: string;
+  }>>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchBSFReports()
-      .then(setApiReports)
-      .finally(() => setLoading(false));
-  }, []);
+    const fetchBSFEvents = async () => {
+      if (!portalToken) {
+        setLoading(false);
+        return;
+      }
 
-  // Combine mock data with API data and categorize
-  const allEvents = [...mockBsfEvents, ...apiReports];
+      try {
+        const response = await fetch(
+          `https://seedglobaleducation.com/api/assist/in-person-event/bsf.php`,
+          {
+            headers: {
+              Authorization: `Bearer ${portalToken}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch BSF events");
+        }
+
+        const result = await response.json();
+        console.log("BSF API response:", result);
+
+        if (result.success && result.data?.events) {
+          const transformedEvents = result.data.events.map((event: any) => ({
+            id: event.event_id,
+            eventName: `BSF ${event.city} ${new Date(event.date).getFullYear()}`,
+            city: event.city,
+            date: event.date,
+            venue: event.venue_name,
+            registrants: event.registrants || 0,
+            attendees: event.attendees || 0,
+            connections: 0,
+            event_type: event.event_type,
+          }));
+          setApiEvents(transformedEvents);
+        }
+      } catch (error) {
+        console.error("Error fetching BSF events:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBSFEvents();
+  }, [portalToken]);
+
+  // Use API events (no more mock data)
+  const allEvents = apiEvents;
   
   const upcomingEvents = allEvents.filter(e => getEventStatus(e.date) === "upcoming");
   const liveEvents = allEvents.filter(e => getEventStatus(e.date) === "live");
@@ -142,17 +163,17 @@ const BSFReports = () => {
   const nextUpcoming = upcomingEvents.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
 
   const handleDownload = async (reportId: string, eventName: string) => {
-    const report = await fetchBSFReportById(reportId);
-    if (!report) return;
+    const event = allEvents.find(e => e.id === reportId);
+    if (!event) return;
     
     exportToXLSX(
       [{
-        "Event Name": report.eventName,
-        "City": report.city,
-        "Date": report.date,
-        "Registrants": report.registrants,
-        "Attendees": report.attendees,
-        "Connections": report.connections,
+        "Event Name": event.eventName,
+        "City": event.city,
+        "Date": event.date,
+        "Registrants": event.registrants,
+        "Attendees": event.attendees,
+        "Connections": event.connections,
       }],
       { filename: `${eventName.replace(/\s+/g, "_")}_Report`, sheetName: "BSF Report" }
     );
@@ -212,7 +233,7 @@ const BSFReports = () => {
                         </span>
                         <span className="flex items-center gap-1">
                           <MapPin className="h-3.5 w-3.5" />
-                          {'venue' in event ? String(event.venue) : event.city}
+                          {event.venue || event.city}
                         </span>
                       </div>
                     </div>
@@ -266,7 +287,7 @@ const BSFReports = () => {
                         </span>
                         <span className="flex items-center gap-1">
                           <MapPin className="h-3.5 w-3.5" />
-                          {'venue' in event ? String(event.venue) : event.city}
+                          {event.venue || event.city}
                         </span>
                       </div>
                     </div>
@@ -320,7 +341,7 @@ const BSFReports = () => {
                         </span>
                         <span className="flex items-center gap-1">
                           <MapPin className="h-3.5 w-3.5" />
-                          {'venue' in event ? String(event.venue) : event.city}
+                          {event.venue || event.city}
                         </span>
                       </div>
                     </div>
