@@ -251,6 +251,58 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setTempToken(token);
       setLoginSchools(schools || []);
 
+      // If user has only one school, auto-select it
+      if (schools && schools.length === 1) {
+        const singleSchool = schools[0];
+        // Auto-select the single school
+        const selectResponse = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/portal-auth?action=select-school`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            },
+            body: JSON.stringify({
+              email: portalUser.email,
+              school_id: singleSchool.school_id,
+              tempToken: token,
+            }),
+          }
+        );
+
+        const selectData = await selectResponse.json();
+
+        if (selectResponse.ok && selectData.success) {
+          const { token: finalToken, user: selectedUser, school: selectedSchoolData, permissions: userPermissions } = selectData.data;
+
+          // Update user with full data
+          const updatedUser: PortalUser = {
+            id: selectedUser?.client_id || portalUser.id,
+            email: selectedUser?.email || portalUser.email,
+            full_name: selectedUser?.client_name || portalUser.full_name,
+            user_metadata: {
+              full_name: selectedUser?.client_name || portalUser.full_name,
+            },
+            client_id: selectedUser?.client_id,
+            role: selectedUser?.role,
+            designation: selectedUser?.designation,
+          };
+
+          // Store final session data
+          localStorage.setItem('portal_user', JSON.stringify(updatedUser));
+          localStorage.setItem('portal_token', finalToken);
+          localStorage.setItem('portal_selected_school', JSON.stringify(selectedSchoolData));
+          localStorage.setItem('portal_permissions', JSON.stringify(userPermissions));
+          localStorage.setItem('seed_current_school', singleSchool.school_id);
+
+          setUser(updatedUser);
+          setPortalToken(finalToken);
+          setSelectedSchool(selectedSchoolData);
+          setPermissions(userPermissions);
+        }
+      }
+
       return { error: null };
     } catch (err) {
       console.error('Sign in error:', err);

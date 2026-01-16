@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -43,7 +43,7 @@ export default function Login() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, signUp, user, selectedSchool, loginSchools } = useAuth();
 
   // Forgot password states
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
@@ -54,9 +54,31 @@ export default function Login() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [forgotLoading, setForgotLoading] = useState(false);
 
-  // Redirect if already logged in
+  // Navigate after successful login based on school count
+  useEffect(() => {
+    if (user && !loading) {
+      if (selectedSchool) {
+        // Single school user (auto-selected) or previously selected
+        navigate("/dashboard", { replace: true });
+      } else if (loginSchools.length > 1) {
+        // Multi-school user needs to select
+        navigate("/select-school", { replace: true });
+      }
+    }
+  }, [user, selectedSchool, loginSchools, loading, navigate]);
+
+  // Early return for loading state after user is set
   if (user) {
-    return <Navigate to="/select-school" replace />;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center animate-pulse">
+            <span className="font-display font-bold text-lg text-primary-foreground">S</span>
+          </div>
+          <p className="text-sm text-muted-foreground">Signing in...</p>
+        </div>
+      </div>
+    );
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -113,7 +135,8 @@ export default function Login() {
           setLoading(false);
           return;
         }
-        navigate("/select-school");
+        // Navigation will be handled by the useEffect or component re-render
+        // For single school users, selectedSchool will be set, for multi-school users it won't
       }
     } catch (error) {
       toast.error("An unexpected error occurred. Please try again.");
