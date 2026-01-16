@@ -136,16 +136,11 @@ export default function InPersonEventsHome() {
 
       try {
         setLoading(true);
-        const externalEndpoint = `https://admin.seedglobaleducation.com/api/in-person-event/overview.php?school_id=${selectedSchool.school_id}`;
-        
-        // Use proxy action to call external API via edge function (avoids CORS)
         const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/portal-auth?action=proxy&endpoint=${encodeURIComponent(externalEndpoint)}`,
+          `https://admin.seedglobaleducation.com/api/in-person-event/overview.php?school_id=${selectedSchool.school_id}`,
           {
             headers: {
-              'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-              'Authorization': `Bearer ${portalToken}`,
-              'Content-Type': 'application/json',
+              Authorization: `Bearer ${portalToken}`,
             },
           }
         );
@@ -155,6 +150,7 @@ export default function InPersonEventsHome() {
         }
 
         const result = await response.json();
+        console.log("In-person overview API response:", result);
         if (result.success) {
           setOverviewData(result.data);
         } else {
