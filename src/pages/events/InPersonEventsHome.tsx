@@ -137,7 +137,7 @@ export default function InPersonEventsHome() {
       try {
         setLoading(true);
         const response = await fetch(
-          `https://admin.seedglobaleducation.com/api/assist/in-person-event/overview.php?school_id=${selectedSchool.school_id}`,
+          `https://seedglobaleducation.com/api/assist/in-person-event/overview.php?school_id=${selectedSchool.school_id}`,
           {
             headers: {
               Authorization: `Bearer ${portalToken}`,
