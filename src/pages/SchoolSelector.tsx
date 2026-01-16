@@ -4,7 +4,7 @@ import { useSchool } from "@/contexts/SchoolContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Building2, MapPin, ChevronRight, LogOut, Loader2 } from "lucide-react";
+import { Building2, ChevronRight, LogOut, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function SchoolSelector() {
@@ -112,30 +112,26 @@ export default function SchoolSelector() {
               >
                 <CardContent className="p-4">
                   <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+                    <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
                       {school.logo_url ? (
                         <img
                           src={school.logo_url}
                           alt={school.name}
-                          className="h-8 w-8 object-contain"
+                          className="h-10 w-10 object-contain"
                         />
                       ) : (
                         <Building2 className="h-6 w-6 text-muted-foreground" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-sm truncate">{school.short_name || school.name}</h3>
-                      <p className="text-xs text-muted-foreground truncate">{school.university}</p>
-                      {(school.city || school.country) && (
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
-                          <MapPin className="h-3 w-3" />
-                          <span className="truncate">
-                            {[school.city, school.country].filter(Boolean).join(", ")}
-                          </span>
-                        </div>
+                      <h3 className="font-medium text-sm">{school.name}</h3>
+                      {school.designation && (
+                        <p className="text-xs text-muted-foreground truncate mt-0.5">
+                          {school.designation}
+                        </p>
                       )}
                       <span className="text-xs text-primary mt-1 inline-block capitalize">
-                        {school.role_name || school.role}
+                        {school.role}
                       </span>
                     </div>
                     {selectingSchoolId === school.id ? (

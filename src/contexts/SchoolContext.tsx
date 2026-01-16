@@ -4,15 +4,10 @@ import { useAuth } from "./AuthContext";
 interface School {
   id: string;
   school_id: string;
-  client_id: string;
   name: string;
-  short_name: string;
-  university: string;
   logo_url: string | null;
-  country: string | null;
-  city: string | null;
   role: string;
-  role_name?: string;
+  designation?: string;
 }
 
 interface SchoolContextType {
@@ -38,15 +33,10 @@ export function SchoolProvider({ children }: { children: ReactNode }) {
       const transformedSchools: School[] = loginSchools.map((ls) => ({
         id: ls.school_id,
         school_id: ls.school_id,
-        client_id: ls.client_id,
-        name: ls.school_name || ls.short_name,
-        short_name: ls.short_name,
-        university: ls.university,
+        name: ls.school_name,
         logo_url: ls.school_logo ? `https://seedglobaleducation.com/uploads/school_logos/${ls.school_logo}` : null,
-        country: ls.country || null,
-        city: ls.city || null,
         role: ls.role,
-        role_name: ls.role,
+        designation: ls.designation,
       }));
 
       setSchools(transformedSchools);
@@ -56,22 +46,16 @@ export function SchoolProvider({ children }: { children: ReactNode }) {
         const current: School = {
           id: selectedSchool.school_id,
           school_id: selectedSchool.school_id,
-          client_id: '', // Will be filled from loginSchools if needed
-          name: selectedSchool.school_name || selectedSchool.short_name,
-          short_name: selectedSchool.short_name,
-          university: selectedSchool.university,
+          name: selectedSchool.school_name,
           logo_url: selectedSchool.school_logo ? `https://seedglobaleducation.com/uploads/school_logos/${selectedSchool.school_logo}` : null,
-          country: selectedSchool.country || null,
-          city: selectedSchool.city || null,
           role: 'member',
         };
         
         // Get role from loginSchools
         const matchingSchool = transformedSchools.find(s => s.school_id === selectedSchool.school_id);
         if (matchingSchool) {
-          current.client_id = matchingSchool.client_id;
           current.role = matchingSchool.role;
-          current.role_name = matchingSchool.role_name;
+          current.designation = matchingSchool.designation;
         }
         
         setCurrentSchoolState(current);

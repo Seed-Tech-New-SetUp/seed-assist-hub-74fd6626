@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Building2, ChevronDown, Check, MapPin, Loader2 } from "lucide-react";
+import { Building2, ChevronDown, Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export function SchoolSwitcher() {
@@ -35,10 +35,10 @@ export function SchoolSwitcher() {
         </div>
         <div className="hidden sm:block">
           <p className="text-xs font-medium leading-tight truncate max-w-[120px]">
-            {currentSchool.short_name || currentSchool.name}
+            {currentSchool.name}
           </p>
           <p className="text-[10px] text-muted-foreground capitalize">
-            {currentSchool.role_name || currentSchool.role}
+            {currentSchool.role}
           </p>
         </div>
       </div>
@@ -84,10 +84,10 @@ export function SchoolSwitcher() {
           </div>
           <div className="hidden sm:block text-left">
             <p className="text-xs font-medium leading-tight truncate max-w-[120px]">
-              {currentSchool.short_name || currentSchool.name}
+              {currentSchool.name}
             </p>
             <p className="text-[10px] text-muted-foreground capitalize">
-              {currentSchool.role_name || currentSchool.role}
+              {currentSchool.role}
             </p>
           </div>
           <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
@@ -118,17 +118,9 @@ export function SchoolSwitcher() {
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{school.short_name || school.name}</p>
-                {school.university && (
-                  <p className="text-xs text-muted-foreground truncate">{school.university}</p>
-                )}
-                {(school.city || school.country) && (
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <MapPin className="h-2.5 w-2.5" />
-                    <span className="truncate">
-                      {[school.city, school.country].filter(Boolean).join(", ")}
-                    </span>
-                  </div>
+                <p className="text-sm font-medium truncate">{school.name}</p>
+                {school.designation && (
+                  <p className="text-xs text-muted-foreground truncate">{school.designation}</p>
                 )}
               </div>
               {switchingSchoolId === school.id ? (

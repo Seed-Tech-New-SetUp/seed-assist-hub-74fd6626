@@ -4,15 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 
 // School data from login response
 interface LoginSchool {
-  client_id: string;
   school_id: string;
   school_name: string;
-  short_name: string;
-  university: string;
   school_logo: string | null;
-  city: string;
-  country: string;
   role: string;
+  designation: string;
 }
 
 // Full school data after selection
