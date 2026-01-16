@@ -3,20 +3,22 @@ import { useAuth } from "./AuthContext";
 
 interface School {
   id: string;
+  school_id: string;
+  client_id: string;
   name: string;
+  short_name: string;
+  university: string;
   logo_url: string | null;
   country: string | null;
   city: string | null;
   role: string;
-  role_name: string;
-  is_primary: boolean;
-  entity_id?: string;
+  role_name?: string;
 }
 
 interface SchoolContextType {
   schools: School[];
   currentSchool: School | null;
-  setCurrentSchool: (school: School) => void;
+  setCurrentSchool: (school: School) => Promise<void>;
   loading: boolean;
   needsSchoolSelection: boolean;
 }
@@ -24,67 +26,100 @@ interface SchoolContextType {
 const SchoolContext = createContext<SchoolContextType | undefined>(undefined);
 
 export function SchoolProvider({ children }: { children: ReactNode }) {
-  const { user, portalSchools } = useAuth();
+  const { user, loginSchools, selectedSchool, tempToken, portalToken, selectSchool } = useAuth();
   const [schools, setSchools] = useState<School[]>([]);
   const [currentSchool, setCurrentSchoolState] = useState<School | null>(null);
   const [loading, setLoading] = useState(true);
   const [needsSchoolSelection, setNeedsSchoolSelection] = useState(false);
 
   useEffect(() => {
-    if (user && portalSchools.length > 0) {
-      // Transform portal schools to our School format
-      const transformedSchools: School[] = portalSchools.map((ps, index) => ({
-        id: ps.id,
-        name: ps.name,
-        logo_url: null, // Portal API doesn't provide logo
-        country: ps.country || null,
-        city: null, // Portal API doesn't provide city separately
-        role: ps.role,
-        role_name: ps.role_name,
-        is_primary: index === 0, // First school is primary by default
-        entity_id: ps.entity_id,
+    if (user && loginSchools.length > 0) {
+      // Transform login schools to our School format
+      const transformedSchools: School[] = loginSchools.map((ls) => ({
+        id: ls.school_id,
+        school_id: ls.school_id,
+        client_id: ls.client_id,
+        name: ls.school_name || ls.short_name,
+        short_name: ls.short_name,
+        university: ls.university,
+        logo_url: ls.school_logo ? `https://seedglobaleducation.com/uploads/school_logos/${ls.school_logo}` : null,
+        country: ls.country || null,
+        city: ls.city || null,
+        role: ls.role,
+        role_name: ls.role,
       }));
 
       setSchools(transformedSchools);
 
-      // Check for stored school preference
-      const storedSchoolId = localStorage.getItem('seed_current_school');
-      const storedSchool = transformedSchools.find((s) => s.id === storedSchoolId);
-
-      if (storedSchool) {
-        setCurrentSchoolState(storedSchool);
+      // Check if user has already selected a school (has final token)
+      if (portalToken && selectedSchool) {
+        const current: School = {
+          id: selectedSchool.school_id,
+          school_id: selectedSchool.school_id,
+          client_id: '', // Will be filled from loginSchools if needed
+          name: selectedSchool.school_name || selectedSchool.short_name,
+          short_name: selectedSchool.short_name,
+          university: selectedSchool.university,
+          logo_url: selectedSchool.school_logo ? `https://seedglobaleducation.com/uploads/school_logos/${selectedSchool.school_logo}` : null,
+          country: selectedSchool.country || null,
+          city: selectedSchool.city || null,
+          role: 'member',
+        };
+        
+        // Get role from loginSchools
+        const matchingSchool = transformedSchools.find(s => s.school_id === selectedSchool.school_id);
+        if (matchingSchool) {
+          current.client_id = matchingSchool.client_id;
+          current.role = matchingSchool.role;
+          current.role_name = matchingSchool.role_name;
+        }
+        
+        setCurrentSchoolState(current);
         setNeedsSchoolSelection(false);
-      } else if (transformedSchools.length === 1) {
-        // Auto-select if only one school
-        setCurrentSchoolState(transformedSchools[0]);
-        localStorage.setItem('seed_current_school', transformedSchools[0].id);
-        setNeedsSchoolSelection(false);
-      } else if (transformedSchools.length > 1) {
-        // Multiple schools - need selection
-        setNeedsSchoolSelection(true);
-      } else {
-        setNeedsSchoolSelection(false);
+      } else if (tempToken) {
+        // User logged in but hasn't selected a school yet
+        if (transformedSchools.length === 1) {
+          // Auto-select if only one school
+          setNeedsSchoolSelection(true); // Still need to call select-school API
+        } else {
+          setNeedsSchoolSelection(true);
+        }
       }
       
       setLoading(false);
-    } else if (user && portalSchools.length === 0) {
-      // User logged in but no schools fetched yet - might still be loading
+    } else if (user && loginSchools.length === 0 && !portalToken) {
+      // User logged in but no schools yet
       setSchools([]);
       setLoading(false);
       setNeedsSchoolSelection(false);
-    } else {
+    } else if (!user) {
       // No user
       setSchools([]);
       setCurrentSchoolState(null);
       setLoading(false);
       setNeedsSchoolSelection(false);
+    } else {
+      setLoading(false);
     }
-  }, [user, portalSchools]);
+  }, [user, loginSchools, selectedSchool, tempToken, portalToken]);
 
-  const setCurrentSchool = (school: School) => {
+  const setCurrentSchool = async (school: School) => {
+    // Find the original login school data
+    const loginSchool = loginSchools.find(ls => ls.school_id === school.school_id);
+    
+    if (loginSchool) {
+      // Call the select-school API
+      const { error } = await selectSchool(loginSchool);
+      
+      if (error) {
+        console.error('Failed to select school:', error);
+        throw error;
+      }
+    }
+    
     setCurrentSchoolState(school);
     setNeedsSchoolSelection(false);
-    localStorage.setItem('seed_current_school', school.id);
+    localStorage.setItem('seed_current_school', school.school_id);
   };
 
   return (

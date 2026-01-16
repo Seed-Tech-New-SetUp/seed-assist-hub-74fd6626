@@ -1,18 +1,29 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSchool } from "@/contexts/SchoolContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Building2, MapPin, ChevronRight, LogOut } from "lucide-react";
+import { Building2, MapPin, ChevronRight, LogOut, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function SchoolSelector() {
   const { schools, setCurrentSchool, loading } = useSchool();
   const { signOut, user } = useAuth();
   const navigate = useNavigate();
+  const [selectingSchoolId, setSelectingSchoolId] = useState<string | null>(null);
 
-  const handleSchoolSelect = (school: typeof schools[0]) => {
-    setCurrentSchool(school);
-    navigate("/dashboard");
+  const handleSchoolSelect = async (school: typeof schools[0]) => {
+    try {
+      setSelectingSchoolId(school.id);
+      await setCurrentSchool(school);
+      navigate("/dashboard");
+    } catch (error) {
+      console.error('Failed to select school:', error);
+      toast.error('Failed to select school. Please try again.');
+    } finally {
+      setSelectingSchoolId(null);
+    }
   };
 
   const handleSignOut = async () => {
@@ -94,7 +105,9 @@ export default function SchoolSelector() {
             {schools.map((school) => (
               <Card
                 key={school.id}
-                className="cursor-pointer transition-all duration-200 hover:shadow-medium hover:border-primary/30 group"
+                className={`cursor-pointer transition-all duration-200 hover:shadow-medium hover:border-primary/30 group ${
+                  selectingSchoolId === school.id ? 'opacity-75 pointer-events-none' : ''
+                }`}
                 onClick={() => handleSchoolSelect(school)}
               >
                 <CardContent className="p-4">
@@ -111,7 +124,8 @@ export default function SchoolSelector() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-sm truncate">{school.name}</h3>
+                      <h3 className="font-medium text-sm truncate">{school.short_name || school.name}</h3>
+                      <p className="text-xs text-muted-foreground truncate">{school.university}</p>
                       {(school.city || school.country) && (
                         <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
                           <MapPin className="h-3 w-3" />
@@ -120,11 +134,15 @@ export default function SchoolSelector() {
                           </span>
                         </div>
                       )}
-                      <span className="text-xs text-primary mt-1 inline-block">
+                      <span className="text-xs text-primary mt-1 inline-block capitalize">
                         {school.role_name || school.role}
                       </span>
                     </div>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                    {selectingSchoolId === school.id ? (
+                      <Loader2 className="h-5 w-5 text-primary animate-spin" />
+                    ) : (
+                      <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                    )}
                   </div>
                 </CardContent>
               </Card>

@@ -10,12 +10,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Building2, ChevronDown, Check, MapPin } from "lucide-react";
+import { Building2, ChevronDown, Check, MapPin, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export function SchoolSwitcher() {
   const { schools, currentSchool, setCurrentSchool } = useSchool();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [switchingSchoolId, setSwitchingSchoolId] = useState<string | null>(null);
 
   if (!currentSchool || schools.length <= 1) {
     return currentSchool ? (
@@ -33,9 +35,9 @@ export function SchoolSwitcher() {
         </div>
         <div className="hidden sm:block">
           <p className="text-xs font-medium leading-tight truncate max-w-[120px]">
-            {currentSchool.name}
+            {currentSchool.short_name || currentSchool.name}
           </p>
-          <p className="text-[10px] text-muted-foreground">
+          <p className="text-[10px] text-muted-foreground capitalize">
             {currentSchool.role_name || currentSchool.role}
           </p>
         </div>
@@ -43,10 +45,23 @@ export function SchoolSwitcher() {
     ) : null;
   }
 
-  const handleSchoolChange = (school: typeof schools[0]) => {
-    setCurrentSchool(school);
-    setOpen(false);
-    navigate("/dashboard");
+  const handleSchoolChange = async (school: typeof schools[0]) => {
+    if (currentSchool.id === school.id) {
+      setOpen(false);
+      return;
+    }
+    
+    try {
+      setSwitchingSchoolId(school.id);
+      await setCurrentSchool(school);
+      setOpen(false);
+      navigate("/dashboard");
+    } catch (error) {
+      console.error('Failed to switch school:', error);
+      toast.error('Failed to switch school. Please try again.');
+    } finally {
+      setSwitchingSchoolId(null);
+    }
   };
 
   return (
@@ -69,9 +84,9 @@ export function SchoolSwitcher() {
           </div>
           <div className="hidden sm:block text-left">
             <p className="text-xs font-medium leading-tight truncate max-w-[120px]">
-              {currentSchool.name}
+              {currentSchool.short_name || currentSchool.name}
             </p>
-            <p className="text-[10px] text-muted-foreground">
+            <p className="text-[10px] text-muted-foreground capitalize">
               {currentSchool.role_name || currentSchool.role}
             </p>
           </div>
@@ -87,7 +102,8 @@ export function SchoolSwitcher() {
           <DropdownMenuItem
             key={school.id}
             onClick={() => handleSchoolChange(school)}
-            className="cursor-pointer py-2"
+            className={`cursor-pointer py-2 ${switchingSchoolId === school.id ? 'opacity-75' : ''}`}
+            disabled={switchingSchoolId !== null}
           >
             <div className="flex items-center gap-3 w-full">
               <div className="h-8 w-8 rounded bg-muted flex items-center justify-center flex-shrink-0">
@@ -102,7 +118,10 @@ export function SchoolSwitcher() {
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{school.name}</p>
+                <p className="text-sm font-medium truncate">{school.short_name || school.name}</p>
+                {school.university && (
+                  <p className="text-xs text-muted-foreground truncate">{school.university}</p>
+                )}
                 {(school.city || school.country) && (
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <MapPin className="h-2.5 w-2.5" />
@@ -112,9 +131,11 @@ export function SchoolSwitcher() {
                   </div>
                 )}
               </div>
-              {currentSchool.id === school.id && (
+              {switchingSchoolId === school.id ? (
+                <Loader2 className="h-4 w-4 text-primary animate-spin flex-shrink-0" />
+              ) : currentSchool.id === school.id ? (
                 <Check className="h-4 w-4 text-primary flex-shrink-0" />
-              )}
+              ) : null}
             </div>
           </DropdownMenuItem>
         ))}

@@ -5,7 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const PORTAL_BASE_URL = "http://server.seedglobaleducation.com/api";
+const PORTAL_BASE_URL = "https://seedglobaleducation.com/api/assist";
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -17,81 +17,33 @@ serve(async (req) => {
     const url = new URL(req.url);
     const action = url.searchParams.get('action') || 'login';
 
-    if (action === 'me') {
-      // Get user info with bearer token
-      const authHeader = req.headers.get('Authorization');
+    if (action === 'select-school') {
+      // Step 2: Select school and get final token
+      const { email, client_id, school_id, tempToken } = await req.json();
       
-      if (!authHeader) {
-        return new Response(
-          JSON.stringify({ error: 'Authorization header required' }),
-          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
+      console.log(`Selecting school for email: ${email}, school_id: ${school_id}`);
 
-      console.log('Fetching user info from portal...');
-
-      const response = await fetch(`${PORTAL_BASE_URL}/member-auth/me`, {
-        method: 'GET',
+      const response = await fetch(`${PORTAL_BASE_URL}/auth/select-school.php`, {
+        method: 'POST',
         headers: {
-          'Authorization': authHeader,
+          'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
+        body: JSON.stringify({ email, client_id, school_id, tempToken }),
       });
 
       const data = await response.json();
-      console.log(`Portal /me response status: ${response.status}`);
+      console.log(`Portal select-school response status: ${response.status}`);
 
-      if (!response.ok) {
-        console.error('Portal user info failed:', data);
+      if (!response.ok || !data.success) {
+        console.error('Portal select-school failed:', data);
         return new Response(
-          JSON.stringify({ error: data.message || 'Failed to fetch user info', details: data }),
-          { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      return new Response(
-        JSON.stringify(data),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    if (action === 'members-by-email') {
-      // Get user's school memberships by email
-      const authHeader = req.headers.get('Authorization');
-      const email = url.searchParams.get('email');
-      
-      if (!authHeader) {
-        return new Response(
-          JSON.stringify({ error: 'Authorization header required' }),
-          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      if (!email) {
-        return new Response(
-          JSON.stringify({ error: 'Email parameter required' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      console.log(`Fetching members by email: ${email}`);
-
-      const response = await fetch(`${PORTAL_BASE_URL}/assist/members/by-email?email=${encodeURIComponent(email)}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': authHeader,
-          'Accept': 'application/json',
-        },
-      });
-
-      const data = await response.json();
-      console.log(`Portal members-by-email response status: ${response.status}`);
-
-      if (!response.ok) {
-        console.error('Portal members-by-email failed:', data);
-        return new Response(
-          JSON.stringify({ error: data.message || 'Failed to fetch member schools', details: data }),
-          { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          JSON.stringify({ 
+            error: data.message || 'Failed to select school',
+            error_code: 'SCHOOL_SELECT_FAILED',
+            details: data 
+          }),
+          { status: response.status || 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
@@ -107,7 +59,7 @@ serve(async (req) => {
       
       console.log(`Requesting password reset OTP for email: ${email}`);
 
-      const response = await fetch(`${PORTAL_BASE_URL}/member-auth/forgot-password`, {
+      const response = await fetch(`${PORTAL_BASE_URL}/auth/forgot-password.php`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -143,7 +95,7 @@ serve(async (req) => {
       
       console.log(`Verifying OTP for email: ${email}`);
 
-      const response = await fetch(`${PORTAL_BASE_URL}/member-auth/verify-otp`, {
+      const response = await fetch(`${PORTAL_BASE_URL}/auth/verify-otp.php`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -179,7 +131,7 @@ serve(async (req) => {
       
       console.log(`Resetting password for email: ${email}`);
 
-      const response = await fetch(`${PORTAL_BASE_URL}/member-auth/reset-password`, {
+      const response = await fetch(`${PORTAL_BASE_URL}/auth/reset-password.php`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -209,12 +161,12 @@ serve(async (req) => {
       );
     }
 
-    // Default: Login action
+    // Default: Login action (Step 1)
     const { email, password } = await req.json();
 
     console.log(`Attempting login for email: ${email}`);
 
-    const response = await fetch(`${PORTAL_BASE_URL}/member-auth/login`, {
+    const response = await fetch(`${PORTAL_BASE_URL}/auth/login.php`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -228,7 +180,7 @@ serve(async (req) => {
     console.log(`Portal response status: ${response.status}`);
     console.log(`Portal response data:`, JSON.stringify(data));
 
-    if (!response.ok) {
+    if (!response.ok || !data.success) {
       console.error('Portal login failed:', data);
       
       // Determine error type based on response
@@ -258,7 +210,7 @@ serve(async (req) => {
           error_code: errorCode,
           details: data 
         }),
-        { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: response.status || 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 

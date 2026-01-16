@@ -2,15 +2,96 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
-interface PortalSchool {
-  id: string;
-  mapping_id: string;
-  entity_id: string;
-  name: string;
-  role: string;
-  role_name: string;
+// School data from login response
+interface LoginSchool {
+  client_id: string;
+  school_id: string;
+  school_name: string;
+  short_name: string;
+  university: string;
+  school_logo: string | null;
+  city: string;
   country: string;
-  country_code: string;
+  role: string;
+}
+
+// Full school data after selection
+interface SelectedSchool {
+  school_id: string;
+  internal_name: string;
+  university: string;
+  school_name: string;
+  short_name: string;
+  school_type: string;
+  about: string;
+  city: string;
+  state: string;
+  country: string;
+  school_logo: string | null;
+  school_banner: string | null;
+  primary_color: string;
+  secondary_color: string;
+  currency: string;
+  social_media: {
+    instagram: string;
+    twitter: string;
+    youtube: string;
+    linkedin: string;
+  };
+}
+
+// Permissions structure
+interface Permissions {
+  engagement: {
+    enabled: boolean;
+    subModules: {
+      inPersonEvents: boolean;
+      virtualEvents: boolean;
+    };
+  };
+  scholarshipPortal: {
+    enabled: boolean;
+    subModules: {
+      applicantPools: boolean;
+    };
+  };
+  orgProfile: {
+    enabled: boolean;
+    subModules: {
+      generalInfo: boolean;
+      academicPrograms: boolean;
+    };
+  };
+  admissions: {
+    enabled: boolean;
+    subModules: {
+      applicationPipeline: boolean;
+    };
+  };
+  teamManagement: {
+    enabled: boolean;
+  };
+  icr: {
+    enabled: boolean;
+    note?: string;
+  };
+}
+
+// User data from login response
+interface LoginUser {
+  client_id: string;
+  client_name: string;
+  email: string;
+}
+
+// Full user data after school selection
+interface SelectedUser {
+  client_id: string;
+  client_name: string;
+  email: string;
+  role: string;
+  designation: string;
+  business_regions: string | null;
 }
 
 interface PortalUser {
@@ -20,12 +101,9 @@ interface PortalUser {
   user_metadata?: {
     full_name?: string;
   };
-  // Extended user info from /me endpoint
+  client_id?: string;
   role?: string;
-  phone?: string;
-  avatar_url?: string;
-  organization?: string;
-  schools?: PortalSchool[];
+  designation?: string;
 }
 
 interface AuthContextType {
@@ -33,8 +111,12 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   portalToken: string | null;
-  portalSchools: PortalSchool[];
+  tempToken: string | null;
+  loginSchools: LoginSchool[];
+  selectedSchool: SelectedSchool | null;
+  permissions: Permissions | null;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  selectSchool: (school: LoginSchool) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
@@ -45,29 +127,62 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | PortalUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [portalToken, setPortalToken] = useState<string | null>(null);
-  const [portalSchools, setPortalSchools] = useState<PortalSchool[]>([]);
+  const [tempToken, setTempToken] = useState<string | null>(null);
+  const [loginSchools, setLoginSchools] = useState<LoginSchool[]>([]);
+  const [selectedSchool, setSelectedSchool] = useState<SelectedSchool | null>(null);
+  const [permissions, setPermissions] = useState<Permissions | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Check for stored portal session first
     const storedPortalUser = localStorage.getItem('portal_user');
     const storedPortalToken = localStorage.getItem('portal_token');
-    const storedPortalSchools = localStorage.getItem('portal_schools');
+    const storedSelectedSchool = localStorage.getItem('portal_selected_school');
+    const storedPermissions = localStorage.getItem('portal_permissions');
+    const storedLoginSchools = localStorage.getItem('portal_login_schools');
+    const storedTempToken = localStorage.getItem('portal_temp_token');
     
     if (storedPortalUser && storedPortalToken) {
       try {
         const parsedUser = JSON.parse(storedPortalUser);
         setUser(parsedUser);
         setPortalToken(storedPortalToken);
-        if (storedPortalSchools) {
-          setPortalSchools(JSON.parse(storedPortalSchools));
+        if (storedSelectedSchool) {
+          setSelectedSchool(JSON.parse(storedSelectedSchool));
+        }
+        if (storedPermissions) {
+          setPermissions(JSON.parse(storedPermissions));
+        }
+        if (storedLoginSchools) {
+          setLoginSchools(JSON.parse(storedLoginSchools));
         }
         setLoading(false);
         return;
       } catch (e) {
+        // Clear corrupted data
         localStorage.removeItem('portal_user');
         localStorage.removeItem('portal_token');
-        localStorage.removeItem('portal_schools');
+        localStorage.removeItem('portal_selected_school');
+        localStorage.removeItem('portal_permissions');
+        localStorage.removeItem('portal_login_schools');
+        localStorage.removeItem('portal_temp_token');
+      }
+    }
+
+    // Check for temp token (user logged in but hasn't selected school)
+    if (storedTempToken && storedLoginSchools) {
+      try {
+        const parsedUser = storedPortalUser ? JSON.parse(storedPortalUser) : null;
+        if (parsedUser) {
+          setUser(parsedUser);
+        }
+        setTempToken(storedTempToken);
+        setLoginSchools(JSON.parse(storedLoginSchools));
+        setLoading(false);
+        return;
+      } catch (e) {
+        localStorage.removeItem('portal_temp_token');
+        localStorage.removeItem('portal_login_schools');
       }
     }
 
@@ -89,48 +204,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchMemberSchools = async (token: string, email: string): Promise<PortalSchool[]> => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/portal-auth?action=members-by-email&email=${encodeURIComponent(email)}`,
-        {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        console.error('Failed to fetch member schools');
-        return [];
-      }
-
-      const result = await response.json();
-      console.log('Member schools fetched:', result);
-
-      if (!result.success || !result.data) {
-        return [];
-      }
-
-      // Transform the portal API response to our PortalSchool format
-      return result.data.map((member: any) => ({
-        id: member.company?.company_id?.toString() || member.id?.toString(),
-        mapping_id: member.mapping_id,
-        entity_id: member.company?.entity_id,
-        name: member.company?.organization_name || 'Unknown School',
-        role: member.role?.role || member.company?.member_type || 'member',
-        role_name: member.role?.role_name || member.company?.member_type_label || 'Member',
-        country: member.country?.country_name || '',
-        country_code: member.country?.country_code || '',
-      }));
-    } catch (err) {
-      console.error('Error fetching member schools:', err);
-      return [];
-    }
-  };
-
   const signIn = async (email: string, password: string) => {
     try {
       const { data, error } = await supabase.functions.invoke('portal-auth', {
@@ -146,36 +219,119 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: new Error(data.error) };
       }
 
-      // Extract token from login response
-      const token = data.data?.access_token || data.access_token || data.token || 'portal_authenticated';
-      const loginUser = data.data?.user || data.user;
-      
-      // Fetch member schools using the token
-      const schools = await fetchMemberSchools(token, email);
+      if (!data.success || !data.data) {
+        return { error: new Error('Invalid response from server') };
+      }
+
+      const { user: loginUser, schools, tempToken: token } = data.data;
       
       // Create portal user from login response
       const portalUser: PortalUser = {
-        id: loginUser?.id || email,
-        email: email,
-        full_name: loginUser?.full_name || loginUser?.name || email.split('@')[0],
+        id: loginUser?.client_id || email,
+        email: loginUser?.email || email,
+        full_name: loginUser?.client_name || email.split('@')[0],
         user_metadata: {
-          full_name: loginUser?.full_name || loginUser?.name || email.split('@')[0],
+          full_name: loginUser?.client_name || email.split('@')[0],
         },
-        phone: loginUser?.phone?.toString(),
-        schools: schools,
+        client_id: loginUser?.client_id,
       };
       
+      // Store temp data for school selection
       localStorage.setItem('portal_user', JSON.stringify(portalUser));
-      localStorage.setItem('portal_token', token);
-      localStorage.setItem('portal_schools', JSON.stringify(schools));
+      localStorage.setItem('portal_temp_token', token);
+      localStorage.setItem('portal_login_schools', JSON.stringify(schools || []));
       
       setUser(portalUser);
-      setPortalToken(token);
-      setPortalSchools(schools);
+      setTempToken(token);
+      setLoginSchools(schools || []);
 
       return { error: null };
     } catch (err) {
       console.error('Sign in error:', err);
+      return { error: err as Error };
+    }
+  };
+
+  const selectSchool = async (school: LoginSchool) => {
+    try {
+      const currentUser = user as PortalUser;
+      const currentTempToken = tempToken || localStorage.getItem('portal_temp_token');
+      
+      if (!currentTempToken || !currentUser?.email) {
+        return { error: new Error('No temp token available. Please login again.') };
+      }
+
+      const { data, error } = await supabase.functions.invoke('portal-auth', {
+        body: { 
+          email: currentUser.email,
+          client_id: school.client_id,
+          school_id: school.school_id,
+          tempToken: currentTempToken,
+        },
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      // Add query param for action
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/portal-auth?action=select-school`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({
+            email: currentUser.email,
+            client_id: school.client_id,
+            school_id: school.school_id,
+            tempToken: currentTempToken,
+          }),
+        }
+      );
+
+      const responseData = await response.json();
+
+      if (!response.ok || !responseData.success) {
+        console.error('School selection failed:', responseData);
+        return { error: new Error(responseData.error || 'Failed to select school') };
+      }
+
+      const { token, user: selectedUser, school: selectedSchoolData, permissions: userPermissions } = responseData.data;
+
+      // Update user with full data
+      const updatedUser: PortalUser = {
+        id: selectedUser?.client_id || currentUser.id,
+        email: selectedUser?.email || currentUser.email,
+        full_name: selectedUser?.client_name || currentUser.full_name,
+        user_metadata: {
+          full_name: selectedUser?.client_name || currentUser.full_name,
+        },
+        client_id: selectedUser?.client_id,
+        role: selectedUser?.role,
+        designation: selectedUser?.designation,
+      };
+
+      // Store final session data
+      localStorage.setItem('portal_user', JSON.stringify(updatedUser));
+      localStorage.setItem('portal_token', token);
+      localStorage.setItem('portal_selected_school', JSON.stringify(selectedSchoolData));
+      localStorage.setItem('portal_permissions', JSON.stringify(userPermissions));
+      localStorage.setItem('seed_current_school', school.school_id);
+      
+      // Clear temp data
+      localStorage.removeItem('portal_temp_token');
+
+      setUser(updatedUser);
+      setPortalToken(token);
+      setTempToken(null);
+      setSelectedSchool(selectedSchoolData);
+      setPermissions(userPermissions);
+
+      return { error: null };
+    } catch (err) {
+      console.error('Select school error:', err);
       return { error: err as Error };
     }
   };
@@ -198,21 +354,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    // Clear portal session
+    // Clear all portal session data
     localStorage.removeItem('portal_user');
     localStorage.removeItem('portal_token');
-    localStorage.removeItem('portal_schools');
+    localStorage.removeItem('portal_temp_token');
+    localStorage.removeItem('portal_login_schools');
+    localStorage.removeItem('portal_selected_school');
+    localStorage.removeItem('portal_permissions');
     localStorage.removeItem('seed_current_school');
+    
     setUser(null);
     setPortalToken(null);
-    setPortalSchools([]);
+    setTempToken(null);
+    setLoginSchools([]);
+    setSelectedSchool(null);
+    setPermissions(null);
     
     // Also sign out from Supabase if there's a session
     await supabase.auth.signOut();
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, portalToken, portalSchools, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      session, 
+      loading, 
+      portalToken, 
+      tempToken,
+      loginSchools,
+      selectedSchool,
+      permissions,
+      signIn, 
+      selectSchool,
+      signUp, 
+      signOut 
+    }}>
       {children}
     </AuthContext.Provider>
   );
