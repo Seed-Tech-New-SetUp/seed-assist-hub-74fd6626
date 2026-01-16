@@ -48,9 +48,10 @@ interface OverviewData {
     city: string;
     country: string;
     date: string;
+    start_time?: string;
+    timezone?: string;
     registrant_count: number;
-    venue?: string;
-    title?: string;
+    venue_name?: string;
   } | null;
   latest_report: {
     event_id: string;
@@ -287,20 +288,21 @@ export default function InPersonEventsHome() {
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                 <div className="space-y-2">
                   <h3 className="text-xl font-semibold">
-                    {nextEvent.title || `${nextEvent.event_type} - ${nextEvent.city}`}
+                    {nextEvent.event_type} - {nextEvent.city}
                   </h3>
                   <div className="flex flex-col sm:flex-row gap-4 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1.5">
                       <Calendar className="h-4 w-4" />
                       {formatDate(nextEvent.date)}
+                      {nextEvent.start_time && ` at ${nextEvent.start_time.slice(0, 5)} ${nextEvent.timezone || ''}`}
                     </span>
                     <span className="flex items-center gap-1.5">
                       <MapPin className="h-4 w-4" />
-                      {nextEvent.city}, {nextEvent.country}
+                      {nextEvent.venue_name || `${nextEvent.city}, ${nextEvent.country}`}
                     </span>
                   </div>
                   <p className="text-sm">
-                    <span className="font-medium text-foreground">{nextEvent.registrant_count}</span>
+                    <span className="font-medium text-foreground">{nextEvent.registrant_count?.toLocaleString()}</span>
                     <span className="text-muted-foreground"> registrations so far</span>
                   </p>
                 </div>
