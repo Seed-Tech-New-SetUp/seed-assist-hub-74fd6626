@@ -17,6 +17,39 @@ serve(async (req) => {
     const url = new URL(req.url);
     const action = url.searchParams.get('action') || 'login';
 
+    // Proxy API calls that need authentication
+    if (action === 'proxy') {
+      const endpoint = url.searchParams.get('endpoint');
+      const authHeader = req.headers.get('authorization');
+      
+      if (!endpoint) {
+        return new Response(
+          JSON.stringify({ error: 'Missing endpoint parameter', error_code: 'MISSING_ENDPOINT' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log(`Proxying request to: ${endpoint}`);
+
+      const proxyResponse = await fetch(endpoint, {
+        method: req.method === 'POST' ? 'POST' : 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          ...(authHeader ? { 'Authorization': authHeader } : {}),
+        },
+        ...(req.method === 'POST' ? { body: await req.text() } : {}),
+      });
+
+      const data = await proxyResponse.json();
+      console.log(`Proxy response status: ${proxyResponse.status}`);
+
+      return new Response(
+        JSON.stringify(data),
+        { status: proxyResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     if (action === 'select-school') {
       // Step 2: Select school and get final token
       const { email, school_id, tempToken } = await req.json();

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
+
 import { 
   Users, 
   UserCheck, 
@@ -135,11 +136,16 @@ export default function InPersonEventsHome() {
 
       try {
         setLoading(true);
+        const externalEndpoint = `https://admin.seedglobaleducation.com/api/in-person-event/overview.php?school_id=${selectedSchool.school_id}`;
+        
+        // Use proxy action to call external API via edge function (avoids CORS)
         const response = await fetch(
-          `https://admin.seedglobaleducation.com/api/in-person-event/overview.php?school_id=${selectedSchool.school_id}`,
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/portal-auth?action=proxy&endpoint=${encodeURIComponent(externalEndpoint)}`,
           {
             headers: {
-              Authorization: `Bearer ${portalToken}`,
+              'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+              'Authorization': `Bearer ${portalToken}`,
+              'Content-Type': 'application/json',
             },
           }
         );
