@@ -381,81 +381,94 @@ const CampusTourReports = () => {
         )}
 
         {/* Past Events & Reports */}
-        <Card className="border-border/50">
-          <CardHeader>
-            <CardTitle className="text-lg font-display">Past Events & Reports</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {pastEvents.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">No past events found</p>
-            ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {pastEvents.map((event) => (
-                  <Card key={event.id} className="bg-card/50 border-border/50 hover:shadow-md transition-shadow">
-                    <CardContent className="p-4 space-y-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <h3 className="font-semibold text-foreground line-clamp-2">{event.eventName}</h3>
-                          <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
-                            <MapPin className="h-3 w-3" /> {event.location}
-                          </p>
-                        </div>
-                        <Badge variant="outline" className="shrink-0">{event.city}</Badge>
+        {pastEvents.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <FileText className="h-5 w-5 text-muted-foreground" />
+                Past Events & Reports
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {pastEvents
+                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                .map((event) => (
+                <div
+                  key={event.id}
+                  className="flex items-center justify-between p-4 rounded-lg border transition-colors hover:bg-muted/50"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="p-2.5 rounded-lg bg-muted">
+                      <FileText className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-medium">{event.eventName}</h4>
+                        <Badge variant="secondary">Completed</Badge>
                       </div>
-                      
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Calendar className="h-4 w-4" />
-                        {formatDate(event.date)}
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        <div className="bg-muted/50 rounded p-2 text-center">
-                          <p className="font-bold text-foreground">{event.registrants}</p>
-                          <p className="text-xs text-muted-foreground">Registrants</p>
-                        </div>
-                        <div className="bg-muted/50 rounded p-2 text-center">
-                          <p className="font-bold text-foreground">{event.attended}</p>
-                          <p className="text-xs text-muted-foreground">Attended</p>
-                        </div>
+                      <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3.5 w-3.5" />
+                          {formatDate(event.date)}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3.5 w-3.5" />
+                          {event.location || event.city}
+                        </span>
                       </div>
 
-                      <div className="pt-2 border-t border-border/50">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="w-full gap-2"
-                          onClick={() => handleDownload(event.id, event.eventName)}
-                          disabled={downloadingId === event.id}
-                        >
-                          {downloadingId === event.id ? (
-                            <>
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                              Downloading...
-                            </>
-                          ) : (
-                            <>
-                              <Download className="h-4 w-4" />
-                              Download Report
-                            </>
-                          )}
-                        </Button>
-                        {event.report_downloaded ? (
-                          <p className="text-xs text-muted-foreground mt-1 text-center">
-                            Report downloaded
-                            {event.lastDownloadedBy ? ` • Last by ${event.lastDownloadedBy}` : ""}
-                            {event.lastDownloadedAt ? ` • ${formatDateTime(event.lastDownloadedAt)}` : ""}
-                          </p>
-                        ) : (
-                          <p className="text-xs text-muted-foreground mt-1 text-center">Report not downloaded yet</p>
-                        )}
+                      {event.report_downloaded ? (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Report downloaded
+                          {event.lastDownloadedBy ? ` • Last by ${event.lastDownloadedBy}` : ""}
+                          {event.lastDownloadedAt ? ` • ${formatDateTime(event.lastDownloadedAt)}` : ""}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground mt-1">Report not downloaded yet</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-6">
+                    <div className="hidden md:flex items-center gap-6 text-sm">
+                      <div className="text-center">
+                        <p className="font-semibold">{event.registrants}</p>
+                        <p className="text-muted-foreground text-xs">Registered</p>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                      <div className="text-center">
+                        <p className="font-semibold">{event.attended}</p>
+                        <p className="text-muted-foreground text-xs">Attended</p>
+                      </div>
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      disabled={downloadingId === event.id}
+                      onClick={() => handleDownload(event.id, event.eventName)}
+                    >
+                      {downloadingId === event.id ? (
+                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                      ) : (
+                        <Download className="h-4 w-4 mr-1" />
+                      )}
+                      {downloadingId === event.id ? "Downloading..." : "Report"}
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Empty state */}
+        {events.length === 0 && (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium">No events yet</h3>
+              <p className="text-muted-foreground mt-1">Campus Tour events will appear here</p>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </DashboardLayout>
   );
