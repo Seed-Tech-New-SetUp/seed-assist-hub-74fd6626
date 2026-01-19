@@ -115,7 +115,7 @@ const BSFReports = () => {
 
       try {
         const response = await fetch(
-          `https://seedglobaleducation.com/api/assist/in-person-event/bsf.php`,
+          `https://seedglobaleducation.com/api/assist/in-person-event/bsf`,
           {
             headers: {
               Authorization: `Bearer ${portalToken}`,
