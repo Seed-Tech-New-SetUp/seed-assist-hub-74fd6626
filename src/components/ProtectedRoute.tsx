@@ -28,13 +28,9 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // If user has multiple schools and hasn't selected one, redirect to selector
-  if (needsSchoolSelection && location.pathname !== "/select-school") {
-    return <Navigate to="/select-school" replace />;
-  }
-
-  // If user has no schools, allow access but show limited functionality
-  if (schools.length === 0 && location.pathname !== "/select-school") {
+  // Only redirect to school selection for multi-school users who haven't selected
+  // Single school users are auto-selected in AuthContext, so don't redirect them
+  if (needsSchoolSelection && schools.length > 1 && location.pathname !== "/select-school") {
     return <Navigate to="/select-school" replace />;
   }
 

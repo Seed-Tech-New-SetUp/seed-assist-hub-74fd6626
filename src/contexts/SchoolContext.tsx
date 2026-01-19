@@ -60,21 +60,25 @@ export function SchoolProvider({ children }: { children: ReactNode }) {
         
         setCurrentSchoolState(current);
         setNeedsSchoolSelection(false);
+        setLoading(false);
       } else if (tempToken) {
         // User logged in but hasn't selected a school yet
-        // For single school users, the AuthContext auto-selects, so wait for that
         if (transformedSchools.length === 1) {
-          // Single school user - don't set needsSchoolSelection, wait for auto-select to complete
+          // Single school user - auto-select is handled by AuthContext
+          // Keep loading true until portalToken is set (auto-select completes)
+          // Don't set needsSchoolSelection to prevent redirect to select-school
           setNeedsSchoolSelection(false);
+          // Don't set loading to false yet - wait for portalToken
         } else {
           // Multi-school user needs to manually select
           setNeedsSchoolSelection(true);
+          setLoading(false);
         }
+      } else {
+        setLoading(false);
       }
-      
-      setLoading(false);
     } else if (user && loginSchools.length === 0 && !portalToken) {
-      // User logged in but no schools yet
+      // User logged in but no schools yet - keep loading if we're waiting for data
       setSchools([]);
       setLoading(false);
       setNeedsSchoolSelection(false);
