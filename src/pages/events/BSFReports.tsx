@@ -31,6 +31,20 @@ const formatDate = (dateStr: string) => {
   });
 };
 
+const formatDateTime = (dateTimeStr: string) => {
+  // API returns "YYYY-MM-DD HH:mm:ss" (no timezone). Convert to ISO-ish for Date.
+  const safe = dateTimeStr.replace(" ", "T");
+  const date = new Date(safe);
+  if (Number.isNaN(date.getTime())) return dateTimeStr;
+  return date.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
 const getEventStatus = (dateStr: string): "upcoming" | "live" | "completed" => {
   const eventDate = new Date(dateStr);
   const today = new Date();
@@ -101,6 +115,10 @@ const BSFReports = () => {
     venue: string;
     registrants: number;
     attendees: number;
+    report_downloaded?: boolean;
+    last_downloaded_at?: string | null;
+    last_downloaded_by?: string | null;
+    download_count?: number;
     event_type?: string;
   }>>([]);
   const [loading, setLoading] = useState(true);
@@ -141,6 +159,10 @@ const BSFReports = () => {
             venue: event.venue_name,
             registrants: event.registrants || 0,
             attendees: event.attendees || 0,
+            report_downloaded: Boolean(event.report_downloaded),
+            last_downloaded_at: event.last_downloaded_at ?? null,
+            last_downloaded_by: event.last_downloaded_by ?? null,
+            download_count: typeof event.download_count === "number" ? event.download_count : 0,
             event_type: event.event_type,
           }));
           setApiEvents(transformedEvents);
@@ -373,6 +395,16 @@ const BSFReports = () => {
                           {event.venue || event.city}
                         </span>
                       </div>
+
+                      {event.report_downloaded ? (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Report downloaded{typeof event.download_count === "number" ? ` (${event.download_count}x)` : ""}
+                          {event.last_downloaded_by ? ` • Last by ${event.last_downloaded_by}` : ""}
+                          {event.last_downloaded_at ? ` • ${formatDateTime(event.last_downloaded_at)}` : ""}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground mt-1">Report not downloaded yet</p>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-6">
