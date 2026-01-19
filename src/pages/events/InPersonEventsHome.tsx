@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
+import { decodeObjectStrings } from "@/lib/utils/decode-utf8";
 
 import { 
   Users, 
@@ -150,11 +151,13 @@ export default function InPersonEventsHome() {
         }
 
         const result = await response.json();
-        console.log("In-person overview API response:", result);
-        if (result.success) {
-          setOverviewData(result.data);
+        // Decode UTF-8 encoded strings to fix special characters
+        const decodedResult = decodeObjectStrings(result);
+        console.log("In-person overview API response:", decodedResult);
+        if (decodedResult.success) {
+          setOverviewData(decodedResult.data);
         } else {
-          throw new Error(result.message || "Failed to fetch data");
+          throw new Error(decodedResult.message || "Failed to fetch data");
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");

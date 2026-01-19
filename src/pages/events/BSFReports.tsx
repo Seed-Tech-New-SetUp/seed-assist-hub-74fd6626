@@ -18,6 +18,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { exportToXLSX } from "@/lib/utils/xlsx-export";
 import { useAuth } from "@/contexts/AuthContext";
+import { decodeObjectStrings } from "@/lib/utils/decode-utf8";
 
 // Mock data removed - using real API data now
 
@@ -127,10 +128,12 @@ const BSFReports = () => {
         }
 
         const result = await response.json();
-        console.log("BSF API response:", result);
+        // Decode UTF-8 encoded strings to fix special characters
+        const decodedResult = decodeObjectStrings(result);
+        console.log("BSF API response:", decodedResult);
 
-        if (result.success && result.data?.events) {
-          const transformedEvents = result.data.events.map((event: any) => ({
+        if (decodedResult.success && decodedResult.data?.events) {
+          const transformedEvents = decodedResult.data.events.map((event: any) => ({
             id: event.event_id,
             eventName: `BSF ${event.city} ${new Date(event.date).getFullYear()}`,
             city: event.city,
