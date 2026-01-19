@@ -33,8 +33,8 @@ serve(async (req) => {
     } else if (action === 'meetups') {
       apiUrl = 'https://seedglobaleducation.com/api/assist/virtual-event/meetups';
     } else if (action === 'download' && eventId) {
-      // Handle report download
-      apiUrl = `https://seedglobaleducation.com/api/assist/virtual-event/reports.php?id=${eventId}`;
+      // Handle masterclass report download
+      apiUrl = `https://seedglobaleducation.com/api/assist/virtual-event/masterclass/report?id=${eventId}`;
       
       const response = await fetch(apiUrl, {
         method: 'GET',
