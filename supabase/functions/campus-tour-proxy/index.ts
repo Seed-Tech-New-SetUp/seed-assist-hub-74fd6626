@@ -22,7 +22,43 @@ serve(async (req) => {
       );
     }
 
-    // Forward the request to the Campus Tour API
+    // Check for event ID in query params (for report download)
+    const url = new URL(req.url);
+    const eventId = url.searchParams.get('id');
+
+    if (eventId) {
+      // Download report for specific event
+      const response = await fetch(
+        `https://seedglobaleducation.com/api/assist/in-person-event/campus-tour/reports.php?id=${eventId}`,
+        {
+          method: 'GET',
+          headers: {
+            'Authorization': authHeader,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Failed to download report' }),
+          { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Get the file as array buffer and return as blob
+      const fileBuffer = await response.arrayBuffer();
+      
+      return new Response(fileBuffer, {
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'Content-Disposition': `attachment; filename="campus_tour_report_${eventId}.xlsx"`,
+        },
+      });
+    }
+
+    // Forward the request to the Campus Tour API (list events)
     const response = await fetch('https://seedglobaleducation.com/api/assist/in-person-event/campus-tour/', {
       method: 'GET',
       headers: {
@@ -43,7 +79,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Campus Tour Proxy Error:', error);
     return new Response(
-      JSON.stringify({ success: false, error: 'Failed to fetch Campus Tour events' }),
+      JSON.stringify({ success: false, error: 'Failed to fetch Campus Tour data' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

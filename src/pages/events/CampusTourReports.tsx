@@ -203,7 +203,7 @@ const CampusTourReports = () => {
     setDownloadingId(eventId);
     try {
       const response = await fetch(
-        `https://seedglobaleducation.com/api/assist/in-person-event/campus-tour/reports.php?id=${eventId}`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/campus-tour-proxy?id=${eventId}`,
         {
           headers: {
             Authorization: `Bearer ${portalToken}`,
