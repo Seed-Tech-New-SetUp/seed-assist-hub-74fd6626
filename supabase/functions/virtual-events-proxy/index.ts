@@ -21,8 +21,46 @@ serve(async (req) => {
       );
     }
 
-    // Forward the request to the Virtual Events Overview API
-    const response = await fetch('https://seedglobaleducation.com/api/assist/virtual-event/overview.php', {
+    const url = new URL(req.url);
+    const action = url.searchParams.get('action');
+    const eventId = url.searchParams.get('id');
+
+    let apiUrl = 'https://seedglobaleducation.com/api/assist/virtual-event/overview.php';
+
+    // Route based on action
+    if (action === 'masterclass') {
+      apiUrl = 'https://seedglobaleducation.com/api/assist/virtual-event/masterclass';
+    } else if (action === 'meetups') {
+      apiUrl = 'https://seedglobaleducation.com/api/assist/virtual-event/meetups';
+    } else if (action === 'download' && eventId) {
+      // Handle report download
+      apiUrl = `https://seedglobaleducation.com/api/assist/virtual-event/reports.php?id=${eventId}`;
+      
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': authHeader,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`API responded with status: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      
+      return new Response(blob, {
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'Content-Disposition': `attachment; filename="virtual-event-report-${eventId}.xlsx"`,
+        },
+      });
+    }
+
+    // Forward the request to the appropriate API
+    const response = await fetch(apiUrl, {
       method: 'GET',
       headers: {
         'Authorization': authHeader,

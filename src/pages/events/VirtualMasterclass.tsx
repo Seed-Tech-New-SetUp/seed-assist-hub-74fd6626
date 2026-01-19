@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,114 +26,175 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Video, Users, Link2, Download, MoreHorizontal, Search, Calendar } from "lucide-react";
+import { Video, Users, Download, MoreHorizontal, Search, Calendar, UserCheck, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-import { exportToXLSX } from "@/lib/utils/xlsx-export";
+import { getCookie } from "@/lib/utils/cookies";
+import { Skeleton } from "@/components/ui/skeleton";
+import { decodeObjectStrings } from "@/lib/utils/decode-utf8";
 
-// TODO: Replace with actual API call
-// import { fetchMasterclassReports } from "@/lib/api/reports";
-const fetchMasterclassReports = async () => {
-  // Simulated API delay
-  await new Promise(resolve => setTimeout(resolve, 100));
-  
-  return [
-    {
-      id: "1",
-      eventName: "MBA Admissions Masterclass",
-      date: "2024-03-18",
-      attendees: 245,
-      connections: 89,
-      recordingAvailable: true,
-      lastDownloadedBy: { name: "John Smith", date: "2024-03-20" },
-    },
-    {
-      id: "2",
-      eventName: "Executive MBA Overview",
-      date: "2024-03-10",
-      attendees: 180,
-      connections: 65,
-      recordingAvailable: true,
-    },
-    {
-      id: "3",
-      eventName: "Scholarship Application Tips",
-      date: "2024-02-25",
-      attendees: 320,
-      connections: 112,
-      recordingAvailable: true,
-      lastDownloadedBy: { name: "Sarah Johnson", date: "2024-02-28" },
-    },
-  ];
-};
+interface MasterclassEvent {
+  event_id: string;
+  hs_event_record_id: string;
+  event_name: string;
+  slug: string;
+  date: string;
+  time: string;
+  timezone: string;
+  status: string;
+  reports_published: boolean;
+  registrants: number;
+  attendees: number;
+  female_percentage: number;
+  prospects: number;
+  report_downloaded: boolean;
+  last_downloaded_at: string | null;
+  last_downloaded_by: string | null;
+  download_count: number;
+}
 
-// TODO: Replace with actual API call for individual report data
-const fetchMasterclassReportData = async (eventId: string) => {
-  // Simulated API delay
-  await new Promise(resolve => setTimeout(resolve, 100));
-  
-  // Return mock attendee data for the report
-  return [
-    { name: "Alice Brown", email: "alice@example.com", company: "StartUp Inc", registeredAt: "2024-03-15", attended: "Yes" },
-    { name: "Charlie Wilson", email: "charlie@example.com", company: "Big Corp", registeredAt: "2024-03-14", attended: "Yes" },
-    { name: "Diana Ross", email: "diana@example.com", company: "Media Co", registeredAt: "2024-03-13", attended: "Yes" },
-  ];
-};
+interface MasterclassResponse {
+  success: boolean;
+  data: {
+    events: MasterclassEvent[];
+    meta: {
+      total_events: number;
+      total_registrants: number;
+      total_attendees: number;
+    };
+  };
+}
 
 export default function VirtualMasterclass() {
   const [searchQuery, setSearchQuery] = useState("");
   const [yearFilter, setYearFilter] = useState<string>("all");
-  const [masterclassEvents, setMasterclassEvents] = useState<Awaited<ReturnType<typeof fetchMasterclassReports>>>([]);
+  const [masterclassEvents, setMasterclassEvents] = useState<MasterclassEvent[]>([]);
+  const [meta, setMeta] = useState<MasterclassResponse['data']['meta'] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
-  // Fetch data on mount
-  useState(() => {
-    fetchMasterclassReports().then(data => {
-      setMasterclassEvents(data);
-      setIsLoading(false);
-    });
+  useEffect(() => {
+    const fetchMasterclassData = async () => {
+      try {
+        const portalToken = getCookie('portal_token');
+        if (!portalToken) {
+          toast.error("Session expired. Please log in again.");
+          return;
+        }
+
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/virtual-events-proxy?action=masterclass`,
+          {
+            headers: {
+              Authorization: `Bearer ${portalToken}`,
+            },
+          }
+        );
+
+        const result: MasterclassResponse = await response.json();
+
+        if (result.success && result.data) {
+          const decodedEvents = decodeObjectStrings(result.data.events) as MasterclassEvent[];
+          setMasterclassEvents(decodedEvents);
+          setMeta(result.data.meta);
+        } else {
+          toast.error("Failed to fetch masterclass data");
+        }
+      } catch (error) {
+        console.error("Error fetching masterclass data:", error);
+        toast.error("Failed to fetch masterclass data");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchMasterclassData();
+  }, []);
+
+  // Filter events based on search and year
+  const filteredEvents = masterclassEvents.filter((event) => {
+    const matchesSearch = event.event_name.toLowerCase().includes(searchQuery.toLowerCase());
+    const eventYear = new Date(event.date).getFullYear().toString();
+    const matchesYear = yearFilter === "all" || eventYear === yearFilter;
+    return matchesSearch && matchesYear;
   });
 
-  // Calculate stats
-  const totalEvents = masterclassEvents.length;
-  const totalAttendees = masterclassEvents.reduce((sum, e) => sum + e.attendees, 0);
-  const totalConnections = masterclassEvents.reduce((sum, e) => sum + e.connections, 0);
+  // Get unique years for filter
+  const availableYears = [...new Set(masterclassEvents.map(e => new Date(e.date).getFullYear()))].sort((a, b) => b - a);
 
-  const handleDownloadReport = async (event: typeof masterclassEvents[0]) => {
+  const handleDownloadReport = async (event: MasterclassEvent) => {
+    if (!event.reports_published) {
+      toast.error("Report not yet published for this event");
+      return;
+    }
+
+    setDownloadingId(event.event_id);
     try {
-      const reportData = await fetchMasterclassReportData(event.id);
-      exportToXLSX(reportData, {
-        filename: `masterclass-report-${event.eventName.replace(/\s+/g, '-').toLowerCase()}`,
-        sheetName: 'Attendees'
-      });
-      toast.success(`Report downloaded: ${event.eventName}`);
+      const portalToken = getCookie('portal_token');
+      if (!portalToken) {
+        toast.error("Session expired. Please log in again.");
+        return;
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/virtual-events-proxy?action=download&id=${event.event_id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${portalToken}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to download report");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `masterclass-report-${event.slug || event.event_id}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast.success(`Report downloaded: ${event.event_name}`);
     } catch (error) {
+      console.error("Error downloading report:", error);
       toast.error("Failed to download report");
+    } finally {
+      setDownloadingId(null);
     }
   };
 
-  const handleDownloadAll = async () => {
-    try {
-      // Fetch all student records from all events
-      const allStudentData: Record<string, unknown>[] = [];
-      for (const event of masterclassEvents) {
-        const students = await fetchMasterclassReportData(event.id);
-        students.forEach(student => {
-          allStudentData.push({
-            ...student,
-            'Event Name': event.eventName,
-            'Event Date': event.date,
-          });
-        });
-      }
-      exportToXLSX(allStudentData, {
-        filename: 'all-masterclass-attendees',
-        sheetName: 'All Attendees'
-      });
-      toast.success("All attendee records downloaded");
-    } catch (error) {
-      toast.error("Failed to download records");
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const formatTime = (timeStr: string, timezone: string) => {
+    const [hours, minutes] = timeStr.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 || 12;
+    return `${displayHour}:${minutes} ${ampm} ${timezone}`;
+  };
+
+  const getStatusBadge = (status: string, reportsPublished: boolean) => {
+    if (status === "completed" && reportsPublished) {
+      return <Badge className="bg-green-500/10 text-green-600 border-green-500/20">Report Available</Badge>;
+    } else if (status === "completed") {
+      return <Badge variant="secondary">Processing</Badge>;
+    } else if (status === "upcoming") {
+      return <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/20">Upcoming</Badge>;
+    } else if (status === "live") {
+      return <Badge className="bg-red-500/10 text-red-600 border-red-500/20">Live Now</Badge>;
     }
+    return <Badge variant="secondary">{status}</Badge>;
   };
 
   return (
@@ -145,10 +206,6 @@ export default function VirtualMasterclass() {
             <h1 className="text-2xl font-display font-bold text-foreground">Virtual Event Reports</h1>
             <p className="text-muted-foreground mt-1">View reports from your virtual masterclass and meetup events</p>
           </div>
-          <Button onClick={handleDownloadAll} className="gap-2">
-            <Download className="h-4 w-4" />
-            Download All
-          </Button>
         </div>
 
         {/* Tabs */}
@@ -180,8 +237,9 @@ export default function VirtualMasterclass() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Years</SelectItem>
-                      <SelectItem value="2024">2024</SelectItem>
-                      <SelectItem value="2023">2023</SelectItem>
+                      {availableYears.map(year => (
+                        <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -197,7 +255,11 @@ export default function VirtualMasterclass() {
                       <Video className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold">{totalEvents}</p>
+                      {isLoading ? (
+                        <Skeleton className="h-8 w-16" />
+                      ) : (
+                        <p className="text-2xl font-bold">{meta?.total_events ?? 0}</p>
+                      )}
                       <p className="text-xs text-muted-foreground">Total Masterclasses</p>
                     </div>
                   </div>
@@ -210,8 +272,12 @@ export default function VirtualMasterclass() {
                       <Users className="h-5 w-5 text-blue-600" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold">{totalAttendees.toLocaleString()}</p>
-                      <p className="text-xs text-muted-foreground">Total Attendees</p>
+                      {isLoading ? (
+                        <Skeleton className="h-8 w-16" />
+                      ) : (
+                        <p className="text-2xl font-bold">{(meta?.total_registrants ?? 0).toLocaleString()}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground">Total Registrants</p>
                     </div>
                   </div>
                 </CardContent>
@@ -220,11 +286,15 @@ export default function VirtualMasterclass() {
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-green-500/10">
-                      <Link2 className="h-5 w-5 text-green-600" />
+                      <UserCheck className="h-5 w-5 text-green-600" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold">{totalConnections.toLocaleString()}</p>
-                      <p className="text-xs text-muted-foreground">Total Connections</p>
+                      {isLoading ? (
+                        <Skeleton className="h-8 w-16" />
+                      ) : (
+                        <p className="text-2xl font-bold">{(meta?.total_attendees ?? 0).toLocaleString()}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground">Total Attendees</p>
                     </div>
                   </div>
                 </CardContent>
@@ -237,68 +307,97 @@ export default function VirtualMasterclass() {
                 <CardTitle className="text-lg">Masterclass Reports</CardTitle>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Event Name</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead className="text-right">Attendees</TableHead>
-                      <TableHead className="text-right">Connections</TableHead>
-                      <TableHead>Recording</TableHead>
-                      <TableHead>Last Downloaded</TableHead>
-                      <TableHead className="w-[100px]">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {masterclassEvents.map((event) => (
-                      <TableRow key={event.id}>
-                        <TableCell className="font-medium">{event.eventName}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            {new Date(event.date).toLocaleDateString()}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">{event.attendees.toLocaleString()}</TableCell>
-                        <TableCell className="text-right">{event.connections.toLocaleString()}</TableCell>
-                        <TableCell>
-                          {event.recordingAvailable ? (
-                            <Badge className="bg-green-500/10 text-green-600 border-green-500/20">
-                              Available
-                            </Badge>
-                          ) : (
-                            <Badge variant="secondary">Processing</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {event.lastDownloadedBy ? (
-                            <div className="text-xs">
-                              <p className="text-foreground">{event.lastDownloadedBy.name}</p>
-                              <p className="text-muted-foreground">{event.lastDownloadedBy.date}</p>
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground text-xs">Never</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleDownloadReport(event)}>
-                                <Download className="h-4 w-4 mr-2" />
-                                Download Report
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
+                {isLoading ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="flex items-center justify-between p-4 rounded-lg border">
+                        <div className="space-y-2">
+                          <Skeleton className="h-5 w-64" />
+                          <Skeleton className="h-4 w-32" />
+                        </div>
+                        <Skeleton className="h-8 w-24" />
+                      </div>
                     ))}
-                  </TableBody>
-                </Table>
+                  </div>
+                ) : filteredEvents.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Video className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No masterclass events found</p>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Event Name</TableHead>
+                        <TableHead>Date & Time</TableHead>
+                        <TableHead className="text-right">Registrants</TableHead>
+                        <TableHead className="text-right">Attendees</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Last Downloaded</TableHead>
+                        <TableHead className="w-[100px]">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredEvents.map((event) => (
+                        <TableRow key={event.event_id}>
+                          <TableCell className="font-medium max-w-[300px]">
+                            <p className="truncate">{event.event_name}</p>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <div className="flex items-center gap-2">
+                                <Calendar className="h-4 w-4 text-muted-foreground" />
+                                {formatDate(event.date)}
+                              </div>
+                              <span className="text-xs text-muted-foreground ml-6">
+                                {formatTime(event.time, event.timezone)}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">{event.registrants.toLocaleString()}</TableCell>
+                          <TableCell className="text-right">{event.attendees.toLocaleString()}</TableCell>
+                          <TableCell>
+                            {getStatusBadge(event.status, event.reports_published)}
+                          </TableCell>
+                          <TableCell>
+                            {event.last_downloaded_by ? (
+                              <div className="text-xs">
+                                <p className="text-foreground">{event.last_downloaded_by}</p>
+                                <p className="text-muted-foreground">
+                                  {event.last_downloaded_at ? formatDate(event.last_downloaded_at) : ''}
+                                </p>
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground text-xs">Never</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" disabled={downloadingId === event.event_id}>
+                                  {downloadingId === event.event_id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  )}
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem 
+                                  onClick={() => handleDownloadReport(event)}
+                                  disabled={!event.reports_published}
+                                >
+                                  <Download className="h-4 w-4 mr-2" />
+                                  Download Report
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
