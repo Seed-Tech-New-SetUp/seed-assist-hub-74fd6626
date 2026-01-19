@@ -1,6 +1,15 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { 
+  getCookieJSON, 
+  getCookie, 
+  setCookieJSON, 
+  setCookie, 
+  removeCookie,
+  clearAuthCookies,
+  AUTH_COOKIES 
+} from "@/lib/utils/cookies";
 
 // School data from login response
 interface LoginSchool {
@@ -140,56 +149,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for stored portal session first
-    const storedPortalUser = localStorage.getItem('portal_user');
-    const storedPortalToken = localStorage.getItem('portal_token');
-    const storedSelectedSchool = localStorage.getItem('portal_selected_school');
-    const storedPermissions = localStorage.getItem('portal_permissions');
-    const storedLoginSchools = localStorage.getItem('portal_login_schools');
-    const storedTempToken = localStorage.getItem('portal_temp_token');
+    // Check for stored portal session from cookies
+    const storedPortalUser = getCookieJSON<PortalUser>(AUTH_COOKIES.USER);
+    const storedPortalToken = getCookie(AUTH_COOKIES.TOKEN);
+    const storedSelectedSchool = getCookieJSON<SelectedSchool>(AUTH_COOKIES.SELECTED_SCHOOL);
+    const storedPermissions = getCookieJSON<Permissions>(AUTH_COOKIES.PERMISSIONS);
+    const storedLoginSchools = getCookieJSON<LoginSchool[]>(AUTH_COOKIES.LOGIN_SCHOOLS);
+    const storedTempToken = getCookie(AUTH_COOKIES.TEMP_TOKEN);
     
     if (storedPortalUser && storedPortalToken) {
-      try {
-        const parsedUser = JSON.parse(storedPortalUser);
-        setUser(parsedUser);
-        setPortalToken(storedPortalToken);
-        if (storedSelectedSchool) {
-          setSelectedSchool(JSON.parse(storedSelectedSchool));
-        }
-        if (storedPermissions) {
-          setPermissions(JSON.parse(storedPermissions));
-        }
-        if (storedLoginSchools) {
-          setLoginSchools(JSON.parse(storedLoginSchools));
-        }
-        setLoading(false);
-        return;
-      } catch (e) {
-        // Clear corrupted data
-        localStorage.removeItem('portal_user');
-        localStorage.removeItem('portal_token');
-        localStorage.removeItem('portal_selected_school');
-        localStorage.removeItem('portal_permissions');
-        localStorage.removeItem('portal_login_schools');
-        localStorage.removeItem('portal_temp_token');
+      setUser(storedPortalUser);
+      setPortalToken(storedPortalToken);
+      if (storedSelectedSchool) {
+        setSelectedSchool(storedSelectedSchool);
       }
+      if (storedPermissions) {
+        setPermissions(storedPermissions);
+      }
+      if (storedLoginSchools) {
+        setLoginSchools(storedLoginSchools);
+      }
+      setLoading(false);
+      return;
     }
 
     // Check for temp token (user logged in but hasn't selected school)
     if (storedTempToken && storedLoginSchools) {
-      try {
-        const parsedUser = storedPortalUser ? JSON.parse(storedPortalUser) : null;
-        if (parsedUser) {
-          setUser(parsedUser);
-        }
-        setTempToken(storedTempToken);
-        setLoginSchools(JSON.parse(storedLoginSchools));
-        setLoading(false);
-        return;
-      } catch (e) {
-        localStorage.removeItem('portal_temp_token');
-        localStorage.removeItem('portal_login_schools');
+      if (storedPortalUser) {
+        setUser(storedPortalUser);
       }
+      setTempToken(storedTempToken);
+      setLoginSchools(storedLoginSchools);
+      setLoading(false);
+      return;
     }
 
     // Fallback to Supabase auth listener
@@ -242,10 +234,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         client_id: loginUser?.client_id,
       };
       
-      // Store temp data for school selection
-      localStorage.setItem('portal_user', JSON.stringify(portalUser));
-      localStorage.setItem('portal_temp_token', token);
-      localStorage.setItem('portal_login_schools', JSON.stringify(schools || []));
+      // Store temp data for school selection in cookies
+      setCookieJSON(AUTH_COOKIES.USER, portalUser);
+      setCookie(AUTH_COOKIES.TEMP_TOKEN, token);
+      setCookieJSON(AUTH_COOKIES.LOGIN_SCHOOLS, schools || []);
       
       setUser(portalUser);
       setTempToken(token);
@@ -289,12 +281,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             designation: selectedUser?.designation,
           };
 
-          // Store final session data
-          localStorage.setItem('portal_user', JSON.stringify(updatedUser));
-          localStorage.setItem('portal_token', finalToken);
-          localStorage.setItem('portal_selected_school', JSON.stringify(selectedSchoolData));
-          localStorage.setItem('portal_permissions', JSON.stringify(userPermissions));
-          localStorage.setItem('seed_current_school', singleSchool.school_id);
+          // Store final session data in cookies
+          setCookieJSON(AUTH_COOKIES.USER, updatedUser);
+          setCookie(AUTH_COOKIES.TOKEN, finalToken);
+          setCookieJSON(AUTH_COOKIES.SELECTED_SCHOOL, selectedSchoolData);
+          setCookieJSON(AUTH_COOKIES.PERMISSIONS, userPermissions);
+          setCookie(AUTH_COOKIES.CURRENT_SCHOOL_ID, singleSchool.school_id);
 
           setUser(updatedUser);
           setPortalToken(finalToken);
@@ -313,21 +305,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const selectSchool = async (school: LoginSchool) => {
     try {
       const currentUser = user as PortalUser;
-      const currentTempToken = tempToken || localStorage.getItem('portal_temp_token');
+      const currentTempToken = tempToken || getCookie(AUTH_COOKIES.TEMP_TOKEN);
       
       if (!currentTempToken || !currentUser?.email) {
         // Clear any stale data and redirect to login
-        localStorage.removeItem('portal_user');
-        localStorage.removeItem('portal_temp_token');
-        localStorage.removeItem('portal_login_schools');
+        clearAuthCookies();
         setUser(null);
         setTempToken(null);
         setLoginSchools([]);
         window.location.href = '/login';
         return { error: null };
       }
-
-      // Note: We're using fetch directly with query param instead of supabase.functions.invoke
 
       // Add query param for action
       const response = await fetch(
@@ -368,13 +356,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         designation: selectedUser?.designation,
       };
 
-      // Store final session data (keep temp token for school switching)
-      localStorage.setItem('portal_user', JSON.stringify(updatedUser));
-      localStorage.setItem('portal_token', token);
-      localStorage.setItem('portal_selected_school', JSON.stringify(selectedSchoolData));
-      localStorage.setItem('portal_permissions', JSON.stringify(userPermissions));
-      localStorage.setItem('seed_current_school', school.school_id);
-      // Note: We keep portal_temp_token stored so user can switch schools without re-login
+      // Store final session data in cookies (keep temp token for school switching)
+      setCookieJSON(AUTH_COOKIES.USER, updatedUser);
+      setCookie(AUTH_COOKIES.TOKEN, token);
+      setCookieJSON(AUTH_COOKIES.SELECTED_SCHOOL, selectedSchoolData);
+      setCookieJSON(AUTH_COOKIES.PERMISSIONS, userPermissions);
+      setCookie(AUTH_COOKIES.CURRENT_SCHOOL_ID, school.school_id);
+      // Note: We keep portal_temp_token cookie so user can switch schools without re-login
 
       setUser(updatedUser);
       setPortalToken(token);
@@ -407,14 +395,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    // Clear all portal session data
-    localStorage.removeItem('portal_user');
-    localStorage.removeItem('portal_token');
-    localStorage.removeItem('portal_temp_token');
-    localStorage.removeItem('portal_login_schools');
-    localStorage.removeItem('portal_selected_school');
-    localStorage.removeItem('portal_permissions');
-    localStorage.removeItem('seed_current_school');
+    // Clear all portal session cookies
+    clearAuthCookies();
     
     setUser(null);
     setPortalToken(null);

@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useAuth } from "./AuthContext";
-
+import { setCookie, AUTH_COOKIES } from "@/lib/utils/cookies";
 interface School {
   id: string;
   school_id: string;
@@ -109,7 +109,7 @@ export function SchoolProvider({ children }: { children: ReactNode }) {
     
     setCurrentSchoolState(school);
     setNeedsSchoolSelection(false);
-    localStorage.setItem('seed_current_school', school.school_id);
+    setCookie(AUTH_COOKIES.CURRENT_SCHOOL_ID, school.school_id);
   };
 
   return (
