@@ -108,14 +108,14 @@ const BSFReports = () => {
 
   useEffect(() => {
     const fetchBSFEvents = async () => {
-      if (!portalToken || !selectedSchool?.school_id) {
+      if (!portalToken) {
         setLoading(false);
         return;
       }
 
       try {
         const response = await fetch(
-          `https://seedglobaleducation.com/api/assist/in-person-event/bsf?school_id=${selectedSchool.school_id}`,
+          `https://seedglobaleducation.com/api/assist/in-person-event/bsf`,
           {
             headers: {
               Authorization: `Bearer ${portalToken}`,
@@ -154,7 +154,7 @@ const BSFReports = () => {
     };
 
     fetchBSFEvents();
-  }, [portalToken, selectedSchool?.school_id]);
+  }, [portalToken]);
 
   // Use API events (no more mock data)
   const allEvents = apiEvents;
