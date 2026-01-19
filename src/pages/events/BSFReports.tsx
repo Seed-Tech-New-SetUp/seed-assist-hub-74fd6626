@@ -92,7 +92,7 @@ const CountdownTimer = ({ targetDate }: { targetDate: string }) => {
 
 const BSFReports = () => {
   const navigate = useNavigate();
-  const { portalToken } = useAuth();
+  const { portalToken, selectedSchool } = useAuth();
   const [apiEvents, setApiEvents] = useState<Array<{
     id: string;
     eventName: string;
@@ -108,14 +108,14 @@ const BSFReports = () => {
 
   useEffect(() => {
     const fetchBSFEvents = async () => {
-      if (!portalToken) {
+      if (!portalToken || !selectedSchool?.school_id) {
         setLoading(false);
         return;
       }
 
       try {
         const response = await fetch(
-          `https://seedglobaleducation.com/api/assist/in-person-event/bsf`,
+          `https://seedglobaleducation.com/api/assist/in-person-event/bsf?school_id=${selectedSchool.school_id}`,
           {
             headers: {
               Authorization: `Bearer ${portalToken}`,
@@ -154,7 +154,7 @@ const BSFReports = () => {
     };
 
     fetchBSFEvents();
-  }, [portalToken]);
+  }, [portalToken, selectedSchool?.school_id]);
 
   // Use API events (no more mock data)
   const allEvents = apiEvents;
