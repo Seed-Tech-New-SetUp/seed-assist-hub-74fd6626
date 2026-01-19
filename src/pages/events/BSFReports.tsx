@@ -13,10 +13,10 @@ import {
   Sparkles,
   Radio,
   FileText,
-  Download
+  Download,
+  Loader2
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { exportToXLSX } from "@/lib/utils/xlsx-export";
 import { useAuth } from "@/contexts/AuthContext";
 import { decodeObjectStrings } from "@/lib/utils/decode-utf8";
 
@@ -165,23 +165,50 @@ const BSFReports = () => {
   
   const nextUpcoming = upcomingEvents.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
 
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
   const handleDownload = async (reportId: string, eventName: string) => {
-    const event = allEvents.find(e => e.id === reportId);
-    if (!event) return;
+    if (!portalToken) {
+      toast({ title: "Error", description: "Please login to download reports.", variant: "destructive" });
+      return;
+    }
+
+    setDownloadingId(reportId);
     
-    exportToXLSX(
-      [{
-        "Event Name": event.eventName,
-        "City": event.city,
-        "Date": event.date,
-        "Registrants": event.registrants,
-        "Attendees": event.attendees,
-        "Connections": event.connections,
-      }],
-      { filename: `${eventName.replace(/\s+/g, "_")}_Report`, sheetName: "BSF Report" }
-    );
-    
-    toast({ title: "Report Downloaded", description: `${eventName} report has been downloaded.` });
+    try {
+      const response = await fetch(
+        `https://seedglobaleducation.com/api/assist/in-person-event/bsf/reports.php?id=${reportId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${portalToken}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to download report");
+      }
+
+      // Get the blob from response
+      const blob = await response.blob();
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${eventName.replace(/\s+/g, "_")}_Report.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast({ title: "Report Downloaded", description: `${eventName} report has been downloaded.` });
+    } catch (error) {
+      console.error("Error downloading report:", error);
+      toast({ title: "Download Failed", description: "Failed to download the report. Please try again.", variant: "destructive" });
+    } finally {
+      setDownloadingId(null);
+    }
   };
 
   if (loading) {
@@ -364,12 +391,21 @@ const BSFReports = () => {
                         <p className="text-muted-foreground text-xs">Connections</p>
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm" onClick={(e) => {
-                      e.stopPropagation();
-                      handleDownload(event.id, event.eventName);
-                    }}>
-                      <Download className="h-4 w-4 mr-1" />
-                      Report
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      disabled={downloadingId === event.id}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDownload(event.id, event.eventName);
+                      }}
+                    >
+                      {downloadingId === event.id ? (
+                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                      ) : (
+                        <Download className="h-4 w-4 mr-1" />
+                      )}
+                      {downloadingId === event.id ? "Downloading..." : "Report"}
                     </Button>
                   </div>
                 </div>
