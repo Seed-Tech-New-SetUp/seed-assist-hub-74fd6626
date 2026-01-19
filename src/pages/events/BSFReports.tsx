@@ -115,10 +115,11 @@ const BSFReports = () => {
 
       try {
         const response = await fetch(
-          `https://seedglobaleducation.com/api/assist/in-person-event/bsf`,
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bsf-proxy`,
           {
             headers: {
               Authorization: `Bearer ${portalToken}`,
+              'Content-Type': 'application/json',
             },
           }
         );
