@@ -101,7 +101,6 @@ const BSFReports = () => {
     venue: string;
     registrants: number;
     attendees: number;
-    connections: number;
     event_type?: string;
   }>>([]);
   const [loading, setLoading] = useState(true);
@@ -142,7 +141,6 @@ const BSFReports = () => {
             venue: event.venue_name,
             registrants: event.registrants || 0,
             attendees: event.attendees || 0,
-            connections: 0,
             event_type: event.event_type,
           }));
           setApiEvents(transformedEvents);
@@ -386,10 +384,6 @@ const BSFReports = () => {
                       <div className="text-center">
                         <p className="font-semibold">{event.attendees}</p>
                         <p className="text-muted-foreground text-xs">Attended</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="font-semibold">{event.connections}</p>
-                        <p className="text-muted-foreground text-xs">Connections</p>
                       </div>
                     </div>
                     <Button 
