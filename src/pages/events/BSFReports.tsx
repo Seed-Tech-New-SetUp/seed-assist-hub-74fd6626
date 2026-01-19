@@ -398,7 +398,7 @@ const BSFReports = () => {
 
                       {event.report_downloaded ? (
                         <p className="text-xs text-muted-foreground mt-1">
-                          Report downloaded{typeof event.download_count === "number" ? ` (${event.download_count}x)` : ""}
+                          Report downloaded
                           {event.last_downloaded_by ? ` • Last by ${event.last_downloaded_by}` : ""}
                           {event.last_downloaded_at ? ` • ${formatDateTime(event.last_downloaded_at)}` : ""}
                         </p>
