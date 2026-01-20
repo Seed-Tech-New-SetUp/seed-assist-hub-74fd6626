@@ -30,7 +30,7 @@ serve(async (req) => {
     // Route based on action
     if (action === 'masterclass') {
       apiUrl = 'https://seedglobaleducation.com/api/assist/virtual-event/masterclass';
-    } else if (action === 'meetups') {
+    } else if (action === 'meetup' || action === 'meetups') {
       apiUrl = 'https://seedglobaleducation.com/api/assist/virtual-event/meetup';
     } else if (action === 'download-meetup' && eventId) {
       // Handle meetup report download

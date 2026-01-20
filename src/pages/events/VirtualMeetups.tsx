@@ -1,309 +1,516 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Video, Users, Link2, Download, MoreHorizontal, Search, Calendar } from "lucide-react";
-import { Link } from "react-router-dom";
-import { toast } from "sonner";
-import { exportToXLSX } from "@/lib/utils/xlsx-export";
+import { Button } from "@/components/ui/button";
+import { Calendar, Clock, Radio, FileText, Download, Loader2, Users, Sparkles, Video, Link2 } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import { getCookie } from "@/lib/utils/cookies";
+import { decodeObjectStrings } from "@/lib/utils/decode-utf8";
 
-// TODO: Replace with actual API call
-// import { fetchMeetupReports } from "@/lib/api/reports";
-const fetchMeetupReports = async () => {
-  // Simulated API delay
-  await new Promise((resolve) => setTimeout(resolve, 100));
+interface MeetupEvent {
+  event_id: string;
+  hs_event_record_id: string;
+  event_name: string;
+  slug: string;
+  date: string;
+  time: string;
+  timezone: string;
+  status: string;
+  reports_published: boolean;
+  registrants: number;
+  attendees: number;
+  connections: number;
+  report_downloaded: boolean;
+  last_downloaded_at: string | null;
+  last_downloaded_by: string | null;
+  download_count: number;
+}
 
-  return [
-    {
-      id: "1",
-      eventName: "Asia MBA Meetup - Singapore",
-      date: "2024-03-22",
-      region: "Asia",
-      attendees: 45,
-      connections: 28,
-      lastDownloadedBy: { name: "John Smith", date: "2024-03-24" },
-    },
-    {
-      id: "2",
-      eventName: "Europe MBA Meetup - London",
-      date: "2024-03-15",
-      region: "Europe",
-      attendees: 62,
-      connections: 35,
-    },
-    {
-      id: "3",
-      eventName: "North America Meetup - New York",
-      date: "2024-03-08",
-      region: "North America",
-      attendees: 78,
-      connections: 42,
-      lastDownloadedBy: { name: "Sarah Johnson", date: "2024-03-10" },
-    },
-    {
-      id: "4",
-      eventName: "Middle East MBA Meetup - Dubai",
-      date: "2024-02-28",
-      region: "Middle East",
-      attendees: 38,
-      connections: 22,
-    },
-  ];
+interface MeetupResponse {
+  success: boolean;
+  data: {
+    events: MeetupEvent[];
+    meta: {
+      total_events: number;
+      total_registrants: number;
+      total_attendees: number;
+      total_connections: number;
+    };
+  };
+}
+
+const formatDate = (dateStr: string) => {
+  return new Date(dateStr).toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 };
 
-// TODO: Replace with actual API call for individual report data
-const fetchMeetupReportData = async (eventId: string) => {
-  // Simulated API delay
-  await new Promise((resolve) => setTimeout(resolve, 100));
+const formatTime = (timeStr: string, timezone: string) => {
+  if (!timeStr) return timezone || "";
+  const [hours, minutes] = timeStr.split(":");
+  const hour = parseInt(hours);
+  const ampm = hour >= 12 ? "PM" : "AM";
+  const hour12 = hour % 12 || 12;
+  return `${hour12}:${minutes} ${ampm} ${timezone || ""}`;
+};
 
-  // Return mock attendee data for the report
-  return [
-    { name: "John Doe", email: "john@example.com", company: "Tech Corp", registeredAt: "2024-03-20", attended: "Yes" },
-    {
-      name: "Jane Smith",
-      email: "jane@example.com",
-      company: "Finance Inc",
-      registeredAt: "2024-03-19",
-      attended: "Yes",
-    },
-    {
-      name: "Bob Johnson",
-      email: "bob@example.com",
-      company: "Consulting LLC",
-      registeredAt: "2024-03-18",
-      attended: "No",
-    },
-  ];
+const formatDateTime = (dateTimeStr: string) => {
+  if (!dateTimeStr) return "";
+  const safe = dateTimeStr.replace(" ", "T");
+  const date = new Date(safe);
+  if (Number.isNaN(date.getTime())) return dateTimeStr;
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
+
+const getEventStatus = (status: string): "upcoming" | "live" | "completed" => {
+  if (status === "completed") return "completed";
+  if (status === "live" || status === "ongoing") return "live";
+  return "upcoming";
+};
+
+const useCountdown = (targetDate: string) => {
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const difference = new Date(targetDate).getTime() - new Date().getTime();
+      if (difference > 0) {
+        setTimeLeft({
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+          minutes: Math.floor((difference / 1000 / 60) % 60),
+          seconds: Math.floor((difference / 1000) % 60),
+        });
+      }
+    };
+
+    calculateTimeLeft();
+    const timer = setInterval(calculateTimeLeft, 1000);
+    return () => clearInterval(timer);
+  }, [targetDate]);
+
+  return timeLeft;
+};
+
+const CountdownTimer = ({ targetDate }: { targetDate: string }) => {
+  const { days, hours, minutes, seconds } = useCountdown(targetDate);
+
+  return (
+    <div className="flex gap-2">
+      {[
+        { value: days, label: "D" },
+        { value: hours, label: "H" },
+        { value: minutes, label: "M" },
+        { value: seconds, label: "S" },
+      ].map((item) => (
+        <div key={item.label} className="flex items-center gap-0.5">
+          <span className="bg-primary/10 text-primary font-bold text-sm px-2 py-1 rounded">
+            {String(item.value).padStart(2, "0")}
+          </span>
+          <span className="text-xs text-muted-foreground">{item.label}</span>
+        </div>
+      ))}
+    </div>
+  );
 };
 
 export default function VirtualMeetups() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [yearFilter, setYearFilter] = useState<string>("all");
-  const [meetupEvents, setMeetupEvents] = useState<Awaited<ReturnType<typeof fetchMeetupReports>>>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [events, setEvents] = useState<MeetupEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [meta, setMeta] = useState<MeetupResponse["data"]["meta"] | null>(null);
 
-  // Fetch data on mount
-  useState(() => {
-    fetchMeetupReports().then((data) => {
-      setMeetupEvents(data);
-      setIsLoading(false);
-    });
-  });
-
-  // Calculate stats
-  const totalEvents = meetupEvents.length;
-  const totalAttendees = meetupEvents.reduce((sum, e) => sum + e.attendees, 0);
-  const totalConnections = meetupEvents.reduce((sum, e) => sum + e.connections, 0);
-
-  const handleDownloadReport = async (event: (typeof meetupEvents)[0]) => {
-    try {
-      const reportData = await fetchMeetupReportData(event.id);
-      exportToXLSX(reportData, {
-        filename: `meetup-report-${event.eventName.replace(/\s+/g, "-").toLowerCase()}`,
-        sheetName: "Attendees",
-      });
-      toast.success(`Report downloaded: ${event.eventName}`);
-    } catch (error) {
-      toast.error("Failed to download report");
-    }
-  };
-
-  const handleDownloadAll = async () => {
-    try {
-      // Fetch all student records from all events
-      const allStudentData: Record<string, unknown>[] = [];
-      for (const event of meetupEvents) {
-        const students = await fetchMeetupReportData(event.id);
-        students.forEach((student) => {
-          allStudentData.push({
-            ...student,
-            "Event Name": event.eventName,
-            "Event Date": event.date,
+  useEffect(() => {
+    const fetchMeetupData = async () => {
+      try {
+        const portalToken = getCookie("portal_token");
+        if (!portalToken) {
+          toast({
+            title: "Error",
+            description: "Session expired. Please log in again.",
+            variant: "destructive",
           });
+          setLoading(false);
+          return;
+        }
+
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/virtual-events-proxy?action=meetup`,
+          {
+            headers: {
+              Authorization: `Bearer ${portalToken}`,
+              "Content-Type": "application/json",
+            },
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch meetup data");
+        }
+
+        const result: MeetupResponse = await response.json();
+        const decodedResult = decodeObjectStrings(result) as MeetupResponse;
+        console.log("Meetup API response:", decodedResult);
+
+        if (decodedResult.success && decodedResult.data?.events) {
+          setEvents(decodedResult.data.events);
+          setMeta(decodedResult.data.meta);
+        }
+      } catch (error) {
+        console.error("Error fetching meetup data:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load meetup events.",
+          variant: "destructive",
         });
+      } finally {
+        setLoading(false);
       }
-      exportToXLSX(allStudentData, {
-        filename: "all-meetup-attendees",
-        sheetName: "All Attendees",
+    };
+
+    fetchMeetupData();
+  }, []);
+
+  const handleDownloadReport = async (event: MeetupEvent) => {
+    const portalToken = getCookie("portal_token");
+    if (!portalToken) {
+      toast({
+        title: "Error",
+        description: "Please login to download reports.",
+        variant: "destructive",
       });
-      toast.success("All attendee records downloaded");
+      return;
+    }
+
+    setDownloadingId(event.event_id);
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/virtual-events-proxy?action=download-meetup&id=${event.hs_event_record_id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${portalToken}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to download report");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${event.event_name.replace(/\s+/g, "_")}_Report.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "Report Downloaded",
+        description: `${event.event_name} report has been downloaded.`,
+      });
     } catch (error) {
-      toast.error("Failed to download records");
+      console.error("Error downloading report:", error);
+      toast({
+        title: "Download Failed",
+        description: "Failed to download the report. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setDownloadingId(null);
     }
   };
+
+  // Group events by status
+  const liveEvents = events.filter((e) => getEventStatus(e.status) === "live");
+  const upcomingEvents = events.filter((e) => getEventStatus(e.status) === "upcoming");
+  const completedEvents = events.filter((e) => getEventStatus(e.status) === "completed");
+
+  // Calculate stats from meta or events
+  const totalEvents = meta?.total_events ?? events.length;
+  const totalAttendees = meta?.total_attendees ?? events.reduce((sum, e) => sum + (e.attendees || 0), 0);
+  const totalConnections = meta?.total_connections ?? events.reduce((sum, e) => sum + (e.connections || 0), 0);
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-display font-bold text-foreground">Virtual Event Reports</h1>
-            <p className="text-muted-foreground mt-1">View reports from your virtual masterclass and meetup events</p>
-          </div>
-          <Button onClick={handleDownloadAll} className="gap-2">
-            <Download className="h-4 w-4" />
-            Download All
-          </Button>
+        <div>
+          <h1 className="text-2xl font-display font-bold text-foreground">1:1 Profile Evaluation</h1>
+          <p className="text-muted-foreground mt-1">All meetup events - upcoming, ongoing, and past</p>
         </div>
 
-        {/* Tabs */}
-        <Tabs defaultValue="meetups">
-          <TabsList>
-            <TabsTrigger value="masterclass" asChild>
-              <Link to="/events/virtual/masterclass">Masterclass</Link>
-            </TabsTrigger>
-            <TabsTrigger value="meetups">MeetUps</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="meetups" className="space-y-6 mt-6">
-            {/* Filters */}
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex flex-wrap gap-3 items-center">
-                  <div className="relative flex-1 min-w-[200px]">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search events..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-9"
-                    />
-                  </div>
-                  <Select value={yearFilter} onValueChange={setYearFilter}>
-                    <SelectTrigger className="w-[120px]">
-                      <SelectValue placeholder="Year" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Years</SelectItem>
-                      <SelectItem value="2024">2024</SelectItem>
-                      <SelectItem value="2023">2023</SelectItem>
-                    </SelectContent>
-                  </Select>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Video className="h-5 w-5 text-primary" />
                 </div>
-              </CardContent>
-            </Card>
+                <div>
+                  <p className="text-2xl font-bold">{totalEvents}</p>
+                  <p className="text-xs text-muted-foreground">Total Events</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-blue-500/10">
+                  <Users className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{totalAttendees.toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground">Total Attendees</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-green-500/10">
+                  <Link2 className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{totalConnections.toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground">Total Connections</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-primary/10">
-                      <Video className="h-5 w-5 text-primary" />
+        {/* Live Events */}
+        {liveEvents.length > 0 && (
+          <Card className="border-red-500/30 bg-gradient-to-r from-red-500/5 to-transparent">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Radio className="h-5 w-5 text-red-500 animate-pulse" />
+                Live Now
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {liveEvents.map((event) => (
+                <div
+                  key={event.event_id}
+                  className="flex items-center justify-between p-4 rounded-lg border bg-red-50/50 dark:bg-red-950/20 border-red-200 dark:border-red-900"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="p-2.5 rounded-lg bg-red-100 dark:bg-red-900/50">
+                      <Radio className="h-5 w-5 text-red-600 animate-pulse" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold">{totalEvents}</p>
-                      <p className="text-xs text-muted-foreground">Total MeetUps</p>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-medium">{event.event_name}</h4>
+                        <Badge className="bg-red-500 text-white border-0">Live Now</Badge>
+                      </div>
+                      <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3.5 w-3.5" />
+                          {formatDate(event.date)}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3.5 w-3.5" />
+                          {formatTime(event.time, event.timezone)}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-blue-500/10">
-                      <Users className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">{totalAttendees.toLocaleString()}</p>
-                      <p className="text-xs text-muted-foreground">Total Attendees</p>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <p className="text-sm font-medium flex items-center gap-1">
+                        <Users className="h-3.5 w-3.5" />
+                        {event.attendees} / {event.registrants} attending
+                      </p>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-green-500/10">
-                      <Link2 className="h-5 w-5 text-green-600" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">{totalConnections.toLocaleString()}</p>
-                      <p className="text-xs text-muted-foreground">Total Connections</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
 
-            {/* Reports Table */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">MeetUp Reports</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Event Name</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Region</TableHead>
-                      <TableHead className="text-right">Attendees</TableHead>
-                      <TableHead className="text-right">Connections</TableHead>
-                      <TableHead>Last Downloaded</TableHead>
-                      <TableHead className="w-[100px]">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {meetupEvents.map((event) => (
-                      <TableRow key={event.id}>
-                        <TableCell className="font-medium">{event.eventName}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            {new Date(event.date).toLocaleDateString()}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{event.region}</Badge>
-                        </TableCell>
-                        <TableCell className="text-right">{event.attendees.toLocaleString()}</TableCell>
-                        <TableCell className="text-right">{event.connections.toLocaleString()}</TableCell>
-                        <TableCell>
-                          {event.lastDownloadedBy ? (
-                            <div className="text-xs">
-                              <p className="text-foreground">{event.lastDownloadedBy.name}</p>
-                              <p className="text-muted-foreground">{event.lastDownloadedBy.date}</p>
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground text-xs">Never</span>
+        {/* Upcoming Events */}
+        {upcomingEvents.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-blue-500" />
+                Upcoming Events
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {upcomingEvents
+                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                .map((event, index) => (
+                  <div
+                    key={event.event_id}
+                    className="flex items-center justify-between p-4 rounded-lg border bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="p-2.5 rounded-lg bg-blue-100 dark:bg-blue-900/50">
+                        <Video className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-medium">{event.event_name}</h4>
+                          <Badge
+                            variant="outline"
+                            className="border-blue-500 text-blue-600 bg-blue-50 dark:bg-blue-950"
+                          >
+                            Upcoming
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3.5 w-3.5" />
+                            {formatDate(event.date)}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3.5 w-3.5" />
+                            {formatTime(event.time, event.timezone)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      {index === 0 && <CountdownTimer targetDate={event.date} />}
+                      <div className="text-right">
+                        <p className="text-sm font-medium flex items-center gap-1">
+                          <Users className="h-3.5 w-3.5" />
+                          {event.registrants} registered
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Completed Events with Reports */}
+        {completedEvents.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <FileText className="h-5 w-5 text-muted-foreground" />
+                Past Events & Reports
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {completedEvents
+                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                .map((event) => (
+                  <div
+                    key={event.event_id}
+                    className="flex items-center justify-between p-4 rounded-lg border transition-colors hover:bg-muted/50"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="p-2.5 rounded-lg bg-muted">
+                        <FileText className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-medium">{event.event_name}</h4>
+                          <Badge variant="secondary">Completed</Badge>
+                        </div>
+                        <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3.5 w-3.5" />
+                            {formatDate(event.date)}
+                          </span>
+                          {event.time && (
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3.5 w-3.5" />
+                              {formatTime(event.time, event.timezone)}
+                            </span>
                           )}
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleDownloadReport(event)}>
-                                <Download className="h-4 w-4 mr-2" />
-                                Download Report
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                        </div>
+
+                        {event.report_downloaded ? (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Report downloaded
+                            {event.last_downloaded_by ? ` • Last by ${event.last_downloaded_by}` : ""}
+                            {event.last_downloaded_at ? ` • ${formatDateTime(event.last_downloaded_at)}` : ""}
+                          </p>
+                        ) : (
+                          <p className="text-xs text-muted-foreground mt-1">Report not downloaded yet</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-6">
+                      <div className="hidden md:flex items-center gap-6 text-sm">
+                        <div className="text-center">
+                          <p className="font-semibold">{event.registrants}</p>
+                          <p className="text-muted-foreground text-xs">Registered</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="font-semibold">{event.attendees}</p>
+                          <p className="text-muted-foreground text-xs">Attended</p>
+                        </div>
+                        {event.connections !== undefined && (
+                          <div className="text-center">
+                            <p className="font-semibold">{event.connections}</p>
+                            <p className="text-muted-foreground text-xs">Connections</p>
+                          </div>
+                        )}
+                      </div>
+                      {event.reports_published && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={downloadingId === event.event_id}
+                          onClick={() => handleDownloadReport(event)}
+                        >
+                          {downloadingId === event.event_id ? (
+                            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                          ) : (
+                            <Download className="h-4 w-4 mr-1" />
+                          )}
+                          {downloadingId === event.event_id ? "Downloading..." : "Report"}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Empty state */}
+        {events.length === 0 && (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <Video className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium">No meetup events yet</h3>
+              <p className="text-muted-foreground mt-1">Virtual meetup events will appear here</p>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </DashboardLayout>
   );
