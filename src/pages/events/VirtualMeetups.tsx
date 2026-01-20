@@ -108,7 +108,7 @@ export default function VirtualMeetups() {
 
   const handleDownloadReport = async (event: (typeof meetupEvents)[0]) => {
     try {
-      const reportData = await fetchMeetupReportData(event.hs_event_record_id);
+      const reportData = await fetchMeetupReportData(event.id);
       exportToXLSX(reportData, {
         filename: `meetup-report-${event.eventName.replace(/\s+/g, "-").toLowerCase()}`,
         sheetName: "Attendees",
