@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,143 +28,35 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Star, Check, Pause, X, Trophy, Search, Eye } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Star, Check, Pause, X, Trophy, Search, Eye, AlertCircle, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { ApplicationFilters, FilterState } from "@/components/scholarships/ApplicationFilters";
-
-type WorkflowStatus = "SHORTLISTED" | "ON_HOLD" | "REJECTED" | "WINNER" | "PENDING";
-
-interface Applicant {
-  id: string;
-  name: string;
-  country: string;
-  countryCode: string;
-  nationality: string;
-  gender: string;
-  isSeedRecommended: boolean;
-  status: WorkflowStatus;
-  standardizedTest: {
-    name: string;
-    score: number;
-  };
-  ugCompletionYear: number;
-  ugGpa: number;
-  workExperience: number;
-}
-
-// Initial mock data
-const initialApplicants: Applicant[] = [
-  {
-    id: "1",
-    name: "Priya Sharma",
-    country: "India",
-    countryCode: "IN",
-    nationality: "Indian",
-    gender: "Female",
-    isSeedRecommended: true,
-    status: "PENDING",
-    standardizedTest: { name: "GMAT", score: 720 },
-    ugCompletionYear: 2019,
-    ugGpa: 3.8,
-    workExperience: 5,
-  },
-  {
-    id: "2",
-    name: "Chen Wei",
-    country: "China",
-    countryCode: "CN",
-    nationality: "Chinese",
-    gender: "Male",
-    isSeedRecommended: true,
-    status: "SHORTLISTED",
-    standardizedTest: { name: "GRE", score: 328 },
-    ugCompletionYear: 2020,
-    ugGpa: 3.6,
-    workExperience: 4,
-  },
-  {
-    id: "3",
-    name: "Ahmed Hassan",
-    country: "Egypt",
-    countryCode: "EG",
-    nationality: "Egyptian",
-    gender: "Male",
-    isSeedRecommended: false,
-    status: "ON_HOLD",
-    standardizedTest: { name: "GMAT", score: 680 },
-    ugCompletionYear: 2018,
-    ugGpa: 3.5,
-    workExperience: 6,
-  },
-  {
-    id: "4",
-    name: "Maria Garcia",
-    country: "Mexico",
-    countryCode: "MX",
-    nationality: "Mexican",
-    gender: "Female",
-    isSeedRecommended: true,
-    status: "WINNER",
-    standardizedTest: { name: "GRE", score: 335 },
-    ugCompletionYear: 2019,
-    ugGpa: 3.9,
-    workExperience: 5,
-  },
-  {
-    id: "5",
-    name: "John Obi",
-    country: "Nigeria",
-    countryCode: "NG",
-    nationality: "Nigerian",
-    gender: "Male",
-    isSeedRecommended: false,
-    status: "REJECTED",
-    standardizedTest: { name: "GMAT", score: 650 },
-    ugCompletionYear: 2021,
-    ugGpa: 3.2,
-    workExperience: 3,
-  },
-  {
-    id: "6",
-    name: "Sara Kim",
-    country: "South Korea",
-    countryCode: "KR",
-    nationality: "South Korean",
-    gender: "Female",
-    isSeedRecommended: true,
-    status: "PENDING",
-    standardizedTest: { name: "TOEFL", score: 115 },
-    ugCompletionYear: 2020,
-    ugGpa: 3.7,
-    workExperience: 3,
-  },
-  {
-    id: "7",
-    name: "Luis Fernandez",
-    country: "Brazil",
-    countryCode: "BR",
-    nationality: "Brazilian",
-    gender: "Male",
-    isSeedRecommended: false,
-    status: "SHORTLISTED",
-    standardizedTest: { name: "IELTS", score: 8 },
-    ugCompletionYear: 2017,
-    ugGpa: 3.4,
-    workExperience: 7,
-  },
-];
+import { 
+  fetchApplicants, 
+  Applicant, 
+  WorkflowStatus, 
+  ApiMeta, 
+  ApiFilterOptions 
+} from "@/lib/api/scholarship";
 
 const statusConfig: Record<WorkflowStatus, { label: string; icon: React.ElementType; color: string }> = {
-  PENDING: { label: "Pending", icon: Pause, color: "bg-gray-500/10 text-gray-600 border-gray-500/20" },
-  SHORTLISTED: { label: "Shortlisted", icon: Check, color: "bg-green-500/10 text-green-600 border-green-500/20" },
-  ON_HOLD: { label: "On Hold", icon: Pause, color: "bg-orange-500/10 text-orange-600 border-orange-500/20" },
-  REJECTED: { label: "Rejected", icon: X, color: "bg-red-500/10 text-red-600 border-red-500/20" },
-  WINNER: { label: "Winner", icon: Trophy, color: "bg-purple-500/10 text-purple-600 border-purple-500/20" },
+  pending: { label: "Pending", icon: Pause, color: "bg-gray-500/10 text-gray-600 border-gray-500/20" },
+  shortlisted: { label: "Shortlisted", icon: Check, color: "bg-green-500/10 text-green-600 border-green-500/20" },
+  onhold: { label: "On Hold", icon: Pause, color: "bg-orange-500/10 text-orange-600 border-orange-500/20" },
+  rejected: { label: "Rejected", icon: X, color: "bg-red-500/10 text-red-600 border-red-500/20" },
+  winner: { label: "Winner", icon: Trophy, color: "bg-purple-500/10 text-purple-600 border-purple-500/20" },
+  recommended: { label: "Recommended", icon: Star, color: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20" },
 };
 
 export default function ScholarshipApplications() {
-  const [applicants, setApplicants] = useState<Applicant[]>(initialApplicants);
+  const [applicants, setApplicants] = useState<Applicant[]>([]);
+  const [meta, setMeta] = useState<ApiMeta | null>(null);
+  const [filterOptions, setFilterOptions] = useState<ApiFilterOptions | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedApplicants, setSelectedApplicants] = useState<string[]>([]);
@@ -183,31 +75,80 @@ export default function ScholarshipApplications() {
   });
   const { toast } = useToast();
 
-  // Extract unique values for filters
-  const availableTests = useMemo(() => [...new Set(applicants.map(a => a.standardizedTest.name))], [applicants]);
-  const availableYears = useMemo(() => [...new Set(applicants.map(a => a.ugCompletionYear))].sort((a, b) => b - a), [applicants]);
-  const availableNationalities = useMemo(() => [...new Set(applicants.map(a => a.nationality))].sort(), [applicants]);
-  const availableGenders = useMemo(() => [...new Set(applicants.map(a => a.gender))].sort(), [applicants]);
+  // Fetch applicants from API
+  const loadApplicants = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await fetchApplicants();
+      setApplicants(data.applicants);
+      setMeta(data.meta);
+      setFilterOptions(data.filterOptions);
+    } catch (err) {
+      console.error("Failed to load applicants:", err);
+      setError(err instanceof Error ? err.message : "Failed to load applicants");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  // Calculate status counts
-  const statusCounts = useMemo(() => applicants.reduce((acc, applicant) => {
-    acc[applicant.status] = (acc[applicant.status] || 0) + 1;
-    return acc;
-  }, {} as Record<WorkflowStatus, number>), [applicants]);
+  useEffect(() => {
+    loadApplicants();
+  }, []);
+
+  // Use API filter options if available
+  const availableTests = useMemo(() => 
+    filterOptions?.test_types || [...new Set(applicants.map(a => a.standardizedTest.name))], 
+    [filterOptions, applicants]
+  );
+  const availableYears = useMemo(() => 
+    filterOptions?.completion_years || [...new Set(applicants.map(a => a.ugCompletionYear))].sort((a, b) => b - a), 
+    [filterOptions, applicants]
+  );
+  const availableNationalities = useMemo(() => 
+    filterOptions?.nationalities || [...new Set(applicants.map(a => a.nationality))].sort(), 
+    [filterOptions, applicants]
+  );
+  const availableGenders = useMemo(() => 
+    filterOptions?.genders || [...new Set(applicants.map(a => a.gender))].sort(), 
+    [filterOptions, applicants]
+  );
+
+  // Use API meta for status counts if available
+  const statusCounts = useMemo(() => {
+    if (meta?.status_counts) {
+      return {
+        pending: meta.status_counts.pending,
+        shortlisted: meta.status_counts.shortlisted,
+        onhold: meta.status_counts.onhold,
+        rejected: meta.status_counts.rejected,
+        winner: meta.status_counts.winners,
+        recommended: meta.status_counts.recommended,
+      };
+    }
+    return applicants.reduce((acc, applicant) => {
+      acc[applicant.status] = (acc[applicant.status] || 0) + 1;
+      return acc;
+    }, {} as Record<WorkflowStatus, number>);
+  }, [meta, applicants]);
   
-  const seedRecommendedCount = useMemo(() => applicants.filter(a => a.isSeedRecommended).length, [applicants]);
+  const seedRecommendedCount = useMemo(() => 
+    meta?.status_counts?.recommended || applicants.filter(a => a.isSeedRecommended).length, 
+    [meta, applicants]
+  );
 
   const filteredApplicants = applicants.filter(applicant => {
     // Search filter
     const matchesSearch = applicant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      applicant.country.toLowerCase().includes(searchQuery.toLowerCase());
+      applicant.country.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      applicant.email.toLowerCase().includes(searchQuery.toLowerCase());
     
     // Status filter
     let matchesStatus = true;
     if (statusFilter === "SEED_RECOMMENDED") {
       matchesStatus = applicant.isSeedRecommended;
     } else if (statusFilter !== "all") {
-      matchesStatus = applicant.status === statusFilter;
+      matchesStatus = applicant.status === statusFilter.toLowerCase();
     }
 
     // Advanced filters
@@ -220,9 +161,6 @@ export default function ScholarshipApplications() {
     const matchesYear = filters.ugCompletionYears.length === 0 ||
       filters.ugCompletionYears.includes(applicant.ugCompletionYear);
     
-    const matchesCgpa = applicant.ugGpa >= filters.cgpaRange[0] &&
-      applicant.ugGpa <= filters.cgpaRange[1];
-    
     const matchesWorkExp = applicant.workExperience >= filters.workExpRange[0] &&
       applicant.workExperience <= filters.workExpRange[1];
     
@@ -233,7 +171,7 @@ export default function ScholarshipApplications() {
       filters.genders.includes(applicant.gender);
 
     return matchesSearch && matchesStatus && matchesTest && matchesTestScore && 
-      matchesYear && matchesCgpa && matchesWorkExp && matchesNationality && matchesGender;
+      matchesYear && matchesWorkExp && matchesNationality && matchesGender;
   });
 
   const toggleSelectAll = () => {
@@ -278,13 +216,80 @@ export default function ScholarshipApplications() {
     setNewStatus(null);
   };
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-2xl font-display font-bold text-foreground">Scholarship Applications</h1>
+            <p className="text-muted-foreground mt-1">Review and manage scholarship applications</p>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {[...Array(6)].map((_, i) => (
+              <Card key={i}>
+                <CardContent className="p-4">
+                  <Skeleton className="h-12 w-full" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          <Card>
+            <CardContent className="p-4">
+              <Skeleton className="h-10 w-full max-w-md mb-4" />
+              <div className="space-y-2">
+                {[...Array(5)].map((_, i) => (
+                  <Skeleton key={i} className="h-16 w-full" />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <DashboardLayout>
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-2xl font-display font-bold text-foreground">Scholarship Applications</h1>
+            <p className="text-muted-foreground mt-1">Review and manage scholarship applications</p>
+          </div>
+          <Card>
+            <CardContent className="p-8 text-center">
+              <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Failed to load applicants</h3>
+              <p className="text-muted-foreground mb-4">{error}</p>
+              <Button onClick={loadApplicants}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Try Again
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">Scholarship Applications</h1>
-          <p className="text-muted-foreground mt-1">Review and manage scholarship applications</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-display font-bold text-foreground">Scholarship Applications</h1>
+            <p className="text-muted-foreground mt-1">
+              Review and manage scholarship applications
+              {meta && ` • ${meta.total_applicants} total applicants`}
+            </p>
+          </div>
+          <Button variant="outline" size="sm" onClick={loadApplicants}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
         </div>
 
         {/* Status Cards */}
@@ -306,25 +311,28 @@ export default function ScholarshipApplications() {
               </div>
             </CardContent>
           </Card>
-          {(Object.entries(statusConfig) as [WorkflowStatus, typeof statusConfig[WorkflowStatus]][]).map(([status, config]) => (
-            <Card
-              key={status}
-              className={`cursor-pointer transition-all ${statusFilter === status ? "ring-2 ring-primary" : "hover:bg-muted/50"}`}
-              onClick={() => setStatusFilter(statusFilter === status ? "all" : status)}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${config.color.split(" ")[0]}`}>
-                    <config.icon className={`h-4 w-4 ${config.color.split(" ")[1]}`} />
+          {(["pending", "shortlisted", "onhold", "rejected", "winner"] as WorkflowStatus[]).map((status) => {
+            const config = statusConfig[status];
+            return (
+              <Card
+                key={status}
+                className={`cursor-pointer transition-all ${statusFilter === status ? "ring-2 ring-primary" : "hover:bg-muted/50"}`}
+                onClick={() => setStatusFilter(statusFilter === status ? "all" : status)}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg ${config.color.split(" ")[0]}`}>
+                      <config.icon className={`h-4 w-4 ${config.color.split(" ")[1]}`} />
+                    </div>
+                    <div>
+                      <p className="text-xl font-bold">{statusCounts[status] || 0}</p>
+                      <p className="text-[10px] text-muted-foreground leading-tight">{config.label}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xl font-bold">{statusCounts[status] || 0}</p>
-                    <p className="text-[10px] text-muted-foreground leading-tight">{config.label}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
         {/* Search & Filters */}
@@ -333,7 +341,7 @@ export default function ScholarshipApplications() {
             <div className="relative max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by name or country..."
+                placeholder="Search by name, email, or country..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
@@ -363,11 +371,9 @@ export default function ScholarshipApplications() {
                       <SelectValue placeholder="Assign Status" />
                     </SelectTrigger>
                     <SelectContent>
-                      {Object.entries(statusConfig)
-                        .filter(([status]) => status !== "WINNER")
-                        .map(([status, config]) => (
-                          <SelectItem key={status} value={status}>{config.label}</SelectItem>
-                        ))}
+                      {(["pending", "shortlisted", "onhold", "rejected"] as WorkflowStatus[]).map((status) => (
+                        <SelectItem key={status} value={status}>{statusConfig[status].label}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -379,7 +385,14 @@ export default function ScholarshipApplications() {
         {/* Applicants Table */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Applicants</CardTitle>
+            <CardTitle className="text-lg">
+              Applicants
+              {filteredApplicants.length !== applicants.length && (
+                <span className="text-sm font-normal text-muted-foreground ml-2">
+                  (showing {filteredApplicants.length} of {applicants.length})
+                </span>
+              )}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
@@ -397,63 +410,77 @@ export default function ScholarshipApplications() {
                   <TableHead>UG Completion</TableHead>
                   <TableHead>UG GPA</TableHead>
                   <TableHead>Work Exp.</TableHead>
+                  <TableHead>Round</TableHead>
                   <TableHead className="w-[100px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredApplicants.map((applicant) => {
-                  const status = statusConfig[applicant.status];
-                  return (
-                    <TableRow key={applicant.id}>
-                      <TableCell>
-                        <Checkbox
-                          checked={selectedApplicants.includes(applicant.id)}
-                          onCheckedChange={() => toggleSelect(applicant.id)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg">{getFlagEmoji(applicant.countryCode)}</span>
-                          <div>
-                            <p className="font-medium">{applicant.name}</p>
-                            <p className="text-xs text-muted-foreground">{applicant.country}</p>
+                {filteredApplicants.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                      No applicants found matching your criteria
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredApplicants.map((applicant) => {
+                    const status = statusConfig[applicant.status];
+                    return (
+                      <TableRow key={applicant.id}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedApplicants.includes(applicant.id)}
+                            onCheckedChange={() => toggleSelect(applicant.id)}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">{getFlagEmoji(applicant.countryCode)}</span>
+                            <div>
+                              <p className="font-medium">{applicant.name}</p>
+                              <p className="text-xs text-muted-foreground">{applicant.country}</p>
+                            </div>
                           </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {applicant.isSeedRecommended && (
-                            <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20">
-                              <Star className="h-3 w-3 mr-1" />
-                              SEED
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            {applicant.isSeedRecommended && (
+                              <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20">
+                                <Star className="h-3 w-3 mr-1" />
+                                SEED
+                              </Badge>
+                            )}
+                            <Badge variant="outline" className={status.color}>
+                              <status.icon className="h-3 w-3 mr-1" />
+                              {status.label}
                             </Badge>
-                          )}
-                          <Badge variant="outline" className={status.color}>
-                            <status.icon className="h-3 w-3 mr-1" />
-                            {status.label}
-                          </Badge>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{applicant.standardizedTest.name}</p>
-                          <p className="text-xs text-muted-foreground">{applicant.standardizedTest.score}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>{applicant.ugCompletionYear}</TableCell>
-                      <TableCell>{applicant.ugGpa.toFixed(1)}</TableCell>
-                      <TableCell>{applicant.workExperience} years</TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link to={`/scholarships/applications/${applicant.id}`}>
-                            <Eye className="h-4 w-4 mr-1" />
-                            View
-                          </Link>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{applicant.standardizedTest.name}</p>
+                            {applicant.standardizedTest.score > 0 && (
+                              <p className="text-xs text-muted-foreground">{applicant.standardizedTest.score}</p>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>{applicant.ugCompletionYear}</TableCell>
+                        <TableCell>{applicant.ugGpaDisplay}</TableCell>
+                        <TableCell>{applicant.workExperience} years</TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">R{applicant.round}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="sm" asChild>
+                            <Link to={`/scholarships/applications/${applicant.id}`}>
+                              <Eye className="h-4 w-4 mr-1" />
+                              View
+                            </Link>
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
               </TableBody>
             </Table>
           </CardContent>
@@ -497,6 +524,7 @@ export default function ScholarshipApplications() {
 }
 
 function getFlagEmoji(countryCode: string): string {
+  if (!countryCode || countryCode === "UN") return "🌍";
   const codePoints = countryCode
     .toUpperCase()
     .split("")
