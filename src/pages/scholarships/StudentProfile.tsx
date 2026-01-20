@@ -568,6 +568,101 @@ export default function StudentProfile() {
           </CardContent>
         </Card>
 
+        {/* Documents Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Documents & Files
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Undergraduate Transcripts */}
+              {profile.education.undergraduate.transcriptsUrl && (
+                <div className="p-4 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                      <FileText className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm">Undergraduate Transcripts</p>
+                      <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                        {profile.education.undergraduate.institution}
+                      </p>
+                      <Button variant="outline" size="sm" className="mt-2" asChild>
+                        <a href={profile.education.undergraduate.transcriptsUrl} target="_blank" rel="noopener noreferrer">
+                          <Download className="h-3.5 w-3.5 mr-1" />
+                          View PDF
+                          <ExternalLink className="h-3 w-3 ml-1" />
+                        </a>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Postgraduate Transcripts */}
+              {profile.education.hasPostgraduate && profile.education.postgraduate?.transcriptsUrl && (
+                <div className="p-4 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                      <FileText className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm">Postgraduate Transcripts</p>
+                      <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                        {profile.education.postgraduate.institution}
+                      </p>
+                      <Button variant="outline" size="sm" className="mt-2" asChild>
+                        <a href={profile.education.postgraduate.transcriptsUrl} target="_blank" rel="noopener noreferrer">
+                          <Download className="h-3.5 w-3.5 mr-1" />
+                          View PDF
+                          <ExternalLink className="h-3 w-3 ml-1" />
+                        </a>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Supporting Documents */}
+              {profile.supportingDocuments && (
+                <div className="p-4 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                      <FileText className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm">Supporting Documents</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Additional application materials
+                      </p>
+                      <Button variant="outline" size="sm" className="mt-2" asChild>
+                        <a href={profile.supportingDocuments} target="_blank" rel="noopener noreferrer">
+                          <Download className="h-3.5 w-3.5 mr-1" />
+                          View Document
+                          <ExternalLink className="h-3 w-3 ml-1" />
+                        </a>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* No documents message */}
+              {!profile.education.undergraduate.transcriptsUrl && 
+               !(profile.education.hasPostgraduate && profile.education.postgraduate?.transcriptsUrl) && 
+               !profile.supportingDocuments && (
+                <div className="col-span-full text-center py-8 text-muted-foreground">
+                  <FileText className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                  <p className="text-sm">No documents uploaded</p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Available Awards */}
         {profile.awards.available.length > 0 && (
           <Card>
