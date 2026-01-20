@@ -174,8 +174,7 @@ export async function fetchApplicants(): Promise<{
     throw new Error("Authentication required");
   }
 
-  const { data, error } = await supabase.functions.invoke("scholarship-proxy", {
-    body: {},
+  const { data, error } = await supabase.functions.invoke("scholarship-proxy?action=list", {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -206,8 +205,7 @@ export async function fetchApplicantProfile(contactId: string): Promise<unknown>
     throw new Error("Authentication required");
   }
 
-  const { data, error } = await supabase.functions.invoke("scholarship-proxy", {
-    body: {},
+  const { data, error } = await supabase.functions.invoke(`scholarship-proxy?action=profile&contact_id=${contactId}`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
