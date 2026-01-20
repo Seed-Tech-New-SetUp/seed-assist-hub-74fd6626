@@ -61,12 +61,10 @@ const formatDateTime = (dateTimeStr: string) => {
   const safe = dateTimeStr.replace(" ", "T");
   const date = new Date(safe);
   if (Number.isNaN(date.getTime())) return dateTimeStr;
-  return date.toLocaleString("en-US", {
+  return date.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
   });
 };
 
