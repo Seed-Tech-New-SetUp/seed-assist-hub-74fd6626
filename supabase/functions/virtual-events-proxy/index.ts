@@ -31,7 +31,32 @@ serve(async (req) => {
     if (action === 'masterclass') {
       apiUrl = 'https://seedglobaleducation.com/api/assist/virtual-event/masterclass';
     } else if (action === 'meetups') {
-      apiUrl = 'https://seedglobaleducation.com/api/assist/virtual-event/meetups';
+      apiUrl = 'https://seedglobaleducation.com/api/assist/virtual-event/meetup';
+    } else if (action === 'download-meetup' && eventId) {
+      // Handle meetup report download
+      apiUrl = `https://seedglobaleducation.com/api/assist/virtual-event/meetup/report.php?id=${eventId}`;
+      
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': authHeader,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`API responded with status: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      
+      return new Response(blob, {
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'Content-Disposition': `attachment; filename="meetup-report-${eventId}.xlsx"`,
+        },
+      });
     } else if (action === 'download' && eventId) {
       // Handle masterclass report download
       apiUrl = `https://seedglobaleducation.com/api/assist/virtual-event/masterclass/report.php?id=${eventId}`;
