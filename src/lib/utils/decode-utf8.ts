@@ -1,24 +1,65 @@
 /**
+ * Decodes HTML entities in a string
+ * Handles cases like &#039; -> ' and &amp; -> &
+ */
+function decodeHTMLEntities(str: string): string {
+  if (!str) return str;
+  
+  // Common HTML entities
+  const entities: Record<string, string> = {
+    '&amp;': '&',
+    '&lt;': '<',
+    '&gt;': '>',
+    '&quot;': '"',
+    '&#039;': "'",
+    '&#39;': "'",
+    '&apos;': "'",
+    '&nbsp;': ' ',
+    '&#x27;': "'",
+    '&#x2F;': '/',
+    '&#47;': '/',
+  };
+  
+  // Replace named and numeric entities
+  let decoded = str;
+  for (const [entity, char] of Object.entries(entities)) {
+    decoded = decoded.split(entity).join(char);
+  }
+  
+  // Handle numeric entities (&#NNN;)
+  decoded = decoded.replace(/&#(\d+);/g, (_, num) => String.fromCharCode(parseInt(num, 10)));
+  
+  // Handle hex entities (&#xHHH;)
+  decoded = decoded.replace(/&#x([0-9A-Fa-f]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+  
+  return decoded;
+}
+
+/**
  * Fixes incorrectly encoded UTF-8 strings
  * Handles cases where UTF-8 was double-encoded or misinterpreted
  */
 export function decodeUTF8(str: string): string {
   if (!str) return str;
   
+  // First decode HTML entities
+  let decoded = decodeHTMLEntities(str);
+  
   try {
     // Try to fix double-encoded UTF-8 (common issue when data goes through multiple encoding steps)
     // This handles cases like "MÃ©ridien" -> "Méridien"
-    return decodeURIComponent(escape(str));
+    decoded = decodeURIComponent(escape(decoded));
   } catch {
     // If that fails, try using TextDecoder
     try {
-      const bytes = new Uint8Array(str.split('').map(c => c.charCodeAt(0)));
-      return new TextDecoder('utf-8').decode(bytes);
+      const bytes = new Uint8Array(decoded.split('').map(c => c.charCodeAt(0)));
+      decoded = new TextDecoder('utf-8').decode(bytes);
     } catch {
-      // Return original string if all decoding attempts fail
-      return str;
+      // Return decoded string if UTF-8 decoding fails
     }
   }
+  
+  return decoded;
 }
 
 /**
