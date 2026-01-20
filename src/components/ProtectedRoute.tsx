@@ -1,6 +1,7 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSchool } from "@/contexts/SchoolContext";
+import { useSessionValidator } from "@/hooks/useSessionValidator";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -10,6 +11,9 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, loading: authLoading } = useAuth();
   const { needsSchoolSelection, loading: schoolLoading, currentSchool, schools } = useSchool();
   const location = useLocation();
+  
+  // Validate session and auto-redirect if cookies are gone
+  useSessionValidator();
 
   if (authLoading || schoolLoading) {
     return (
