@@ -15,6 +15,7 @@ import {
   MapPin,
   Video,
   FileText,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -26,6 +27,7 @@ interface NavSubItem {
   title: string;
   href: string;
   permissionKey?: string; // Maps to subModules permission
+  alwaysShow?: boolean; // Show even without permission (with lock icon)
 }
 
 interface NavSubGroup {
@@ -72,7 +74,7 @@ const baseNavigation: NavItem[] = [
         items: [
           { title: "Overview", href: "/events/virtual" },
           { title: "Masterclass", href: "/events/virtual/masterclass", permissionKey: "masterclasses" },
-          { title: "Meetups", href: "/events/virtual/meetups", permissionKey: "meetups" },
+          { title: "1:1 Profile Evaluation", href: "/events/virtual/meetups", permissionKey: "meetups", alwaysShow: true },
         ],
       },
     ],
@@ -160,8 +162,11 @@ const filterNavigation = (navigation: NavItem[], permissions: Permissions | null
           return true;
         })
         .map((group) => {
-          // Filter items within the group
+          // Filter items within the group, but keep items with alwaysShow flag
           const filteredItems = group.items.filter((subItem) => {
+            // Always show items with alwaysShow flag
+            if (subItem.alwaysShow) return true;
+            
             if (subItem.permissionKey && subModules) {
               return subModules[subItem.permissionKey as keyof typeof subModules] !== false;
             }
@@ -355,6 +360,26 @@ export function AppSidebar() {
                               <CollapsibleContent className="space-y-0.5 mt-0.5">
                                 {group.items.map((subItem) => {
                                   const subItemActive = isPathActive(subItem.href);
+                                  // Check if this item is locked (has alwaysShow but no permission)
+                                  const permModule = permissions?.[item.permissionKey as keyof Permissions];
+                                  const subModules = permModule && typeof permModule === 'object' && 'subModules' in permModule 
+                                    ? permModule.subModules 
+                                    : null;
+                                  const isLocked = subItem.alwaysShow && subItem.permissionKey && subModules && 
+                                    subModules[subItem.permissionKey as keyof typeof subModules] === false;
+                                  
+                                  if (isLocked) {
+                                    return (
+                                      <div
+                                        key={subItem.href}
+                                        className="flex items-center gap-2 px-2 py-1.5 rounded-md text-[11px] transition-colors ml-2 text-sidebar-foreground/40 cursor-not-allowed"
+                                      >
+                                        <span className="truncate">{subItem.title}</span>
+                                        <Lock className="h-3 w-3 flex-shrink-0" />
+                                      </div>
+                                    );
+                                  }
+                                  
                                   return (
                                     <NavLink
                                       key={subItem.href}
