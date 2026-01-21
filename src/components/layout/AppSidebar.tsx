@@ -125,7 +125,7 @@ const baseNavigation: NavItem[] = [
     title: "In-Country Representation",
     href: "/in-country-reports",
     icon: Globe,
-    permissionKey: "inCountryRepresentation",
+    permissionKey: "icr",
   },
   {
     title: "Team Management",
