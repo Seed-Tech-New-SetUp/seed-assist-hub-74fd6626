@@ -1,9 +1,11 @@
 import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -20,141 +22,32 @@ import {
 } from "@/components/ui/dialog";
 import {
   Search,
-  Download,
   Eye,
   FileText,
   Calendar,
   Users,
   Target,
   TrendingUp,
-  MapPin,
   Briefcase,
   GraduationCap,
+  Phone,
+  Mail,
+  MessageSquare,
+  AlertCircle,
 } from "lucide-react";
+import {
+  fetchICRReports,
+  calculateICRTotals,
+  formatReportMonth,
+  activityTypeLabels,
+  type ICRReport,
+} from "@/lib/api/icr";
 
-// Mock data for ICR reports - replace with API call
-interface ICRReport {
-  id: string;
-  month: string;
-  year: number;
-  country: string;
-  region: string;
-  status: "submitted" | "published";
-  submittedDate: string;
-  publishedDate?: string;
-  metrics: {
-    leadsCaptured: number;
-    eventsAttended: number;
-    schoolsVisited: number;
-    applicationsGenerated: number;
-    conversionsToAdmit: number;
-  };
-  activities: {
-    title: string;
-    date: string;
-    type: string;
-    attendees: number;
-    leadsGenerated: number;
-    description?: string;
-  }[];
-  highlights: string[];
-}
-
-const mockReports: ICRReport[] = [
-  {
-    id: "1",
-    month: "December",
-    year: 2024,
-    country: "India",
-    region: "South Asia",
-    status: "published",
-    submittedDate: "2024-12-05",
-    publishedDate: "2024-12-08",
-    metrics: {
-      leadsCaptured: 456,
-      eventsAttended: 8,
-      schoolsVisited: 12,
-      applicationsGenerated: 89,
-      conversionsToAdmit: 23,
-    },
-    activities: [
-      {
-        title: "IIM Bangalore Campus Visit",
-        date: "2024-12-02",
-        type: "Campus Visit",
-        attendees: 150,
-        leadsGenerated: 45,
-        description: "Conducted information session and Q&A with prospective MBA students.",
-      },
-      {
-        title: "Delhi Business Education Fair",
-        date: "2024-12-05",
-        type: "Education Fair",
-        attendees: 320,
-        leadsGenerated: 98,
-        description: "Participated in annual education fair, engaged with working professionals.",
-      },
-    ],
-    highlights: [
-      "Strong engagement from tier-2 cities",
-      "30% increase in qualified leads vs. last month",
-      "Partnership discussions with 3 new universities",
-    ],
-  },
-  {
-    id: "2",
-    month: "November",
-    year: 2024,
-    country: "India",
-    region: "South Asia",
-    status: "published",
-    submittedDate: "2024-11-28",
-    publishedDate: "2024-12-01",
-    metrics: {
-      leadsCaptured: 389,
-      eventsAttended: 6,
-      schoolsVisited: 10,
-      applicationsGenerated: 72,
-      conversionsToAdmit: 18,
-    },
-    activities: [
-      {
-        title: "Mumbai MBA Summit",
-        date: "2024-11-15",
-        type: "Summit",
-        attendees: 280,
-        leadsGenerated: 76,
-      },
-    ],
-    highlights: [
-      "Successful webinar series launch",
-      "15% improvement in lead quality",
-    ],
-  },
-  {
-    id: "3",
-    month: "October",
-    year: 2024,
-    country: "India",
-    region: "South Asia",
-    status: "published",
-    submittedDate: "2024-10-25",
-    publishedDate: "2024-10-28",
-    metrics: {
-      leadsCaptured: 312,
-      eventsAttended: 5,
-      schoolsVisited: 8,
-      applicationsGenerated: 56,
-      conversionsToAdmit: 14,
-    },
-    activities: [],
-    highlights: ["Focus on digital engagement", "New social media strategy implemented"],
-  },
-];
-
-const statusStyles = {
-  submitted: "bg-warning/10 text-warning border-warning/20",
-  published: "bg-success/10 text-success border-success/20",
+// Icon mapping for activity types
+const activityIcons: Record<string, React.ReactNode> = {
+  phoneCalls: <Phone className="h-3.5 w-3.5" />,
+  emailConv: <Mail className="h-3.5 w-3.5" />,
+  whatsapp: <MessageSquare className="h-3.5 w-3.5" />,
 };
 
 export default function InCountryReports() {
@@ -162,35 +55,42 @@ export default function InCountryReports() {
   const [selectedReport, setSelectedReport] = useState<ICRReport | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Fetch ICR reports
+  const { data: response, isLoading, error } = useQuery({
+    queryKey: ["icr-reports"],
+    queryFn: () => fetchICRReports(),
+  });
+
+  const reports = response?.data?.reports ?? [];
+  const school = response?.data?.school;
+
+  // Filter reports by search query
   const filteredReports = useMemo(() => {
-    if (!searchQuery.trim()) return mockReports;
+    if (!searchQuery.trim()) return reports;
     const query = searchQuery.toLowerCase();
-    return mockReports.filter(
-      (report) =>
-        report.month.toLowerCase().includes(query) ||
-        report.country.toLowerCase().includes(query) ||
-        report.region.toLowerCase().includes(query)
-    );
-  }, [searchQuery]);
+    return reports.filter((report) => {
+      const monthYear = formatReportMonth(report.report_month).toLowerCase();
+      const clientName = report.client_name.toLowerCase();
+      return monthYear.includes(query) || clientName.includes(query);
+    });
+  }, [searchQuery, reports]);
+
+  // Calculate summary stats
+  const summaryStats = useMemo(() => {
+    return calculateICRTotals(reports);
+  }, [reports]);
 
   const handleViewReport = (report: ICRReport) => {
     setSelectedReport(report);
     setIsModalOpen(true);
   };
 
-  const handleDownloadReport = (reportId: string) => {
-    // TODO: Implement download via API
-    console.log("Downloading report:", reportId);
+  // Calculate totals for a single report
+  const getReportTotals = (report: ICRReport) => {
+    const totalLeads = report.lead_generation.reduce((sum, lg) => sum + lg.qualified_leads, 0);
+    const totalEngaged = report.lead_engagement.reduce((sum, le) => sum + le.leads_engaged, 0);
+    return { totalLeads, totalEngaged };
   };
-
-  // Calculate summary stats
-  const summaryStats = useMemo(() => {
-    const totalLeads = mockReports.reduce((sum, r) => sum + r.metrics.leadsCaptured, 0);
-    const totalEvents = mockReports.reduce((sum, r) => sum + r.metrics.eventsAttended, 0);
-    const totalApplications = mockReports.reduce((sum, r) => sum + r.metrics.applicationsGenerated, 0);
-    const publishedReports = mockReports.filter((r) => r.status === "published").length;
-    return { totalLeads, totalEvents, totalApplications, publishedReports };
-  }, []);
 
   return (
     <DashboardLayout>
@@ -201,7 +101,7 @@ export default function InCountryReports() {
             In-Country <span className="text-primary">Representation</span> Reports
           </h1>
           <p className="text-muted-foreground">
-            View and download monthly activity reports from your regional representatives.
+            {school ? `${school.school_name} - ${school.university}` : "View monthly activity reports from your regional representatives."}
           </p>
         </div>
       </div>
@@ -213,7 +113,11 @@ export default function InCountryReports() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Published Reports</p>
-                <p className="text-2xl font-bold font-display">{summaryStats.publishedReports}</p>
+                {isLoading ? (
+                  <Skeleton className="h-8 w-16 mt-1" />
+                ) : (
+                  <p className="text-2xl font-bold font-display">{summaryStats.publishedReports}</p>
+                )}
               </div>
               <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
                 <FileText className="h-5 w-5 text-primary" />
@@ -226,7 +130,11 @@ export default function InCountryReports() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Leads</p>
-                <p className="text-2xl font-bold font-display">{summaryStats.totalLeads.toLocaleString()}</p>
+                {isLoading ? (
+                  <Skeleton className="h-8 w-16 mt-1" />
+                ) : (
+                  <p className="text-2xl font-bold font-display">{summaryStats.totalLeads.toLocaleString()}</p>
+                )}
               </div>
               <div className="h-10 w-10 rounded-lg bg-info/10 flex items-center justify-center">
                 <Users className="h-5 w-5 text-info" />
@@ -238,8 +146,12 @@ export default function InCountryReports() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Events Attended</p>
-                <p className="text-2xl font-bold font-display">{summaryStats.totalEvents}</p>
+                <p className="text-sm text-muted-foreground">Activities</p>
+                {isLoading ? (
+                  <Skeleton className="h-8 w-16 mt-1" />
+                ) : (
+                  <p className="text-2xl font-bold font-display">{summaryStats.totalActivities}</p>
+                )}
               </div>
               <div className="h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center">
                 <Calendar className="h-5 w-5 text-accent" />
@@ -251,8 +163,12 @@ export default function InCountryReports() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Applications Generated</p>
-                <p className="text-2xl font-bold font-display">{summaryStats.totalApplications}</p>
+                <p className="text-sm text-muted-foreground">Applications</p>
+                {isLoading ? (
+                  <Skeleton className="h-8 w-16 mt-1" />
+                ) : (
+                  <p className="text-2xl font-bold font-display">{summaryStats.totalApplications}</p>
+                )}
               </div>
               <div className="h-10 w-10 rounded-lg bg-success/10 flex items-center justify-center">
                 <Target className="h-5 w-5 text-success" />
@@ -285,88 +201,92 @@ export default function InCountryReports() {
           </div>
         </CardHeader>
         <CardContent>
-          {filteredReports.length === 0 ? (
+          {isLoading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-16 w-full" />
+              ))}
+            </div>
+          ) : error || !response?.success ? (
+            <div className="text-center py-16">
+              <AlertCircle className="h-12 w-12 text-destructive/50 mx-auto mb-4" />
+              <p className="text-muted-foreground">Failed to load reports. Please try again.</p>
+            </div>
+          ) : filteredReports.length === 0 ? (
             <div className="text-center py-16">
               <FileText className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
-              <p className="text-muted-foreground">No reports found matching your search.</p>
+              <p className="text-muted-foreground">
+                {searchQuery ? "No reports found matching your search." : "No reports available yet."}
+              </p>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Month</TableHead>
-                  <TableHead>Country</TableHead>
-                  <TableHead className="text-right">Leads</TableHead>
-                  <TableHead className="text-right">Events</TableHead>
+                  <TableHead>Representative</TableHead>
+                  <TableHead className="text-right">Leads Generated</TableHead>
+                  <TableHead className="text-right">Leads Engaged</TableHead>
                   <TableHead className="text-right">Applications</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Published</TableHead>
+                  <TableHead className="text-right">Admitted</TableHead>
+                  <TableHead>Last Updated</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredReports.map((report, index) => (
-                  <TableRow
-                    key={report.id}
-                    className="animate-fade-in opacity-0"
-                    style={{ animationDelay: `${350 + index * 50}ms`, animationFillMode: "forwards" }}
-                  >
-                    <TableCell>
-                      <Badge className="bg-gradient-to-r from-primary to-accent text-primary-foreground font-semibold">
-                        {report.month} {report.year}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-muted-foreground" />
-                        <span>{report.country}</span>
-                        <span className="text-xs text-muted-foreground">({report.region})</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right font-semibold text-primary">
-                      {report.metrics.leadsCaptured}
-                    </TableCell>
-                    <TableCell className="text-right">{report.metrics.eventsAttended}</TableCell>
-                    <TableCell className="text-right">{report.metrics.applicationsGenerated}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className={statusStyles[report.status]}
-                      >
-                        {report.status.charAt(0).toUpperCase() + report.status.slice(1)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground text-sm">
-                      {report.publishedDate
-                        ? new Date(report.publishedDate).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })
-                        : "-"}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleViewReport(report)}
-                        >
-                          <Eye className="h-4 w-4 mr-1" />
-                          View
-                        </Button>
-                        <Button
-                          variant="default"
-                          size="sm"
-                          onClick={() => handleDownloadReport(report.id)}
-                        >
-                          <Download className="h-4 w-4 mr-1" />
-                          Download
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {filteredReports.map((report, index) => {
+                  const totals = getReportTotals(report);
+                  return (
+                    <TableRow
+                      key={report.report_id}
+                      className="animate-fade-in opacity-0"
+                      style={{ animationDelay: `${350 + index * 50}ms`, animationFillMode: "forwards" }}
+                    >
+                      <TableCell>
+                        <Badge className="bg-gradient-to-r from-primary to-accent text-primary-foreground font-semibold">
+                          {formatReportMonth(report.report_month)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <span className="font-medium">{report.client_name}</span>
+                          <span className="text-xs text-muted-foreground block">{report.client_role}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right font-semibold text-primary">
+                        {totals.totalLeads}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {report.application_funnel?.leads_engaged ?? totals.totalEngaged}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {report.application_funnel?.applications_submitted ?? 0}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {report.application_funnel?.admitted ?? 0}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground text-sm">
+                        {new Date(report.updated_at).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-end">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleViewReport(report)}
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}
@@ -379,75 +299,88 @@ export default function InCountryReports() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-primary" />
-              {selectedReport?.month} {selectedReport?.year} Report
+              {selectedReport && formatReportMonth(selectedReport.report_month)} Report
             </DialogTitle>
           </DialogHeader>
 
           {selectedReport && (
             <div className="space-y-6">
-              {/* Funnel Metrics */}
-              <div>
-                <h4 className="text-sm font-semibold text-primary flex items-center gap-2 mb-4 pb-2 border-b">
-                  <TrendingUp className="h-4 w-4" />
-                  Performance Funnel
-                </h4>
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                  <div className="bg-muted/50 p-4 rounded-lg text-center border-2 border-transparent hover:border-primary/30 transition-colors">
-                    <p className="text-xs text-muted-foreground uppercase mb-1">Leads</p>
-                    <p className="text-2xl font-bold text-primary">{selectedReport.metrics.leadsCaptured}</p>
-                  </div>
-                  <div className="bg-muted/50 p-4 rounded-lg text-center border-2 border-transparent hover:border-primary/30 transition-colors">
-                    <p className="text-xs text-muted-foreground uppercase mb-1">Events</p>
-                    <p className="text-2xl font-bold text-primary">{selectedReport.metrics.eventsAttended}</p>
-                  </div>
-                  <div className="bg-muted/50 p-4 rounded-lg text-center border-2 border-transparent hover:border-primary/30 transition-colors">
-                    <p className="text-xs text-muted-foreground uppercase mb-1">Schools</p>
-                    <p className="text-2xl font-bold text-primary">{selectedReport.metrics.schoolsVisited}</p>
-                  </div>
-                  <div className="bg-muted/50 p-4 rounded-lg text-center border-2 border-transparent hover:border-primary/30 transition-colors">
-                    <p className="text-xs text-muted-foreground uppercase mb-1">Applications</p>
-                    <p className="text-2xl font-bold text-primary">{selectedReport.metrics.applicationsGenerated}</p>
-                  </div>
-                  <div className="bg-muted/50 p-4 rounded-lg text-center border-2 border-transparent hover:border-primary/30 transition-colors">
-                    <p className="text-xs text-muted-foreground uppercase mb-1">Admits</p>
-                    <p className="text-2xl font-bold text-primary">{selectedReport.metrics.conversionsToAdmit}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Activities */}
-              {selectedReport.activities.length > 0 && (
+              {/* Application Funnel */}
+              {selectedReport.application_funnel && (
                 <div>
                   <h4 className="text-sm font-semibold text-primary flex items-center gap-2 mb-4 pb-2 border-b">
-                    <Briefcase className="h-4 w-4" />
-                    Activities Conducted
+                    <TrendingUp className="h-4 w-4" />
+                    Application Funnel
+                  </h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="bg-muted/50 p-4 rounded-lg text-center border-2 border-transparent hover:border-primary/30 transition-colors">
+                      <p className="text-xs text-muted-foreground uppercase mb-1">Engaged</p>
+                      <p className="text-2xl font-bold text-primary">
+                        {selectedReport.application_funnel.leads_engaged}
+                      </p>
+                    </div>
+                    <div className="bg-muted/50 p-4 rounded-lg text-center border-2 border-transparent hover:border-primary/30 transition-colors">
+                      <p className="text-xs text-muted-foreground uppercase mb-1">Interested 2026</p>
+                      <p className="text-2xl font-bold text-primary">
+                        {selectedReport.application_funnel.interested_2026}
+                      </p>
+                    </div>
+                    <div className="bg-muted/50 p-4 rounded-lg text-center border-2 border-transparent hover:border-primary/30 transition-colors">
+                      <p className="text-xs text-muted-foreground uppercase mb-1">Applications</p>
+                      <p className="text-2xl font-bold text-primary">
+                        {selectedReport.application_funnel.applications_submitted}
+                      </p>
+                    </div>
+                    <div className="bg-muted/50 p-4 rounded-lg text-center border-2 border-transparent hover:border-primary/30 transition-colors">
+                      <p className="text-xs text-muted-foreground uppercase mb-1">Admitted</p>
+                      <p className="text-2xl font-bold text-primary">
+                        {selectedReport.application_funnel.admitted}
+                      </p>
+                    </div>
+                    <div className="bg-muted/50 p-4 rounded-lg text-center border-2 border-transparent hover:border-primary/30 transition-colors">
+                      <p className="text-xs text-muted-foreground uppercase mb-1">Offers Accepted</p>
+                      <p className="text-2xl font-bold text-primary">
+                        {selectedReport.application_funnel.offers_accepted}
+                      </p>
+                    </div>
+                    <div className="bg-muted/50 p-4 rounded-lg text-center border-2 border-transparent hover:border-primary/30 transition-colors">
+                      <p className="text-xs text-muted-foreground uppercase mb-1">Enrolled</p>
+                      <p className="text-2xl font-bold text-primary">
+                        {selectedReport.application_funnel.enrolled}
+                      </p>
+                    </div>
+                    <div className="bg-muted/50 p-4 rounded-lg text-center border-2 border-transparent hover:border-warning/30 transition-colors">
+                      <p className="text-xs text-muted-foreground uppercase mb-1">Not Interested</p>
+                      <p className="text-2xl font-bold text-warning">
+                        {selectedReport.application_funnel.not_interested}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Lead Generation */}
+              {selectedReport.lead_generation.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-semibold text-primary flex items-center gap-2 mb-4 pb-2 border-b">
+                    <GraduationCap className="h-4 w-4" />
+                    Lead Generation Activities
                   </h4>
                   <div className="space-y-3">
-                    {selectedReport.activities.map((activity, idx) => (
-                      <div key={idx} className="bg-muted/30 p-4 rounded-lg">
+                    {selectedReport.lead_generation.map((activity) => (
+                      <div key={activity.id} className="bg-muted/30 p-4 rounded-lg">
                         <div className="flex flex-wrap justify-between gap-2 mb-2">
-                          <span className="font-medium">{activity.title}</span>
-                          <Badge variant="secondary">{activity.type}</Badge>
-                        </div>
-                        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-2">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-3.5 w-3.5" />
-                            {new Date(activity.date).toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                            })}
+                          <span className="font-medium">
+                            {activityTypeLabels[activity.activity_type] || activity.activity_type}
                           </span>
-                          <span className="flex items-center gap-1">
-                            <Users className="h-3.5 w-3.5" />
-                            {activity.attendees} attendees
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Target className="h-3.5 w-3.5" />
-                            {activity.leadsGenerated} leads
-                          </span>
+                          <Badge variant="secondary" className="bg-primary/10 text-primary">
+                            {activity.qualified_leads} leads
+                          </Badge>
                         </div>
                         {activity.description && (
-                          <p className="text-sm text-muted-foreground italic">{activity.description}</p>
+                          <p className="text-sm text-muted-foreground whitespace-pre-line">
+                            {activity.description}
+                          </p>
                         )}
                       </div>
                     ))}
@@ -455,32 +388,53 @@ export default function InCountryReports() {
                 </div>
               )}
 
-              {/* Highlights */}
-              {selectedReport.highlights.length > 0 && (
+              {/* Lead Engagement */}
+              {selectedReport.lead_engagement.length > 0 && (
                 <div>
                   <h4 className="text-sm font-semibold text-primary flex items-center gap-2 mb-4 pb-2 border-b">
-                    <GraduationCap className="h-4 w-4" />
-                    Key Highlights
+                    <Briefcase className="h-4 w-4" />
+                    Lead Engagement Activities
                   </h4>
-                  <ul className="space-y-2">
-                    {selectedReport.highlights.map((highlight, idx) => (
-                      <li key={idx} className="flex items-start gap-2 text-sm">
-                        <span className="h-1.5 w-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0" />
-                        {highlight}
-                      </li>
+                  <div className="space-y-3">
+                    {selectedReport.lead_engagement.map((activity) => (
+                      <div key={activity.id} className="bg-muted/30 p-4 rounded-lg">
+                        <div className="flex flex-wrap justify-between gap-2 mb-2">
+                          <span className="font-medium flex items-center gap-2">
+                            {activityIcons[activity.activity_type]}
+                            {activityTypeLabels[activity.activity_type] || activity.activity_type}
+                          </span>
+                          <Badge variant="secondary">
+                            {activity.leads_engaged} engaged
+                          </Badge>
+                        </div>
+                        {activity.description && (
+                          <p className="text-sm text-muted-foreground whitespace-pre-line">
+                            {activity.description}
+                          </p>
+                        )}
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 </div>
               )}
+
+              {/* Representative Info */}
+              <div className="pt-4 border-t">
+                <p className="text-sm text-muted-foreground">
+                  Submitted by <span className="font-medium text-foreground">{selectedReport.client_name}</span>
+                  {" "}({selectedReport.client_role}) on{" "}
+                  {new Date(selectedReport.created_at).toLocaleDateString("en-US", {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </p>
+              </div>
 
               {/* Footer Actions */}
               <div className="flex justify-end gap-3 pt-4 border-t">
                 <Button variant="outline" onClick={() => setIsModalOpen(false)}>
                   Close
-                </Button>
-                <Button onClick={() => handleDownloadReport(selectedReport.id)}>
-                  <Download className="h-4 w-4 mr-2" />
-                  Download Report
                 </Button>
               </div>
             </div>
