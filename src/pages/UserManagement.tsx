@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useSchool } from "@/contexts/SchoolContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminStatus } from "@/hooks/useAdminStatus";
@@ -33,35 +32,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { UserPlus, Shield, Users, Mail, Calendar, ShieldAlert, Clock, Trash2, User, Inbox } from "lucide-react";
+import { UserPlus, Users, Mail, ShieldAlert, Clock, Trash2, Inbox } from "lucide-react";
 import { format } from "date-fns";
-
-interface SchoolUser {
-  id: string;
-  user_id: string;
-  role: string;
-  is_primary: boolean;
-  created_at: string;
-  profile?: {
-    id: string;
-    full_name: string | null;
-    email: string | null;
-    avatar_url: string | null;
-  };
-}
-
-interface PendingInvitation {
-  id: string;
-  email: string;
-  full_name?: string;
-  role?: string;
-  designation?: string;
-  invited_by_name?: string;
-  created_at: string;
-}
+import {
+  fetchUsers,
+  inviteUser,
+  deleteInvitation,
+  ActiveUser,
+  PendingInvitation,
+  InviteUserPayload,
+} from "@/lib/api/users";
 
 interface InviteFormData {
   email: string;
@@ -72,7 +55,7 @@ interface InviteFormData {
 
 export default function UserManagement() {
   const { currentSchool } = useSchool();
-  const { user } = useAuth();
+  const { portalToken } = useAuth();
   const { isAdmin, isLoading: adminLoading } = useAdminStatus();
   const queryClient = useQueryClient();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -83,123 +66,40 @@ export default function UserManagement() {
     designation: "",
   });
 
-  // Fetch active users
-  const { data: schoolUsers, isLoading } = useQuery({
-    queryKey: ["school-users", currentSchool?.id],
+  // Fetch users from API
+  const { data: usersData, isLoading } = useQuery({
+    queryKey: ["users-management", currentSchool?.id],
     queryFn: async () => {
-      if (!currentSchool?.id) return [];
-
-      const { data: userSchools, error } = await supabase
-        .from("user_schools")
-        .select("id, user_id, role, is_primary, created_at")
-        .eq("school_id", currentSchool.id);
-
-      if (error) throw error;
-      if (!userSchools || userSchools.length === 0) return [];
-
-      const userIds = userSchools.map((us) => us.user_id);
-      const { data: profiles, error: profileError } = await supabase
-        .from("profiles")
-        .select("id, full_name, email, avatar_url")
-        .in("id", userIds);
-
-      if (profileError) throw profileError;
-
-      const profileMap = new Map(profiles?.map((p) => [p.id, p]) || []);
-      return userSchools.map((us) => ({
-        ...us,
-        profile: profileMap.get(us.user_id),
-      })) as SchoolUser[];
+      if (!portalToken) throw new Error("No auth token");
+      return fetchUsers(portalToken);
     },
-    enabled: !!currentSchool?.id,
+    enabled: !!currentSchool?.id && !!portalToken,
   });
 
-  // Fetch pending invitations
-  const { data: pendingInvitations } = useQuery({
-    queryKey: ["pending-invitations", currentSchool?.id],
-    queryFn: async () => {
-      if (!currentSchool?.id) return [];
-
-      const { data, error } = await supabase
-        .from("school_invitations")
-        .select("id, email, created_at")
-        .eq("school_id", currentSchool.id)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return data as PendingInvitation[];
-    },
-    enabled: !!currentSchool?.id && isAdmin,
-  });
+  const activeUsers = usersData?.data?.active_users || [];
+  const pendingInvitations = usersData?.data?.pending_invitations || [];
+  const activeUsersCount = usersData?.data?.meta?.active_users_count || 0;
+  const pendingCount = usersData?.data?.meta?.pending_invitations_count || 0;
 
   // Add user mutation
   const addUserMutation = useMutation({
     mutationFn: async (data: InviteFormData) => {
-      // First check if user already exists in profiles
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("email", data.email.toLowerCase().trim())
-        .maybeSingle();
-
-      if (profile) {
-        // User exists - check if already associated
-        const { data: existing } = await supabase
-          .from("user_schools")
-          .select("id")
-          .eq("user_id", profile.id)
-          .eq("school_id", currentSchool?.id)
-          .maybeSingle();
-
-        if (existing) throw new Error("User is already associated with this school.");
-
-        // Add user directly
-        const { error } = await supabase
-          .from("user_schools")
-          .insert({
-            user_id: profile.id,
-            school_id: currentSchool?.id,
-            role: data.role,
-            is_primary: false,
-          });
-
-        if (error) throw error;
-        return { type: "added" as const };
-      } else {
-        // User doesn't exist - check for existing invitation
-        const { data: existingInvite } = await supabase
-          .from("school_invitations")
-          .select("id")
-          .eq("email", data.email.toLowerCase().trim())
-          .eq("school_id", currentSchool?.id)
-          .maybeSingle();
-
-        if (existingInvite) throw new Error("An invitation has already been sent to this email.");
-
-        // Create invitation
-        const { error } = await supabase
-          .from("school_invitations")
-          .insert({
-            school_id: currentSchool?.id,
-            email: data.email.toLowerCase().trim(),
-            role: data.role,
-            invited_by: user?.id,
-          });
-
-        if (error) throw error;
-        return { type: "invited" as const };
-      }
+      if (!portalToken) throw new Error("No auth token");
+      
+      const payload: InviteUserPayload = {
+        email: data.email.toLowerCase().trim(),
+        client_name: data.fullName.trim(),
+        role: data.role,
+        designation: data.designation.trim(),
+      };
+      
+      return inviteUser(portalToken, payload);
     },
     onSuccess: (result) => {
-      if (result.type === "added") {
-        toast.success("User added successfully");
-      } else {
-        toast.success("Invitation sent. User will be added when they sign up.");
-      }
+      toast.success(result.message || "Invitation sent successfully");
       setIsAddDialogOpen(false);
       setFormData({ email: "", fullName: "", role: "user", designation: "" });
-      queryClient.invalidateQueries({ queryKey: ["school-users", currentSchool?.id] });
-      queryClient.invalidateQueries({ queryKey: ["pending-invitations", currentSchool?.id] });
+      queryClient.invalidateQueries({ queryKey: ["users-management", currentSchool?.id] });
     },
     onError: (error: Error) => {
       toast.error(error.message);
@@ -208,17 +108,13 @@ export default function UserManagement() {
 
   // Cancel invitation mutation
   const cancelInvitationMutation = useMutation({
-    mutationFn: async (invitationId: string) => {
-      const { error } = await supabase
-        .from("school_invitations")
-        .delete()
-        .eq("id", invitationId);
-
-      if (error) throw error;
+    mutationFn: async (invitationId: number) => {
+      if (!portalToken) throw new Error("No auth token");
+      return deleteInvitation(portalToken, invitationId);
     },
-    onSuccess: () => {
-      toast.success("Invitation deleted");
-      queryClient.invalidateQueries({ queryKey: ["pending-invitations", currentSchool?.id] });
+    onSuccess: (result) => {
+      toast.success(result.message || "Invitation deleted");
+      queryClient.invalidateQueries({ queryKey: ["users-management", currentSchool?.id] });
     },
     onError: () => {
       toast.error("Failed to delete invitation");
@@ -248,7 +144,7 @@ export default function UserManagement() {
     addUserMutation.mutate(formData);
   };
 
-  const getInitials = (name: string | null, email: string | null) => {
+  const getInitials = (name: string | null) => {
     if (name) {
       return name
         .split(" ")
@@ -257,11 +153,11 @@ export default function UserManagement() {
         .toUpperCase()
         .slice(0, 2);
     }
-    return email?.charAt(0).toUpperCase() || "U";
+    return "U";
   };
 
   const getRoleBadgeVariant = (role: string): "default" | "destructive" | "outline" | "secondary" => {
-    switch (role) {
+    switch (role.toLowerCase()) {
       case "admin":
       case "super_admin":
         return "destructive";
@@ -298,10 +194,6 @@ export default function UserManagement() {
     );
   }
 
-  const activeUsersCount = schoolUsers?.length || 0;
-  const adminCount = schoolUsers?.filter((u) => u.role === "admin").length || 0;
-  const pendingCount = pendingInvitations?.length || 0;
-
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -310,7 +202,7 @@ export default function UserManagement() {
           <div>
             <h1 className="text-2xl font-display font-bold text-foreground">Manage Users</h1>
             <p className="text-muted-foreground mt-1">
-              {currentSchool?.name}
+              {usersData?.data?.school?.school_name || currentSchool?.name}
             </p>
           </div>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
@@ -447,23 +339,22 @@ export default function UserManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {schoolUsers && schoolUsers.length > 0 ? (
-                  schoolUsers.map((user) => (
-                    <TableRow key={user.id}>
+                {activeUsers.length > 0 ? (
+                  activeUsers.map((user: ActiveUser) => (
+                    <TableRow key={user.client_id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <Avatar className="h-8 w-8">
-                            <AvatarImage src={user.profile?.avatar_url || undefined} />
                             <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                              {getInitials(user.profile?.full_name || null, user.profile?.email || null)}
+                              {getInitials(user.client_name)}
                             </AvatarFallback>
                           </Avatar>
                           <div>
                             <p className="font-medium text-sm">
-                              {user.profile?.full_name || "Unknown User"}
+                              {user.client_name}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              {user.profile?.email || "—"}
+                              {user.email}
                             </p>
                           </div>
                         </div>
@@ -474,7 +365,7 @@ export default function UserManagement() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <p className="text-xs font-medium">—</p>
+                        <p className="text-xs font-medium">{user.designation || "—"}</p>
                       </TableCell>
                       <TableCell className="text-center">
                         <Badge variant="default" className="bg-green-500/10 text-green-600 hover:bg-green-500/20 border-0">
@@ -520,13 +411,13 @@ export default function UserManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {pendingInvitations && pendingInvitations.length > 0 ? (
-                  pendingInvitations.map((invitation) => (
-                    <TableRow key={invitation.id}>
+                {pendingInvitations.length > 0 ? (
+                  pendingInvitations.map((invitation: PendingInvitation) => (
+                    <TableRow key={invitation.pending_client_id}>
                       <TableCell>
                         <div>
                           <p className="font-medium text-sm">
-                            {invitation.full_name || "—"}
+                            {invitation.client_name || "—"}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             {invitation.email}
@@ -548,7 +439,7 @@ export default function UserManagement() {
                       </TableCell>
                       <TableCell>
                         <span className="text-xs text-muted-foreground">
-                          {format(new Date(invitation.created_at), "MMM d, yyyy HH:mm")}
+                          {format(new Date(invitation.invited_at), "MMM d, yyyy HH:mm")}
                         </span>
                       </TableCell>
                       <TableCell className="text-center">
@@ -562,7 +453,7 @@ export default function UserManagement() {
                           size="sm"
                           onClick={() => {
                             if (confirm("Are you sure you want to delete this invitation?")) {
-                              cancelInvitationMutation.mutate(invitation.id);
+                              cancelInvitationMutation.mutate(invitation.pending_client_id);
                             }
                           }}
                           disabled={cancelInvitationMutation.isPending}
