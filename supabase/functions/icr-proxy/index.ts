@@ -54,15 +54,41 @@ serve(async (req) => {
       },
     });
 
-    const data = await response.json();
+    // IMPORTANT: upstream may return HTML (e.g., auth/WAF page) which would break response.json().
+    const contentType = response.headers.get('content-type') || 'unknown';
+    const rawText = await response.text();
 
-    return new Response(
-      JSON.stringify(data),
-      { 
-        status: response.status, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
-    );
+    let data: unknown;
+    try {
+      data = JSON.parse(rawText);
+    } catch (parseError) {
+      const snippet = rawText.slice(0, 600);
+      console.error('ICR Proxy Upstream Non-JSON Response', {
+        apiUrl,
+        status: response.status,
+        contentType,
+        snippet,
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Upstream returned non-JSON response',
+          upstream: {
+            url: apiUrl,
+            status: response.status,
+            contentType,
+            body_snippet: snippet,
+          },
+        }),
+        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    return new Response(JSON.stringify(data), {
+      status: response.status,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   } catch (error) {
     console.error('ICR Proxy Error:', error);
     return new Response(
