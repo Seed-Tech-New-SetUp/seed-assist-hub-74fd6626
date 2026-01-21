@@ -114,23 +114,13 @@ export default function ScholarshipApplications() {
     [filterOptions, applicants]
   );
 
-  // Use API meta for status counts if available
+  // Calculate status counts directly from applicants array for accuracy
   const statusCounts = useMemo(() => {
-    if (meta?.status_counts) {
-      return {
-        pending: meta.status_counts.pending,
-        shortlisted: meta.status_counts.shortlisted,
-        onhold: meta.status_counts.onhold,
-        rejected: meta.status_counts.rejected,
-        winner: meta.status_counts.winners,
-        recommended: meta.status_counts.recommended,
-      };
-    }
     return applicants.reduce((acc, applicant) => {
       acc[applicant.status] = (acc[applicant.status] || 0) + 1;
       return acc;
     }, {} as Record<WorkflowStatus, number>);
-  }, [meta, applicants]);
+  }, [applicants]);
   
   // SEED Recommended count should be based on the isSeedRecommended flag, not status
   const seedRecommendedCount = useMemo(() => 
