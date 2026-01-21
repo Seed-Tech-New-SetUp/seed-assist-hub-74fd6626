@@ -23,12 +23,20 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { UserPlus, Shield, Users, Mail, Calendar, ShieldAlert, Clock, Trash2 } from "lucide-react";
+import { UserPlus, Shield, Users, Mail, Calendar, ShieldAlert, Clock, Trash2, User, Inbox } from "lucide-react";
 import { format } from "date-fns";
 
 interface SchoolUser {
@@ -48,7 +56,18 @@ interface SchoolUser {
 interface PendingInvitation {
   id: string;
   email: string;
+  full_name?: string;
+  role?: string;
+  designation?: string;
+  invited_by_name?: string;
   created_at: string;
+}
+
+interface InviteFormData {
+  email: string;
+  fullName: string;
+  role: string;
+  designation: string;
 }
 
 export default function UserManagement() {
@@ -57,7 +76,12 @@ export default function UserManagement() {
   const { isAdmin, isLoading: adminLoading } = useAdminStatus();
   const queryClient = useQueryClient();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [newUserEmail, setNewUserEmail] = useState("");
+  const [formData, setFormData] = useState<InviteFormData>({
+    email: "",
+    fullName: "",
+    role: "user",
+    designation: "",
+  });
 
   // Fetch active users
   const { data: schoolUsers, isLoading } = useQuery({
@@ -110,12 +134,12 @@ export default function UserManagement() {
 
   // Add user mutation
   const addUserMutation = useMutation({
-    mutationFn: async (email: string) => {
+    mutationFn: async (data: InviteFormData) => {
       // First check if user already exists in profiles
       const { data: profile } = await supabase
         .from("profiles")
         .select("id")
-        .eq("email", email.toLowerCase().trim())
+        .eq("email", data.email.toLowerCase().trim())
         .maybeSingle();
 
       if (profile) {
@@ -135,7 +159,7 @@ export default function UserManagement() {
           .insert({
             user_id: profile.id,
             school_id: currentSchool?.id,
-            role: "user",
+            role: data.role,
             is_primary: false,
           });
 
@@ -146,7 +170,7 @@ export default function UserManagement() {
         const { data: existingInvite } = await supabase
           .from("school_invitations")
           .select("id")
-          .eq("email", email.toLowerCase().trim())
+          .eq("email", data.email.toLowerCase().trim())
           .eq("school_id", currentSchool?.id)
           .maybeSingle();
 
@@ -157,8 +181,8 @@ export default function UserManagement() {
           .from("school_invitations")
           .insert({
             school_id: currentSchool?.id,
-            email: email.toLowerCase().trim(),
-            role: "user",
+            email: data.email.toLowerCase().trim(),
+            role: data.role,
             invited_by: user?.id,
           });
 
@@ -173,7 +197,7 @@ export default function UserManagement() {
         toast.success("Invitation sent. User will be added when they sign up.");
       }
       setIsAddDialogOpen(false);
-      setNewUserEmail("");
+      setFormData({ email: "", fullName: "", role: "user", designation: "" });
       queryClient.invalidateQueries({ queryKey: ["school-users", currentSchool?.id] });
       queryClient.invalidateQueries({ queryKey: ["pending-invitations", currentSchool?.id] });
     },
@@ -193,25 +217,35 @@ export default function UserManagement() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Invitation cancelled");
+      toast.success("Invitation deleted");
       queryClient.invalidateQueries({ queryKey: ["pending-invitations", currentSchool?.id] });
     },
     onError: () => {
-      toast.error("Failed to cancel invitation");
+      toast.error("Failed to delete invitation");
     },
   });
 
-  const handleAddUser = () => {
-    const email = newUserEmail.trim();
-    if (!email) {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.email.trim()) {
       toast.error("Please enter an email address");
       return;
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       toast.error("Please enter a valid email address");
       return;
     }
-    addUserMutation.mutate(email);
+    if (!formData.fullName.trim()) {
+      toast.error("Please enter the full name");
+      return;
+    }
+    if (!formData.designation.trim()) {
+      toast.error("Please enter a designation");
+      return;
+    }
+    
+    addUserMutation.mutate(formData);
   };
 
   const getInitials = (name: string | null, email: string | null) => {
@@ -226,10 +260,13 @@ export default function UserManagement() {
     return email?.charAt(0).toUpperCase() || "U";
   };
 
-  const getRoleBadgeVariant = (role: string) => {
+  const getRoleBadgeVariant = (role: string): "default" | "destructive" | "outline" | "secondary" => {
     switch (role) {
       case "admin":
-        return "default";
+      case "super_admin":
+        return "destructive";
+      case "user":
+        return "secondary";
       default:
         return "outline";
     }
@@ -261,170 +298,157 @@ export default function UserManagement() {
     );
   }
 
+  const activeUsersCount = schoolUsers?.length || 0;
+  const adminCount = schoolUsers?.filter((u) => u.role === "admin").length || 0;
+  const pendingCount = pendingInvitations?.length || 0;
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-display font-bold text-foreground">User Management</h1>
+            <h1 className="text-2xl font-display font-bold text-foreground">Manage Users</h1>
             <p className="text-muted-foreground mt-1">
-              Manage users associated with {currentSchool?.name}
+              {currentSchool?.name}
             </p>
           </div>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
               <Button className="gap-2">
                 <UserPlus className="h-4 w-4" />
-                Add User
+                Invite New User
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>Add User to School</DialogTitle>
+                <DialogTitle className="flex items-center gap-2">
+                  <UserPlus className="h-5 w-5" />
+                  Invite New User
+                </DialogTitle>
                 <DialogDescription>
-                  Enter the user's email address. If they haven't signed up yet, they'll be added automatically when they do.
+                  Send an invitation to add a new user to your school.
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-4 pt-4">
+              <form onSubmit={handleSubmit} className="space-y-4 pt-2">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
+                  <Label htmlFor="email">Email Address *</Label>
                   <Input
                     id="email"
                     type="email"
                     placeholder="user@example.com"
-                    value={newUserEmail}
-                    onChange={(e) => setNewUserEmail(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleAddUser()}
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   />
                 </div>
-                <Button
-                  onClick={handleAddUser}
-                  disabled={addUserMutation.isPending}
-                  className="w-full"
-                >
-                  {addUserMutation.isPending ? "Adding..." : "Add User"}
-                </Button>
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Full Name *</Label>
+                  <Input
+                    id="fullName"
+                    type="text"
+                    placeholder="John Doe"
+                    value={formData.fullName}
+                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="role">Role *</Label>
+                  <Select
+                    value={formData.role}
+                    onValueChange={(value) => setFormData({ ...formData, role: value })}
+                    disabled
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="user">User</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="designation">Designation *</Label>
+                  <Input
+                    id="designation"
+                    type="text"
+                    placeholder="e.g., Admissions Director"
+                    value={formData.designation}
+                    onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
+                  />
+                </div>
+                <DialogFooter className="gap-2 sm:gap-0">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsAddDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={addUserMutation.isPending}
+                    className="gap-2"
+                  >
+                    <Mail className="h-4 w-4" />
+                    {addUserMutation.isPending ? "Sending..." : "Send Invitation"}
+                  </Button>
+                </DialogFooter>
+              </form>
             </DialogContent>
           </Dialog>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Active Users</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-primary" />
-                <span className="text-2xl font-bold">{schoolUsers?.length || 0}</span>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Users className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Active Users</p>
+                  <p className="text-2xl font-bold">{activeUsersCount}</p>
+                </div>
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Admins</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-primary" />
-                <span className="text-2xl font-bold">
-                  {schoolUsers?.filter((u) => u.role === "admin").length || 0}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Pending Invitations</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <Clock className="h-5 w-5 text-muted-foreground" />
-                <span className="text-2xl font-bold">{pendingInvitations?.length || 0}</span>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 rounded-full bg-amber-500/10 flex items-center justify-center">
+                  <Clock className="h-6 w-6 text-amber-500" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Pending Invitations</p>
+                  <p className="text-2xl font-bold">{pendingCount}</p>
+                </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Pending Invitations */}
-        {pendingInvitations && pendingInvitations.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                Pending Invitations
-              </CardTitle>
-              <CardDescription>
-                Users who will be added when they sign up
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Invited</TableHead>
-                    <TableHead className="w-[100px]">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {pendingInvitations.map((invitation) => (
-                    <TableRow key={invitation.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Mail className="h-4 w-4 text-muted-foreground" />
-                          {invitation.email}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                          <Calendar className="h-3.5 w-3.5" />
-                          {format(new Date(invitation.created_at), "MMM d, yyyy")}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => cancelInvitationMutation.mutate(invitation.id)}
-                          disabled={cancelInvitationMutation.isPending}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        )}
-
         {/* Active Users Table */}
         <Card>
-          <CardHeader>
-            <CardTitle>Active Users</CardTitle>
-            <CardDescription>
-              All users with access to {currentSchool?.name}
-            </CardDescription>
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-muted-foreground" />
+              <CardTitle className="text-lg">Active Users ({activeUsersCount})</CardTitle>
+            </div>
           </CardHeader>
-          <CardContent>
-            {schoolUsers && schoolUsers.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Added</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {schoolUsers.map((user) => (
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-xs h-10">User</TableHead>
+                  <TableHead className="text-xs h-10">Role</TableHead>
+                  <TableHead className="text-xs h-10">Designation</TableHead>
+                  <TableHead className="text-xs h-10 text-center">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {schoolUsers && schoolUsers.length > 0 ? (
+                  schoolUsers.map((user) => (
                     <TableRow key={user.id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
@@ -434,15 +458,14 @@ export default function UserManagement() {
                               {getInitials(user.profile?.full_name || null, user.profile?.email || null)}
                             </AvatarFallback>
                           </Avatar>
-                          <span className="font-medium">
-                            {user.profile?.full_name || "Unknown User"}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Mail className="h-3.5 w-3.5" />
-                          {user.profile?.email || "—"}
+                          <div>
+                            <p className="font-medium text-sm">
+                              {user.profile?.full_name || "Unknown User"}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {user.profile?.email || "—"}
+                            </p>
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -451,20 +474,118 @@ export default function UserManagement() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                          <Calendar className="h-3.5 w-3.5" />
-                          {format(new Date(user.created_at), "MMM d, yyyy")}
-                        </div>
+                        <p className="text-xs font-medium">—</p>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="default" className="bg-green-500/10 text-green-600 hover:bg-green-500/20 border-0">
+                          Active
+                        </Badge>
                       </TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            ) : (
-              <div className="text-center py-12 text-muted-foreground">
-                No users found for this school.
-              </div>
-            )}
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={4} className="h-32 text-center">
+                      <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                        <Users className="h-10 w-10 opacity-50" />
+                        <p>No users found</p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        {/* Pending Invitations Table */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-muted-foreground" />
+              <CardTitle className="text-lg">Pending Invitations ({pendingCount})</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-xs h-10">User</TableHead>
+                  <TableHead className="text-xs h-10">Role</TableHead>
+                  <TableHead className="text-xs h-10">Designation</TableHead>
+                  <TableHead className="text-xs h-10">Invited By</TableHead>
+                  <TableHead className="text-xs h-10">Invited At</TableHead>
+                  <TableHead className="text-xs h-10 text-center">Status</TableHead>
+                  <TableHead className="text-xs h-10 text-center">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {pendingInvitations && pendingInvitations.length > 0 ? (
+                  pendingInvitations.map((invitation) => (
+                    <TableRow key={invitation.id}>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium text-sm">
+                            {invitation.full_name || "—"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {invitation.email}
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className="capitalize">
+                          {invitation.role || "user"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <p className="text-xs font-medium">{invitation.designation || "—"}</p>
+                      </TableCell>
+                      <TableCell>
+                        <p className="text-xs text-muted-foreground">
+                          {invitation.invited_by_name || "—"}
+                        </p>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-xs text-muted-foreground">
+                          {format(new Date(invitation.created_at), "MMM d, yyyy HH:mm")}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-200">
+                          Pending
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            if (confirm("Are you sure you want to delete this invitation?")) {
+                              cancelInvitationMutation.mutate(invitation.id);
+                            }
+                          }}
+                          disabled={cancelInvitationMutation.isPending}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Delete
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-32 text-center">
+                      <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                        <Inbox className="h-10 w-10 opacity-50" />
+                        <p>No pending invitations</p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       </div>
