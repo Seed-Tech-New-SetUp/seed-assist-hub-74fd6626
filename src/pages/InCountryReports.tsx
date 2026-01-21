@@ -115,7 +115,6 @@ export default function InCountryReports() {
         "Month": monthLabel,
         "Representative": report.client_name,
         "Email": report.client_email,
-        "Status": "Published",
         "Leads Generated": totals.totalLeads,
         "Leads Engaged": totals.totalEngaged,
         "Funnel - Engaged": funnel?.leads_engaged ?? 0,
