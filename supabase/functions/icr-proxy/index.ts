@@ -37,7 +37,7 @@ serve(async (req) => {
     }
 
     // Build the API URL with optional filters
-    let apiUrl = 'https://seedglobaleducation.com/api/assist/icr/reports';
+    let apiUrl = 'https://seedglobaleducation.com/api/assist/in-country-representation/';
     const params = new URLSearchParams();
     if (year) params.append('year', year);
     if (month) params.append('month', month);
