@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { getCookie } from "@/lib/utils/cookies";
+import { AUTH_COOKIES, getCookie } from "@/lib/utils/cookies";
 
 // ===========================================
 // ICR (In-Country Representation) API
@@ -79,7 +79,9 @@ export async function fetchICRReports(
   year?: string,
   month?: string
 ): Promise<ICRReportsResponse> {
-  const token = getCookie("auth_token");
+  // Token is stored in secure cookies by the portal auth flow
+  // (legacy fallback to "auth_token" kept for backward compatibility)
+  const token = getCookie(AUTH_COOKIES.TOKEN) ?? getCookie("auth_token");
 
   if (!token) {
     return { success: false, error: "Not authenticated" };
