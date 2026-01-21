@@ -92,6 +92,11 @@ export default function InCountryReports() {
     return { totalLeads, totalEngaged };
   };
 
+  // NOTE: "Leads Engaged" should come strictly from lead_engagement rows.
+  // The application_funnel.leads_engaged field is not used here because it may be a derived value.
+  const getEngagedCount = (report: ICRReport) =>
+    report.lead_engagement.reduce((sum, le) => sum + le.leads_engaged, 0);
+
   return (
     <DashboardLayout>
       {/* Page Header */}
@@ -257,7 +262,7 @@ export default function InCountryReports() {
                         {totals.totalLeads}
                       </TableCell>
                       <TableCell className="text-right">
-                        {report.application_funnel?.leads_engaged ?? totals.totalEngaged}
+                        {totals.totalEngaged}
                       </TableCell>
                       <TableCell className="text-right">
                         {report.application_funnel?.applications_submitted ?? 0}
@@ -316,7 +321,7 @@ export default function InCountryReports() {
                     <div className="bg-muted/50 p-4 rounded-lg text-center border-2 border-transparent hover:border-primary/30 transition-colors">
                       <p className="text-xs text-muted-foreground uppercase mb-1">Engaged</p>
                       <p className="text-2xl font-bold text-primary">
-                        {selectedReport.application_funnel.leads_engaged}
+                        {getEngagedCount(selectedReport)}
                       </p>
                     </div>
                     <div className="bg-muted/50 p-4 rounded-lg text-center border-2 border-transparent hover:border-primary/30 transition-colors">
