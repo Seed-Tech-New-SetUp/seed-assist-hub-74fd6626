@@ -376,7 +376,7 @@ export default function InCountryReports() {
                             View
                           </Button>
                           <Button
-                            variant="ghost"
+                            variant="success"
                             size="sm"
                             onClick={() => handleDownloadReport(report)}
                             disabled={downloadingReportId === report.report_id}
@@ -386,6 +386,7 @@ export default function InCountryReports() {
                             ) : (
                               <Download className="h-4 w-4" />
                             )}
+                            {downloadingReportId === report.report_id ? "Downloading..." : "Download"}
                           </Button>
                         </div>
                       </TableCell>

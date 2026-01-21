@@ -421,17 +421,17 @@ export default function VirtualMasterclass() {
                       </div>
                       {event.reports_published && (
                         <Button
-                          variant="ghost"
+                          variant="success"
                           size="sm"
                           disabled={downloadingId === event.event_id}
                           onClick={() => handleDownloadReport(event)}
                         >
                           {downloadingId === event.event_id ? (
-                            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                            <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
-                            <Download className="h-4 w-4 mr-1" />
+                            <Download className="h-4 w-4" />
                           )}
-                          {downloadingId === event.event_id ? "Downloading..." : "Report"}
+                          {downloadingId === event.event_id ? "Downloading..." : "Download"}
                         </Button>
                       )}
                     </div>
