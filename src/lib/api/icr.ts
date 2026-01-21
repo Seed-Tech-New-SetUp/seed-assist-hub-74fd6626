@@ -86,19 +86,17 @@ export async function fetchICRReports(
   }
 
   try {
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    // Build query parameters
+    // Build query parameters for the edge function
     const params = new URLSearchParams();
     if (year) params.append('year', year);
     if (month) params.append('month', month);
     
-    const queryString = params.toString() ? `?${params.toString()}` : '';
-    
-    const response = await supabase.functions.invoke('icr-proxy' + queryString, {
+    // Pass filters in request body since supabase.functions.invoke doesn't support query params
+    const response = await supabase.functions.invoke('icr-proxy', {
       headers: {
         Authorization: `Bearer ${token}`,
       },
+      body: { year, month },
     });
 
     if (response.error) {
