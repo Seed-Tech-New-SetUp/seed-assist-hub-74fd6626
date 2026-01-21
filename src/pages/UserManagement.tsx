@@ -96,7 +96,7 @@ export default function UserManagement() {
       return inviteUser(portalToken, payload);
     },
     onSuccess: (result) => {
-      toast.success(result.message || "Invitation sent successfully");
+      toast.success(result.data?.message || "Invitation sent successfully");
       setIsAddDialogOpen(false);
       setFormData({ email: "", fullName: "", role: "user", designation: "" });
       queryClient.invalidateQueries({ queryKey: ["users-management", currentSchool?.id] });
@@ -113,7 +113,7 @@ export default function UserManagement() {
       return deleteInvitation(portalToken, invitationId);
     },
     onSuccess: (result) => {
-      toast.success(result.message || "Invitation deleted");
+      toast.success(result.data?.message || "Invitation deleted");
       queryClient.invalidateQueries({ queryKey: ["users-management", currentSchool?.id] });
     },
     onError: () => {

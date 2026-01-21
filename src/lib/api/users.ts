@@ -55,20 +55,43 @@ export interface InviteUserPayload {
 
 export interface InviteUserResponse {
   success: boolean;
-  message: string;
   data?: {
-    pending_client_id: number;
-    email: string;
-    client_name: string;
-    role: string;
-    designation: string;
-    invited_by_name: string;
+    message: string;
+    email_sent: boolean;
+    data: {
+      pending_client_id: string;
+      email: string;
+      client_name: string;
+      role: string;
+      designation: string;
+      school_id: string;
+      school_name: string;
+      invited_by_name: string;
+      invited_at: string;
+    };
+  };
+  error?: {
+    code: string;
+    message: string;
+    details?: Record<string, unknown>;
   };
 }
 
 export interface DeleteInvitationResponse {
   success: boolean;
-  message: string;
+  data?: {
+    message: string;
+    details: {
+      pending_client_id: string;
+      email: string;
+      name: string;
+      action: string;
+    };
+  };
+  error?: {
+    code: string;
+    message: string;
+  };
 }
 
 export async function fetchUsers(authToken: string): Promise<UsersResponse> {
@@ -115,7 +138,8 @@ export async function inviteUser(
   const result = await response.json();
 
   if (!response.ok || !result.success) {
-    throw new Error(result.message || result.error || "Failed to send invitation");
+    const errorMessage = result.error?.message || result.message || "Failed to send invitation";
+    throw new Error(errorMessage);
   }
 
   return decodeObjectStrings(result) as InviteUserResponse;
@@ -139,8 +163,9 @@ export async function deleteInvitation(
 
   const result = await response.json();
 
-  if (!result.success) {
-    throw new Error(result.message || "Failed to delete invitation");
+  if (!response.ok || !result.success) {
+    const errorMessage = result.error?.message || result.message || "Failed to delete invitation";
+    throw new Error(errorMessage);
   }
 
   return result as DeleteInvitationResponse;
