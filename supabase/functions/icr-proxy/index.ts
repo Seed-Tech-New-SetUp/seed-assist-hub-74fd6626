@@ -22,10 +22,19 @@ serve(async (req) => {
       );
     }
 
-    // Parse URL to get query parameters
-    const url = new URL(req.url);
-    const year = url.searchParams.get('year');
-    const month = url.searchParams.get('month');
+    // Parse request body for filter parameters
+    let year: string | null = null;
+    let month: string | null = null;
+    
+    if (req.method === 'POST') {
+      try {
+        const body = await req.json();
+        year = body.year || null;
+        month = body.month || null;
+      } catch {
+        // Body parsing failed, continue without filters
+      }
+    }
 
     // Build the API URL with optional filters
     let apiUrl = 'https://seedglobaleducation.com/api/assist/icr/reports';
