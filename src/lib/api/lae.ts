@@ -134,7 +134,14 @@ export async function fetchLAEAssignments(): Promise<LAEAssignment[]> {
   if (error) throw new Error(error.message);
   if (!data?.success) throw new Error(data?.error || "Failed to fetch assignments");
 
-  return data.assignments || [];
+  // Map API response to our interface
+  return (data.assignments || []).map((a: Record<string, unknown>) => ({
+    assignment_id: a.assignment_id || a.id,
+    assignment_type: a.assignment_type || a.type || 'Lead Analytics',
+    cycle: a.cycle || null,
+    start_date: a.start_date || a.created_at || null,
+    status: a.status || 'pending',
+  }));
 }
 
 export async function fetchAnalyticsData(
