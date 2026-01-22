@@ -292,6 +292,22 @@ function getCountryCode(nationality: string): string {
   return countryCodeMap[nationality] || "UN"; // UN = unknown/generic flag
 }
 
+// Remove country short codes from country/nationality strings (e.g., "India (IN)" → "India", "IN" → "India")
+function cleanCountryName(countryOrNationality: string): string {
+  if (!countryOrNationality) return "";
+  
+  // Remove parenthetical codes like "(IN)", "(GH)"
+  let cleaned = countryOrNationality.replace(/\s*\([A-Z]{2,3}\)\s*/g, "").trim();
+  
+  // If the result is just a 2-3 letter code, try to find the full country name
+  if (/^[A-Z]{2,3}$/.test(cleaned)) {
+    const fullName = Object.entries(countryCodeMap).find(([, code]) => code === cleaned)?.[0];
+    if (fullName) return fullName;
+  }
+  
+  return cleaned;
+}
+
 function normalizeStatus(status: string): WorkflowStatus {
   const normalized = status.toLowerCase().trim();
   if (normalized === "winner" || normalized === "winners") return "winner";
@@ -303,13 +319,14 @@ function normalizeStatus(status: string): WorkflowStatus {
 }
 
 function transformApplicant(api: ApiApplicant): Applicant {
+  const cleanedNationality = cleanCountryName(api.nationality);
   return {
     id: api.contact_id,
     name: api.name,
     email: api.email,
-    country: api.nationality,
-    countryCode: getCountryCode(api.nationality),
-    nationality: api.nationality,
+    country: cleanedNationality,
+    countryCode: getCountryCode(cleanedNationality),
+    nationality: cleanedNationality,
     gender: api.gender,
     isSeedRecommended: api.status.toLowerCase() === "recommended",
     status: normalizeStatus(api.status),
@@ -328,6 +345,8 @@ function transformApplicant(api: ApiApplicant): Applicant {
 
 function transformProfile(api: ApiProfileResponse["data"]): ApplicantProfile {
   const { profile, education, test_scores, work_experience, essays, awards, navigation, meta } = api;
+  const cleanedNationality = cleanCountryName(profile.nationality);
+  const cleanedCountryOfResidence = cleanCountryName(profile.country_of_residence);
   
   return {
     id: profile.contact_id,
@@ -338,9 +357,9 @@ function transformProfile(api: ApiProfileResponse["data"]): ApplicantProfile {
     phone: profile.phone,
     gender: profile.gender,
     dateOfBirth: profile.date_of_birth,
-    nationality: profile.nationality,
-    countryCode: getCountryCode(profile.nationality),
-    countryOfResidence: profile.country_of_residence,
+    nationality: cleanedNationality,
+    countryCode: getCountryCode(cleanedNationality),
+    countryOfResidence: cleanedCountryOfResidence,
     status: normalizeStatus(profile.status),
     isSeedRecommended: profile.recommendation_status === "recommended",
     currentRound: profile.current_round,
