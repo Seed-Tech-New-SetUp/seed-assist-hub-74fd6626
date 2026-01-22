@@ -306,10 +306,6 @@ export default function InPersonEventsHome() {
                       {nextEvent.venue_name || `${nextEvent.city}, ${nextEvent.country}`}
                     </span>
                   </div>
-                  <p className="text-sm">
-                    <span className="font-medium text-foreground">{nextEvent.registrant_count?.toLocaleString()}</span>
-                    <span className="text-muted-foreground"> registrations so far</span>
-                  </p>
                 </div>
                 <div className="flex flex-col items-start lg:items-end gap-4">
                   <CountdownTimer targetDate={nextEvent.date} />
