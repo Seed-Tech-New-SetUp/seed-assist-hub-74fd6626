@@ -122,6 +122,7 @@ const BSFReports = () => {
     venue: string;
     registrants: number;
     attendees: number;
+    femalePercentage: number;
     report_downloaded?: boolean;
     last_downloaded_at?: string | null;
     last_downloaded_by?: string | null;
@@ -167,6 +168,7 @@ const BSFReports = () => {
             venue: event.venue_name,
             registrants: event.registrants || 0,
             attendees: event.attendees || 0,
+            femalePercentage: event.female_candidates_percentage || 0,
             report_downloaded: Boolean(event.report_downloaded),
             last_downloaded_at: event.last_downloaded_at ?? null,
             last_downloaded_by: event.last_downloaded_by ?? null,
@@ -467,7 +469,7 @@ const BSFReports = () => {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-6">
                     <div className="hidden md:flex items-center gap-6 text-sm">
                       <div className="text-center">
                         <p className="font-semibold">{event.registrants}</p>
@@ -476,6 +478,10 @@ const BSFReports = () => {
                       <div className="text-center">
                         <p className="font-semibold">{event.attendees}</p>
                         <p className="text-muted-foreground text-xs">Attended</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="font-semibold text-pink-600">{event.femalePercentage}%</p>
+                        <p className="text-muted-foreground text-xs">Female</p>
                       </div>
                     </div>
                     <Button 

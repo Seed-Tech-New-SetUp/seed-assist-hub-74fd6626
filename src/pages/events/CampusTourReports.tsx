@@ -111,7 +111,7 @@ interface CampusTourEvent {
   location: string;
   registrants: number;
   attended: number;
-  connections: number;
+  femalePercentage: number;
   status: string;
   report_downloaded: boolean;
   lastDownloadedBy: string | null;
@@ -168,7 +168,7 @@ const CampusTourReports = () => {
             location: event.location,
             registrants: event.registrants || 0,
             attended: event.attended || 0,
-            connections: event.connections || 0,
+            femalePercentage: event.female_candidates_percentage || 0,
             status: event.status || "completed",
             report_downloaded: Boolean(event.report_downloaded),
             lastDownloadedBy: event.lastDownloadedBy ?? null,
@@ -435,6 +435,10 @@ const CampusTourReports = () => {
                       <div className="text-center">
                         <p className="font-semibold">{event.attended}</p>
                         <p className="text-muted-foreground text-xs">Attended</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="font-semibold text-pink-600">{event.femalePercentage}%</p>
+                        <p className="text-muted-foreground text-xs">Female</p>
                       </div>
                     </div>
                     <Button 
