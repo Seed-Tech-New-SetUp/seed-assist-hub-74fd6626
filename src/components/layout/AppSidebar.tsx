@@ -64,7 +64,7 @@ const baseNavigation: NavItem[] = [
         permissionKey: "inPersonEvents",
         items: [
           { title: "Overview", href: "/events/in-person" },
-          { title: "Business School Festivals", href: "/events/in-person/bsf", permissionKey: "bsf", alwaysShow: true },
+          { title: "Business School Festivals", href: "/events/in-person/bsf", permissionKey: "bsf" },
           { title: "Campus Tours", href: "/events/in-person/campus-tours", permissionKey: "campusTours" },
         ],
       },
