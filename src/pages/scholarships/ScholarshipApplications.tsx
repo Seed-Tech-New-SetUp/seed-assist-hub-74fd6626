@@ -384,7 +384,7 @@ export default function ScholarshipApplications() {
         {/* Bulk Actions - Sticky */}
         {selectedApplicants.length > 0 && (
           <div className="sticky top-16 z-40">
-            <Card className="bg-primary/5 border-primary/20 shadow-lg">
+            <Card className="bg-background border-primary/20 shadow-lg">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">{selectedApplicants.length} applicant(s) selected</span>
