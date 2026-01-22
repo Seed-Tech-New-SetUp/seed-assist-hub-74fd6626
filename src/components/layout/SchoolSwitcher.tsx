@@ -34,7 +34,7 @@ export function SchoolSwitcher() {
           )}
         </div>
         <div className="hidden sm:block">
-          <p className="text-xs font-medium leading-tight truncate max-w-[120px]">
+          <p className="text-sm font-semibold leading-tight truncate max-w-[160px]">
             {currentSchool.name}
           </p>
           <p className="text-[10px] text-muted-foreground capitalize">
@@ -83,7 +83,7 @@ export function SchoolSwitcher() {
             )}
           </div>
           <div className="hidden sm:block text-left">
-            <p className="text-xs font-medium leading-tight truncate max-w-[120px]">
+            <p className="text-sm font-semibold leading-tight truncate max-w-[160px]">
               {currentSchool.name}
             </p>
             <p className="text-[10px] text-muted-foreground capitalize">

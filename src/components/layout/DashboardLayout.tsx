@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Search, Bell, Settings, User, LogOut, HelpCircle, ChevronDown, Building2 } from "lucide-react";
+import { LogOut, ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSchool } from "@/contexts/SchoolContext";
 import { useSidebarState } from "@/contexts/SidebarContext";
@@ -66,28 +66,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <div className="flex items-center justify-between h-full px-6">
             <div className="flex items-center gap-4">
               <SchoolSwitcher />
-              
-              <div className="hidden md:block flex-1 max-w-md">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input placeholder="Search..." className="pl-10 bg-muted/50 border-border focus-visible:bg-background focus-visible:ring-1" />
-                </div>
-              </div>
             </div>
 
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
               <ThemeToggle />
-              
-              <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground">
-                <HelpCircle className="h-4 w-4" />
-              </Button>
-              
-              <Button variant="ghost" size="icon" className="relative h-9 w-9 text-muted-foreground hover:text-foreground">
-                <Bell className="h-4 w-4" />
-                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-destructive" />
-              </Button>
-
-              <div className="w-px h-6 bg-border mx-2" />
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -108,14 +90,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 bg-popover">
                   <DropdownMenuLabel>{getDisplayName()}</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem><User className="mr-2 h-4 w-4" />Profile</DropdownMenuItem>
-                  <DropdownMenuItem><Settings className="mr-2 h-4 w-4" />Settings</DropdownMenuItem>
-                  {schools.length > 1 && (
-                    <DropdownMenuItem onClick={handleSwitchSchool}>
-                      <Building2 className="mr-2 h-4 w-4" />Switch School
-                    </DropdownMenuItem>
-                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem className="text-destructive" onClick={handleSignOut}>
                     <LogOut className="mr-2 h-4 w-4" />Log out
