@@ -510,11 +510,10 @@ export async function updateApplicantStatus(request: StatusAssignmentRequest): P
     throw new Error("Authentication required");
   }
 
-  // Map UI status to API status
+  // Map UI status to API status (API accepts: shortlisted, selected, onHold, rejected)
   const statusMap: Record<string, string> = {
-    "PENDING": "pending",
     "SHORTLISTED": "shortlisted",
-    "ON_HOLD": "onhold",
+    "ON_HOLD": "onHold",
     "REJECTED": "rejected",
     "WINNER": "selected",
   };
