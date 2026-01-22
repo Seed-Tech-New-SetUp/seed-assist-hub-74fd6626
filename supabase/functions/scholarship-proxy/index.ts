@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
 };
 
 serve(async (req) => {
@@ -25,6 +26,8 @@ serve(async (req) => {
     const action = url.searchParams.get('action') || 'list';
 
     let apiUrl: string;
+    let method = 'GET';
+    let body: string | undefined;
 
     if (action === 'list' || action === 'applicants') {
       // Get applicants list
@@ -39,6 +42,26 @@ serve(async (req) => {
         );
       }
       apiUrl = `https://seedglobaleducation.com/api/assist/scholarship/profile.php?contact_id=${contactId}`;
+    } else if (action === 'status_assignment') {
+      // Update applicant status (POST)
+      apiUrl = 'https://seedglobaleducation.com/api/assist/scholarship/status_assignment.php';
+      method = 'POST';
+      
+      if (req.method !== 'POST') {
+        return new Response(
+          JSON.stringify({ success: false, error: 'POST method required for status_assignment' }),
+          { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      try {
+        body = await req.text();
+      } catch (e) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Invalid request body' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     } else {
       return new Response(
         JSON.stringify({ success: false, error: 'Invalid action' }),
@@ -46,16 +69,21 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Scholarship Proxy: Fetching from ${apiUrl}`);
+    console.log(`Scholarship Proxy: ${method} ${apiUrl}`);
 
-    const response = await fetch(apiUrl, {
-      method: 'GET',
+    const fetchOptions: RequestInit = {
+      method,
       headers: {
         'Authorization': authHeader,
         'Content-Type': 'application/json',
       },
-    });
+    };
 
+    if (body) {
+      fetchOptions.body = body;
+    }
+
+    const response = await fetch(apiUrl, fetchOptions);
     const data = await response.json();
 
     return new Response(
