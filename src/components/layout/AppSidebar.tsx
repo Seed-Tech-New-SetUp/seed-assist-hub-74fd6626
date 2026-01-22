@@ -132,7 +132,7 @@ const baseNavigation: NavItem[] = [
     title: "Lead Analytics",
     href: "/lead-analytics",
     icon: BarChart3,
-    // No permissionKey - always visible (LAE is a core feature)
+    permissionKey: "leadAndApplicationEngagement",
   },
   // TODO: Re-enable Team Management when ready
   // {

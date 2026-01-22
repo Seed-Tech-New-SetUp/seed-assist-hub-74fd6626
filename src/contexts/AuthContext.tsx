@@ -90,7 +90,7 @@ export interface Permissions {
       addReport: boolean;
     };
   };
-  lae: {
+  leadAndApplicationEngagement: {
     enabled: boolean;
   };
 }
