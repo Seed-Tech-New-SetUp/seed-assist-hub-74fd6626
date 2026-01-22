@@ -30,6 +30,15 @@ function truncateLabel(label: string, maxLength = 25): string {
   return label.substring(0, maxLength - 3) + "...";
 }
 
+function shouldUseLogScale(data: number[]): boolean {
+  if (data.length === 0) return false;
+  const max = Math.max(...data);
+  const nonZeroValues = data.filter((v) => v > 0);
+  if (nonZeroValues.length === 0) return false;
+  const min = Math.min(...nonZeroValues);
+  return max / min > 50;
+}
+
 export function AnalyticsChart({
   type,
   data,
@@ -51,6 +60,11 @@ export function AnalyticsChart({
     [chartData]
   );
 
+  const useLogScale = useMemo(
+    () => type === "bar" && shouldUseLogScale(chartData.map((d) => d.value)),
+    [type, chartData]
+  );
+
   const handleClick = (data: { name: string }) => {
     if (onItemClick && data.name) {
       onItemClick(data.name);
@@ -66,7 +80,12 @@ export function AnalyticsChart({
             layout="vertical"
             margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
           >
-            <XAxis type="number" tick={{ fontSize: 11 }} />
+            <XAxis 
+              type="number" 
+              tick={{ fontSize: 11 }} 
+              scale={useLogScale ? "log" : "auto"}
+              domain={useLogScale ? [1, "auto"] : [0, "auto"]}
+            />
             <YAxis
               type="category"
               dataKey="name"
@@ -77,7 +96,7 @@ export function AnalyticsChart({
             <Tooltip
               formatter={(value: number) => [
                 `${value.toLocaleString()} (${((value / total) * 100).toFixed(1)}%)`,
-                "Count",
+                "Count - Click for details",
               ]}
               contentStyle={{
                 backgroundColor: "hsl(var(--popover))",
@@ -128,7 +147,7 @@ export function AnalyticsChart({
           </Pie>
           <Tooltip
             formatter={(value: number) => [
-              `${value.toLocaleString()} (${((value / total) * 100).toFixed(1)}%)`,
+              `${value.toLocaleString()} (${((value / total) * 100).toFixed(1)}%) - Click for details`,
               "Count",
             ]}
             contentStyle={{
@@ -140,10 +159,12 @@ export function AnalyticsChart({
           />
           <Legend
             formatter={(value) => (
-              <span style={{ color: "hsl(var(--foreground))", fontSize: "12px" }}>
+              <span style={{ color: "hsl(var(--foreground))", fontSize: "12px", cursor: "pointer" }}>
                 {truncateLabel(value, 20)}
               </span>
             )}
+            onClick={(data) => handleClick({ name: data.value as string })}
+            wrapperStyle={{ cursor: "pointer" }}
           />
         </PieChart>
       </ResponsiveContainer>

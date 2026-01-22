@@ -91,18 +91,29 @@ export function AnalyticsTable({
               {multiSelectMode && (
                 <TableHead className="w-[40px] text-center">
                   <Checkbox
-                    checked={
-                      selectedItems.length === data.length && data.length > 0
-                    }
+                    checked={selectedItems.length === data.length && data.length > 0}
+                    ref={(el) => {
+                      if (el) {
+                        const isIndeterminate = selectedItems.length > 0 && selectedItems.length < data.length;
+                        (el as unknown as HTMLInputElement).indeterminate = isIndeterminate;
+                      }
+                    }}
                     onCheckedChange={(checked) => {
+                      const allLabels = data.map((item) => item.label);
                       if (checked) {
-                        data.forEach((item) => {
-                          if (!selectedItems.includes(item.label)) {
-                            onItemClick(item.label);
+                        // Select all not already selected
+                        allLabels.forEach((label) => {
+                          if (!selectedItems.includes(label)) {
+                            onItemClick(label);
                           }
                         });
                       } else {
-                        selectedItems.forEach((label) => onItemClick(label));
+                        // Deselect all currently selected
+                        selectedItems.forEach((label) => {
+                          if (allLabels.includes(label)) {
+                            onItemClick(label);
+                          }
+                        });
                       }
                     }}
                   />
