@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
+
 import { Eye, EyeOff, Mail, Lock, ArrowRight, User, ArrowLeft, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -678,14 +678,6 @@ export default function Login() {
               </div>
             </div>
 
-            {!isSignUp && (
-              <div className="flex items-center space-x-2">
-                <Checkbox id="remember" disabled={loading} />
-                <Label htmlFor="remember" className="text-sm font-normal cursor-pointer">
-                  Keep me signed in for 30 days
-                </Label>
-              </div>
-            )}
 
             <Button type="submit" size="lg" className="w-full" disabled={loading}>
               {loading ? (
@@ -702,33 +694,19 @@ export default function Login() {
             </Button>
           </form>
 
-          <p className="text-center text-sm text-muted-foreground">
-            {isSignUp ? (
-              <>
-                Already have an account?{" "}
-                <Button
-                  variant="link"
-                  className="px-0.5 h-auto text-sm text-primary"
-                  onClick={() => setIsSignUp(false)}
-                  disabled={loading}
-                >
-                  Sign in
-                </Button>
-              </>
-            ) : (
-              <>
-                Don't have an account?{" "}
-                <Button
-                  variant="link"
-                  className="px-0.5 h-auto text-sm text-primary"
-                  onClick={() => setIsSignUp(true)}
-                  disabled={loading}
-                >
-                  Create one
-                </Button>
-              </>
-            )}
-          </p>
+          {isSignUp && (
+            <p className="text-center text-sm text-muted-foreground">
+              Already have an account?{" "}
+              <Button
+                variant="link"
+                className="px-0.5 h-auto text-sm text-primary"
+                onClick={() => setIsSignUp(false)}
+                disabled={loading}
+              >
+                Sign in
+              </Button>
+            </p>
+          )}
 
           <p className="text-center text-xs text-muted-foreground">
             By {isSignUp ? "signing up" : "signing in"}, you agree to our{" "}
