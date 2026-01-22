@@ -90,6 +90,9 @@ export interface Permissions {
       addReport: boolean;
     };
   };
+  lae: {
+    enabled: boolean;
+  };
 }
 
 // User data from login response
