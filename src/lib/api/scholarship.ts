@@ -410,6 +410,34 @@ function transformProfile(api: ApiProfileResponse["data"]): ApplicantProfile {
 }
 
 // ===========================================
+// Status Assignment Types
+// ===========================================
+
+export interface StatusAssignmentRequest {
+  contact_ids: string[];
+  status: string;
+  award_id?: string;
+  custom_currency?: string;
+  custom_amount?: string;
+  send_email?: boolean;
+}
+
+export interface StatusAssignmentResponse {
+  success: boolean;
+  data?: {
+    message: string;
+    updated_count: number;
+    status: string;
+    email_results?: {
+      contact_id: string;
+      email: string;
+      sent: boolean;
+    }[];
+  };
+  error?: string;
+}
+
+// ===========================================
 // API Functions
 // ===========================================
 
@@ -473,4 +501,47 @@ export async function fetchApplicantProfile(contactId: string): Promise<Applican
   }
 
   return transformProfile(response.data);
+}
+
+export async function updateApplicantStatus(request: StatusAssignmentRequest): Promise<StatusAssignmentResponse> {
+  const token = getCookie("portal_token");
+  
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+
+  // Map UI status to API status
+  const statusMap: Record<string, string> = {
+    "PENDING": "pending",
+    "SHORTLISTED": "shortlisted",
+    "ON_HOLD": "onhold",
+    "REJECTED": "rejected",
+    "WINNER": "selected",
+  };
+
+  const apiRequest = {
+    ...request,
+    status: statusMap[request.status] || request.status.toLowerCase(),
+  };
+
+  const { data, error } = await supabase.functions.invoke("scholarship-proxy?action=status_assignment", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: apiRequest,
+  });
+
+  if (error) {
+    console.error("Error updating applicant status:", error);
+    throw new Error("Failed to update applicant status");
+  }
+
+  const response = data as StatusAssignmentResponse;
+
+  if (!response.success) {
+    throw new Error(response.error || "Failed to update status");
+  }
+
+  return response;
 }

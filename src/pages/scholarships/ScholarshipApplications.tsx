@@ -35,6 +35,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ApplicationFilters, FilterState } from "@/components/scholarships/ApplicationFilters";
 import { 
   fetchApplicants, 
+  updateApplicantStatus,
   Applicant, 
   WorkflowStatus, 
   ApiMeta, 
@@ -63,6 +64,7 @@ export default function ScholarshipApplications() {
   const [showStatusDialog, setShowStatusDialog] = useState(false);
   const [newStatus, setNewStatus] = useState<WorkflowStatus | null>(null);
   const [showNotifyDialog, setShowNotifyDialog] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
     standardizedTests: [],
     testScoreRange: [0, 800],
@@ -189,22 +191,51 @@ export default function ScholarshipApplications() {
     setShowNotifyDialog(true);
   };
 
-  const handleNotifyDecision = (notify: boolean) => {
-    // Update the applicants state with new status
-    if (newStatus) {
+  const handleNotifyDecision = async (notify: boolean) => {
+    if (!newStatus) return;
+    
+    setIsUpdatingStatus(true);
+    
+    try {
+      // Map internal status to API status format
+      const statusMap: Record<string, string> = {
+        pending: "PENDING",
+        shortlisted: "SHORTLISTED",
+        onhold: "ON_HOLD",
+        rejected: "REJECTED",
+        winner: "WINNER",
+      };
+      
+      await updateApplicantStatus({
+        contact_ids: selectedApplicants,
+        status: statusMap[newStatus] || newStatus.toUpperCase(),
+        send_email: notify,
+      });
+
+      // Update the applicants state with new status
       setApplicants(prev => prev.map(applicant => 
         selectedApplicants.includes(applicant.id) 
           ? { ...applicant, status: newStatus }
           : applicant
       ));
+
+      toast({
+        title: "Status Updated",
+        description: `${selectedApplicants.length} applicant(s) updated to ${statusConfig[newStatus]?.label || newStatus}${notify ? ". Notifications sent." : "."}`,
+      });
+    } catch (err) {
+      console.error("Error updating status:", err);
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "Failed to update status",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdatingStatus(false);
+      setShowNotifyDialog(false);
+      setSelectedApplicants([]);
+      setNewStatus(null);
     }
-    setShowNotifyDialog(false);
-    toast({
-      title: "Status Updated",
-      description: `${selectedApplicants.length} applicant(s) updated to ${newStatus}${notify ? ". Notifications sent." : "."}`,
-    });
-    setSelectedApplicants([]);
-    setNewStatus(null);
   };
 
   // Loading state
@@ -495,7 +526,7 @@ export default function ScholarshipApplications() {
         </Dialog>
 
         {/* Notify Dialog */}
-        <Dialog open={showNotifyDialog} onOpenChange={setShowNotifyDialog}>
+        <Dialog open={showNotifyDialog} onOpenChange={(open) => !isUpdatingStatus && setShowNotifyDialog(open)}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Send Notification?</DialogTitle>
@@ -504,8 +535,12 @@ export default function ScholarshipApplications() {
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
-              <Button variant="outline" onClick={() => handleNotifyDecision(false)}>No</Button>
-              <Button onClick={() => handleNotifyDecision(true)}>Yes, Send Email</Button>
+              <Button variant="outline" onClick={() => handleNotifyDecision(false)} disabled={isUpdatingStatus}>
+                {isUpdatingStatus ? "Updating..." : "No"}
+              </Button>
+              <Button onClick={() => handleNotifyDecision(true)} disabled={isUpdatingStatus}>
+                {isUpdatingStatus ? "Sending..." : "Yes, Send Email"}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

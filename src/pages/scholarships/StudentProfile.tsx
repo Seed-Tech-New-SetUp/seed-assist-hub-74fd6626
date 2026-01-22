@@ -43,7 +43,7 @@ import {
 } from "lucide-react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { fetchApplicantProfile, ApplicantProfile, WorkflowStatus } from "@/lib/api/scholarship";
+import { fetchApplicantProfile, updateApplicantStatus, ApplicantProfile, WorkflowStatus } from "@/lib/api/scholarship";
 
 function normalizeExternalUrl(url: string): string {
   const trimmed = url.trim();
@@ -142,10 +142,14 @@ export default function StudentProfile() {
   const [newAwardName, setNewAwardName] = useState("");
   const [newAwardAmount, setNewAwardAmount] = useState("");
   const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [pendingStatusData, setPendingStatusData] = useState<{
     status: UIWorkflowStatus;
     totalAmount?: number;
     awardCount?: number;
+    selectedAwardId?: string;
+    customAmount?: string;
+    customCurrency?: string;
   } | null>(null);
 
   const loadProfile = async () => {
@@ -203,35 +207,101 @@ export default function StudentProfile() {
     const totalAmount = selectedUniversityAwards.reduce((sum, a) => sum + a.value, 0) +
       customAwards.reduce((sum, a) => sum + (parseFloat(a.amount) || 0), 0);
 
+    // Determine award_id and custom award details
+    let selectedAwardId: string | undefined;
+    let customAmount: string | undefined;
+    let customCurrency: string | undefined;
+
+    if (selectedUniversityAwards.length > 0) {
+      // Use the first selected university award
+      selectedAwardId = selectedUniversityAwards[0].id;
+    } else if (customAwards.length > 0) {
+      // Use custom award
+      selectedAwardId = "other";
+      customAmount = customAwards[0].amount;
+      customCurrency = "USD"; // Default currency
+    }
+
     setPendingStatusData({
       status: "WINNER",
       totalAmount,
       awardCount: selectedUniversityAwards.length + customAwards.length,
+      selectedAwardId,
+      customAmount,
+      customCurrency,
     });
 
     setShowAwardsModal(false);
     setShowNotificationModal(true);
   };
 
-  const handleNotificationChoice = (sendNotification: boolean) => {
+  const handleNotificationChoice = async (sendNotification: boolean) => {
     if (!profile || !pendingStatusData) return;
 
-    if (pendingStatusData.status === "WINNER" && pendingStatusData.awardCount) {
-      toast({
-        title: "Winner Confirmed!",
-        description: `${profile.name} has been marked as winner with ${pendingStatusData.awardCount} award(s) totaling $${pendingStatusData.totalAmount?.toLocaleString()}.${sendNotification ? " Notification sent." : ""}`,
-      });
-    } else {
-      toast({
-        title: "Status Updated",
-        description: `${profile.name}'s status has been changed to ${statusConfig[pendingStatusData.status].label}.${sendNotification ? " Notification sent." : ""}`,
-      });
-    }
+    setIsUpdatingStatus(true);
 
-    setShowNotificationModal(false);
-    setPendingStatusData(null);
-    setSelectedAwards([]);
-    setCustomAwards([]);
+    try {
+      // Map UI status to API status format
+      const statusMap: Record<string, string> = {
+        PENDING: "PENDING",
+        SHORTLISTED: "SHORTLISTED",
+        ON_HOLD: "ON_HOLD",
+        REJECTED: "REJECTED",
+        WINNER: "WINNER",
+      };
+
+      const request: {
+        contact_ids: string[];
+        status: string;
+        send_email?: boolean;
+        award_id?: string;
+        custom_currency?: string;
+        custom_amount?: string;
+      } = {
+        contact_ids: [profile.id],
+        status: statusMap[pendingStatusData.status] || pendingStatusData.status,
+        send_email: sendNotification,
+      };
+
+      // Add award details for winner status
+      if (pendingStatusData.status === "WINNER" && pendingStatusData.selectedAwardId) {
+        request.award_id = pendingStatusData.selectedAwardId;
+        if (pendingStatusData.selectedAwardId === "other" && pendingStatusData.customAmount) {
+          request.custom_currency = pendingStatusData.customCurrency || "USD";
+          request.custom_amount = pendingStatusData.customAmount;
+        }
+      }
+
+      await updateApplicantStatus(request);
+
+      if (pendingStatusData.status === "WINNER" && pendingStatusData.awardCount) {
+        toast({
+          title: "Winner Confirmed!",
+          description: `${profile.name} has been marked as winner with ${pendingStatusData.awardCount} award(s) totaling $${pendingStatusData.totalAmount?.toLocaleString()}.${sendNotification ? " Notification sent." : ""}`,
+        });
+      } else {
+        toast({
+          title: "Status Updated",
+          description: `${profile.name}'s status has been changed to ${statusConfig[pendingStatusData.status].label}.${sendNotification ? " Notification sent." : ""}`,
+        });
+      }
+
+      // Reload profile to get updated status
+      await loadProfile();
+    } catch (err) {
+      console.error("Error updating status:", err);
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "Failed to update status",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdatingStatus(false);
+      setShowNotificationModal(false);
+      setPendingStatusData(null);
+      setSelectedAwards([]);
+      setCustomAwards([]);
+    }
   };
 
   const navigateToPrev = () => {
@@ -949,7 +1019,7 @@ export default function StudentProfile() {
         </Dialog>
 
         {/* Notification Confirmation Modal */}
-        <Dialog open={showNotificationModal} onOpenChange={setShowNotificationModal}>
+        <Dialog open={showNotificationModal} onOpenChange={(open) => !isUpdatingStatus && setShowNotificationModal(open)}>
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
@@ -981,16 +1051,26 @@ export default function StudentProfile() {
                 variant="outline"
                 onClick={() => handleNotificationChoice(false)}
                 className="flex-1"
+                disabled={isUpdatingStatus}
               >
-                <X className="h-4 w-4 mr-2" />
-                Skip Notification
+                {isUpdatingStatus ? "Updating..." : (
+                  <>
+                    <X className="h-4 w-4 mr-2" />
+                    Skip Notification
+                  </>
+                )}
               </Button>
               <Button
                 onClick={() => handleNotificationChoice(true)}
                 className="flex-1"
+                disabled={isUpdatingStatus}
               >
-                <Send className="h-4 w-4 mr-2" />
-                Send Notification
+                {isUpdatingStatus ? "Sending..." : (
+                  <>
+                    <Send className="h-4 w-4 mr-2" />
+                    Send Notification
+                  </>
+                )}
               </Button>
             </DialogFooter>
           </DialogContent>
