@@ -127,12 +127,13 @@ const baseNavigation: NavItem[] = [
     icon: Globe,
     permissionKey: "icr",
   },
-  {
-    title: "Team Management",
-    href: "/user-management",
-    icon: Users,
-    permissionKey: "teamManagement",
-  },
+  // TODO: Re-enable Team Management when ready
+  // {
+  //   title: "Team Management",
+  //   href: "/user-management",
+  //   icon: Users,
+  //   permissionKey: "teamManagement",
+  // },
 ];
 
 // Helper function to filter navigation based on permissions
