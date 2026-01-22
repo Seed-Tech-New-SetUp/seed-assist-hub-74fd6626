@@ -183,9 +183,16 @@ export default function StudentProfile() {
   };
 
   const toggleAwardSelection = (awardId: string) => {
-    setSelectedAwards(prev =>
-      prev.includes(awardId) ? prev.filter(id => id !== awardId) : [...prev, awardId]
-    );
+    setSelectedAwards(prev => {
+      const newSelection = prev.includes(awardId) ? prev.filter(id => id !== awardId) : [...prev, awardId];
+      // Clear custom awards when a predefined award is selected
+      if (newSelection.length > 0) {
+        setCustomAwards([]);
+        setNewAwardName("");
+        setNewAwardAmount("");
+      }
+      return newSelection;
+    });
   };
 
   const addCustomAward = () => {
@@ -956,9 +963,14 @@ export default function StudentProfile() {
                 </div>
               )}
 
-              {/* Custom Awards */}
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">Custom Awards</Label>
+              {/* Custom Awards - Only show if no predefined award is selected */}
+              <div className={`space-y-3 ${selectedAwards.length > 0 ? "opacity-50 pointer-events-none" : ""}`}>
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  Custom Awards
+                  {selectedAwards.length > 0 && (
+                    <span className="text-xs text-muted-foreground font-normal">(Disabled when predefined award is selected)</span>
+                  )}
+                </Label>
                 
                 {customAwards.map((award, index) => (
                   <div key={index} className="flex items-center gap-2 p-3 rounded-lg border border-primary/50 bg-primary/5">
@@ -971,6 +983,7 @@ export default function StudentProfile() {
                       size="icon"
                       className="h-8 w-8 text-destructive hover:text-destructive"
                       onClick={() => removeCustomAward(index)}
+                      disabled={selectedAwards.length > 0}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -983,18 +996,20 @@ export default function StudentProfile() {
                     placeholder="Award name"
                     value={newAwardName}
                     onChange={(e) => setNewAwardName(e.target.value)}
+                    disabled={selectedAwards.length > 0}
                   />
                   <Input
                     placeholder="Amount"
                     type="number"
                     value={newAwardAmount}
                     onChange={(e) => setNewAwardAmount(e.target.value)}
+                    disabled={selectedAwards.length > 0}
                   />
                   <Button
                     variant="outline"
                     size="icon"
                     onClick={addCustomAward}
-                    disabled={!newAwardName.trim() || !newAwardAmount.trim()}
+                    disabled={selectedAwards.length > 0 || !newAwardName.trim() || !newAwardAmount.trim()}
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
