@@ -34,21 +34,21 @@ serve(async (req) => {
 
     switch (action) {
       case 'assignments':
-        // GET /api/assist/lae/ - List all assignments
-        url = `${BASE_URL}/`;
+        // GET /api/assist/lae/index.php - List all assignments
+        url = `${BASE_URL}/index.php`;
         break;
 
       case 'list':
-        // GET /api/assist/lae/list - List uploaded files
+        // GET /api/assist/lae/list.php - List uploaded files
         const listParams = new URLSearchParams();
         if (params.page) listParams.append('page', params.page);
         if (params.limit) listParams.append('limit', params.limit);
-        url = `${BASE_URL}/list${listParams.toString() ? '?' + listParams.toString() : ''}`;
+        url = `${BASE_URL}/list.php${listParams.toString() ? '?' + listParams.toString() : ''}`;
         break;
 
       case 'upload':
-        // POST /api/assist/lae/upload - Upload file
-        url = `${BASE_URL}/upload`;
+        // POST /api/assist/lae/upload.php - Upload file
+        url = `${BASE_URL}/upload.php`;
         method = 'POST';
         fetchBody = JSON.stringify({
           file_name: params.file_name,
@@ -59,14 +59,14 @@ serve(async (req) => {
         break;
 
       case 'delete':
-        // POST /api/assist/lae/delete - Delete file
-        url = `${BASE_URL}/delete`;
+        // POST /api/assist/lae/delete.php - Delete file
+        url = `${BASE_URL}/delete.php`;
         method = 'POST';
         fetchBody = JSON.stringify({ file_id: params.file_id });
         break;
 
       case 'analytics':
-        // GET /api/assist/lae/analytics - Get analytics data
+        // GET /api/assist/lae/analytics.php - Get analytics data
         const analyticsParams = new URLSearchParams();
         analyticsParams.append('assignment_id', params.assignment_id);
         if (params.status && params.status !== 'all') {
@@ -75,11 +75,11 @@ serve(async (req) => {
         if (params.program && params.program !== 'all') {
           analyticsParams.append('program', params.program);
         }
-        url = `${BASE_URL}/analytics?${analyticsParams.toString()}`;
+        url = `${BASE_URL}/analytics.php?${analyticsParams.toString()}`;
         break;
 
       case 'detail':
-        // GET /api/assist/lae/detail - Get detail records
+        // GET /api/assist/lae/detail.php - Get detail records
         const detailParams = new URLSearchParams();
         detailParams.append('assignment_id', params.assignment_id);
         detailParams.append('filter_type', params.filter_type);
@@ -95,11 +95,11 @@ serve(async (req) => {
         if (params.program && params.program !== 'all') {
           detailParams.append('program', params.program);
         }
-        url = `${BASE_URL}/detail?${detailParams.toString()}`;
+        url = `${BASE_URL}/detail.php?${detailParams.toString()}`;
         break;
 
       case 'detail_export':
-        // GET /api/assist/lae/detail_export - Export detail as XLSX
+        // GET /api/assist/lae/detail_export.php - Export detail as XLSX
         isDownload = true;
         const exportParams = new URLSearchParams();
         exportParams.append('assignment_id', params.assignment_id);
@@ -116,11 +116,11 @@ serve(async (req) => {
         if (params.program && params.program !== 'all') {
           exportParams.append('program', params.program);
         }
-        url = `${BASE_URL}/detail_export?${exportParams.toString()}`;
+        url = `${BASE_URL}/detail_export.php?${exportParams.toString()}`;
         break;
 
       case 'analytics_export':
-        // GET /api/assist/lae/analytics_export - Export analytics as XLSX (if endpoint exists)
+        // GET /api/assist/lae/analytics_export.php - Export analytics as XLSX
         isDownload = true;
         const analyticsExportParams = new URLSearchParams();
         analyticsExportParams.append('assignment_id', params.assignment_id);
@@ -130,7 +130,7 @@ serve(async (req) => {
         if (params.program && params.program !== 'all') {
           analyticsExportParams.append('program', params.program);
         }
-        url = `${BASE_URL}/analytics_export?${analyticsExportParams.toString()}`;
+        url = `${BASE_URL}/analytics_export.php?${analyticsExportParams.toString()}`;
         break;
 
       default:
