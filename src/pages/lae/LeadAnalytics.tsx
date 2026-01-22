@@ -153,7 +153,7 @@ export default function LeadAnalytics() {
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-foreground">
-            Welcome, {user?.user_metadata?.full_name || "User"}
+            Welcome, {(user as any)?.full_name || (user as any)?.client_name || (user as any)?.user_metadata?.full_name || "User"}
           </h1>
           <p className="text-muted-foreground">
             Lead Analytics Engine

@@ -118,14 +118,31 @@ export function AnalyticsModal({
     setIsLoading(true);
     try {
       const data = await fetchAnalyticsData(assignmentId, statusFilter, programFilter);
-      setAnalyticsData(data);
+      // Ensure data has required structure
+      const safeData: AnalyticsData = {
+        success: data?.success ?? false,
+        columns: data?.columns ?? { status_column: null, program_column: null },
+        filters: {
+          statuses: data?.filters?.statuses ?? [],
+          programs: data?.filters?.programs ?? [],
+        },
+        total_records: data?.total_records ?? 0,
+        program_total: data?.program_total ?? 0,
+        status_total: data?.status_total ?? 0,
+        program_distribution: data?.program_distribution ?? [],
+        status_distribution: data?.status_distribution ?? [],
+      };
+      setAnalyticsData(safeData);
       setGeneratedTime(new Date());
     } catch (error) {
+      console.error("Analytics load error:", error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to load analytics",
         variant: "destructive",
       });
+      // Set empty data on error to prevent crash
+      setAnalyticsData(null);
     } finally {
       setIsLoading(false);
     }
