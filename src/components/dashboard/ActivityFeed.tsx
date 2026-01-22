@@ -163,8 +163,6 @@ export function UpcomingEventsList() {
                 <div className="flex items-center gap-2 mt-0.5">
                   <Clock className="h-3 w-3 text-muted-foreground" />
                   <span className="text-xs text-muted-foreground">{event.time}</span>
-                  <span className="text-xs text-muted-foreground">•</span>
-                  <span className="text-xs text-muted-foreground">{event.registrations} registered</span>
                 </div>
               </div>
               
