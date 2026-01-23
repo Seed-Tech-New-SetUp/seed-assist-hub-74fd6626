@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { ImageUpload } from "@/components/ui/image-upload";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -33,10 +34,48 @@ import {
   Mail,
   Linkedin,
   User,
+  Loader2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useAdminStatus } from "@/hooks/useAdminStatus";
+import {
+  usePrograms,
+  useProgramInfo,
+  useSaveProgramInfo,
+  useProgramFeatures,
+  useSaveProgramFeature,
+  useDeleteProgramFeature,
+  useProgramMembers,
+  useSaveProgramMember,
+  useDeleteProgramMember,
+  useProgramRankings,
+  useRankingOrganizations,
+  useSaveProgramRanking,
+  useDeleteProgramRanking,
+  useProgramRecruiters,
+  useSaveProgramRecruiter,
+  useDeleteProgramRecruiter,
+  useProgramJobRoles,
+  useSaveProgramJobRole,
+  useDeleteProgramJobRole,
+  useProgramFAQs,
+  useSaveProgramFAQ,
+  useDeleteProgramFAQ,
+  useProgramPOCs,
+  useSaveProgramPOC,
+  useDeleteProgramPOC,
+} from "@/hooks/usePrograms";
+import type {
+  ProgramInfo,
+  ProgramFeature,
+  ProgramMember,
+  ProgramRanking,
+  ProgramRecruiter,
+  ProgramJobRole,
+  ProgramFAQ,
+  ProgramPOC,
+} from "@/lib/api/programs";
 
 const programSections = [
   { id: "info", label: "Core Details", icon: Info },
@@ -51,26 +90,25 @@ const programSections = [
   { id: "pocs", label: "Key Contacts", icon: Phone },
 ];
 
-// Mock programs data
-const mockPrograms = [
-  { id: "1", name: "MBA Full-Time", type: "MBA" },
-  { id: "2", name: "Executive MBA", type: "EMBA" },
-  { id: "3", name: "Master in Finance", type: "MiF" },
-];
-
 export default function Programs() {
-  const [selectedProgram, setSelectedProgram] = useState(mockPrograms[0]?.id || "");
+  const [selectedProgram, setSelectedProgram] = useState("");
   const [activeSection, setActiveSection] = useState("info");
   const [completedSections, setCompletedSections] = useState<string[]>([]);
   const { toast } = useToast();
   const { isAdmin } = useAdminStatus();
 
+  // Fetch programs list
+  const { data: programs = [], isLoading: programsLoading } = usePrograms();
+
+  // Set first program as default when loaded
+  useEffect(() => {
+    if (programs.length > 0 && !selectedProgram) {
+      setSelectedProgram(programs[0].id);
+    }
+  }, [programs, selectedProgram]);
+
   const handleSave = (sectionId: string) => {
     setCompletedSections(prev => [...new Set([...prev, sectionId])]);
-    toast({
-      title: "Section Saved",
-      description: "Your changes have been saved successfully.",
-    });
     
     const currentIndex = programSections.findIndex(s => s.id === sectionId);
     if (currentIndex < programSections.length - 1) {
@@ -99,6 +137,8 @@ export default function Programs() {
     });
   };
 
+  const selectedProgramData = programs.find(p => p.id === selectedProgram);
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -121,19 +161,25 @@ export default function Programs() {
           <CardContent className="p-4">
             <div className="flex items-center gap-4">
               <Label className="whitespace-nowrap">Select Program:</Label>
-              <Select value={selectedProgram} onValueChange={setSelectedProgram}>
-                <SelectTrigger className="w-[300px]">
-                  <SelectValue placeholder="Select a program" />
-                </SelectTrigger>
-                <SelectContent>
-                  {mockPrograms.map((program) => (
-                    <SelectItem key={program.id} value={program.id}>
-                      {program.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Badge variant="secondary">{mockPrograms.find(p => p.id === selectedProgram)?.type}</Badge>
+              {programsLoading ? (
+                <Skeleton className="h-10 w-[300px]" />
+              ) : (
+                <Select value={selectedProgram} onValueChange={setSelectedProgram}>
+                  <SelectTrigger className="w-[300px]">
+                    <SelectValue placeholder="Select a program" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {programs.map((program) => (
+                      <SelectItem key={program.id} value={program.id}>
+                        {program.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {selectedProgramData?.type && (
+                <Badge variant="secondary">{selectedProgramData.type}</Badge>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -182,16 +228,16 @@ export default function Programs() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {activeSection === "info" && <ProgramInfoSection />}
-                  {activeSection === "features" && <ProgramFeaturesSection />}
-                  {activeSection === "faculty" && <ProgramFacultySection />}
-                  {activeSection === "students" && <CurrentStudentsSection />}
-                  {activeSection === "alumni" && <ProgramAlumniSection />}
-                  {activeSection === "rankings" && <ProgramRankingsSection />}
-                  {activeSection === "recruiters" && <ProgramRecruitersSection />}
-                  {activeSection === "jobroles" && <ProgramJobRolesSection />}
-                  {activeSection === "faqs" && <ProgramFAQsSection />}
-                  {activeSection === "pocs" && <ProgramPOCsSection />}
+                  {activeSection === "info" && <ProgramInfoSection programId={selectedProgram} onSave={() => handleSave("info")} />}
+                  {activeSection === "features" && <ProgramFeaturesSection programId={selectedProgram} onSave={() => handleSave("features")} />}
+                  {activeSection === "faculty" && <ProgramMembersSection programId={selectedProgram} category="faculty" title="Faculty Member" onSave={() => handleSave("faculty")} />}
+                  {activeSection === "students" && <ProgramMembersSection programId={selectedProgram} category="current_student" title="Current Student" onSave={() => handleSave("students")} />}
+                  {activeSection === "alumni" && <ProgramMembersSection programId={selectedProgram} category="alumni" title="Alumni" onSave={() => handleSave("alumni")} />}
+                  {activeSection === "rankings" && <ProgramRankingsSection programId={selectedProgram} onSave={() => handleSave("rankings")} />}
+                  {activeSection === "recruiters" && <ProgramRecruitersSection programId={selectedProgram} onSave={() => handleSave("recruiters")} />}
+                  {activeSection === "jobroles" && <ProgramJobRolesSection programId={selectedProgram} onSave={() => handleSave("jobroles")} />}
+                  {activeSection === "faqs" && <ProgramFAQsSection programId={selectedProgram} onSave={() => handleSave("faqs")} />}
+                  {activeSection === "pocs" && <ProgramPOCsSection programId={selectedProgram} onSave={() => handleSave("pocs")} />}
 
                   {/* Navigation Buttons */}
                   <Separator />
@@ -204,9 +250,6 @@ export default function Programs() {
                       Previous
                     </Button>
                     <div className="flex gap-2">
-                      <Button onClick={() => handleSave(activeSection)}>
-                        Save Section
-                      </Button>
                       {activeSection !== programSections[programSections.length - 1].id && (
                         <Button variant="outline" onClick={handleNext}>
                           Next
@@ -224,58 +267,142 @@ export default function Programs() {
   );
 }
 
-function ProgramInfoSection() {
-  const [diversity, setDiversity] = useState([
-    { country: "India", percentage: 35 },
-    { country: "USA", percentage: 20 },
-    { country: "China", percentage: 15 },
-  ]);
+// ============ Program Info Section ============
 
-  const addDiversity = () => setDiversity([...diversity, { country: "", percentage: 0 }]);
-  const removeDiversity = (index: number) => setDiversity(diversity.filter((_, i) => i !== index));
-  const updateDiversity = (index: number, field: string, value: string | number) => {
-    const newDiversity = [...diversity];
-    newDiversity[index] = { ...newDiversity[index], [field]: value };
-    setDiversity(newDiversity);
+interface SectionProps {
+  programId: string;
+  onSave: () => void;
+}
+
+function ProgramInfoSection({ programId, onSave }: SectionProps) {
+  const { data: info, isLoading } = useProgramInfo(programId);
+  const saveMutation = useSaveProgramInfo();
+  
+  const [formData, setFormData] = useState<Partial<ProgramInfo>>({
+    program_name: "",
+    class_size: 0,
+    average_age: 0,
+    average_work_experience: 0,
+    median_earnings: 0,
+    graduation_rate: 0,
+    brochure_link: "",
+    is_hero_program: false,
+    diversity: [],
+  });
+
+  useEffect(() => {
+    if (info) {
+      setFormData(info);
+    }
+  }, [info]);
+
+  const handleSave = () => {
+    saveMutation.mutate({ programId, info: formData }, {
+      onSuccess: () => onSave(),
+    });
   };
+
+  const addDiversity = () => {
+    setFormData(prev => ({
+      ...prev,
+      diversity: [...(prev.diversity || []), { country: "", percentage: 0 }],
+    }));
+  };
+
+  const removeDiversity = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      diversity: (prev.diversity || []).filter((_, i) => i !== index),
+    }));
+  };
+
+  const updateDiversity = (index: number, field: string, value: string | number) => {
+    setFormData(prev => ({
+      ...prev,
+      diversity: (prev.diversity || []).map((item, i) =>
+        i === index ? { ...item, [field]: value } : item
+      ),
+    }));
+  };
+
+  if (isLoading) {
+    return <div className="space-y-4"><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /></div>;
+  }
 
   return (
     <div className="space-y-6">
-      {/* Row 1: Program Name (full width) */}
       <div>
         <Label>Program Name</Label>
-        <Input defaultValue="MBA Full-Time" className="mt-1.5" placeholder="Enter program name..." />
+        <Input 
+          value={formData.program_name || ""} 
+          onChange={(e) => setFormData(prev => ({ ...prev, program_name: e.target.value }))}
+          className="mt-1.5" 
+          placeholder="Enter program name..." 
+        />
       </div>
 
-      {/* Row 2: Class Size, Average Age, Avg Work Exp */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <Label>Class Size</Label>
-          <Input type="number" defaultValue="120" className="mt-1.5" placeholder="Enter class size..." />
+          <Input 
+            type="number" 
+            value={formData.class_size || ""} 
+            onChange={(e) => setFormData(prev => ({ ...prev, class_size: parseInt(e.target.value) || 0 }))}
+            className="mt-1.5" 
+            placeholder="Enter class size..." 
+          />
         </div>
         <div>
           <Label>Average Age</Label>
-          <Input type="number" defaultValue="28" className="mt-1.5" placeholder="Enter average age..." />
+          <Input 
+            type="number" 
+            value={formData.average_age || ""} 
+            onChange={(e) => setFormData(prev => ({ ...prev, average_age: parseInt(e.target.value) || 0 }))}
+            className="mt-1.5" 
+            placeholder="Enter average age..." 
+          />
         </div>
         <div>
           <Label>Average Work Experience (Years)</Label>
-          <Input type="number" defaultValue="5" className="mt-1.5" placeholder="Enter avg work exp..." />
+          <Input 
+            type="number" 
+            value={formData.average_work_experience || ""} 
+            onChange={(e) => setFormData(prev => ({ ...prev, average_work_experience: parseFloat(e.target.value) || 0 }))}
+            className="mt-1.5" 
+            placeholder="Enter avg work exp..." 
+          />
         </div>
       </div>
 
-      {/* Row 3: Median Earnings, Graduation Rate, Hero Program */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <Label>Median Earnings After Graduation (USD/Year)</Label>
-          <Input type="number" defaultValue="150000" className="mt-1.5" placeholder="Enter median earnings..." />
+          <Input 
+            type="number" 
+            value={formData.median_earnings || ""} 
+            onChange={(e) => setFormData(prev => ({ ...prev, median_earnings: parseInt(e.target.value) || 0 }))}
+            className="mt-1.5" 
+            placeholder="Enter median earnings..." 
+          />
         </div>
         <div>
           <Label>Graduation Rate (%)</Label>
-          <Input type="number" defaultValue="95" className="mt-1.5" placeholder="Enter graduation rate..." min="0" max="100" />
+          <Input 
+            type="number" 
+            value={formData.graduation_rate || ""} 
+            onChange={(e) => setFormData(prev => ({ ...prev, graduation_rate: parseFloat(e.target.value) || 0 }))}
+            className="mt-1.5" 
+            placeholder="Enter graduation rate..." 
+            min="0" 
+            max="100" 
+          />
         </div>
         <div>
           <Label>Is this a Hero Program?</Label>
-          <Select defaultValue="no">
+          <Select 
+            value={formData.is_hero_program ? "yes" : "no"}
+            onValueChange={(value) => setFormData(prev => ({ ...prev, is_hero_program: value === "yes" }))}
+          >
             <SelectTrigger className="mt-1.5">
               <SelectValue placeholder="Select..." />
             </SelectTrigger>
@@ -287,13 +414,17 @@ function ProgramInfoSection() {
         </div>
       </div>
 
-      {/* Program Brochure Link */}
       <div>
         <Label>Program Brochure Link</Label>
-        <Input type="url" defaultValue="https://example.com/brochure.pdf" className="mt-1.5" placeholder="Enter brochure URL..." />
+        <Input 
+          type="url" 
+          value={formData.brochure_link || ""} 
+          onChange={(e) => setFormData(prev => ({ ...prev, brochure_link: e.target.value }))}
+          className="mt-1.5" 
+          placeholder="Enter brochure URL..." 
+        />
       </div>
 
-      {/* Program Diversity */}
       <div>
         <div className="flex items-center justify-between mb-2">
           <Label>Program Diversity (Country-wise)</Label>
@@ -303,7 +434,7 @@ function ProgramInfoSection() {
           </Button>
         </div>
         <div className="space-y-2">
-          {diversity.map((item, index) => (
+          {(formData.diversity || []).map((item, index) => (
             <div key={index} className="flex gap-2 items-center">
               <Input
                 value={item.country}
@@ -334,48 +465,68 @@ function ProgramInfoSection() {
             </div>
           ))}
         </div>
-        {diversity.length === 0 && (
+        {(formData.diversity || []).length === 0 && (
           <p className="text-sm text-muted-foreground text-center py-2">No diversity data added yet</p>
         )}
       </div>
+
+      <Button onClick={handleSave} disabled={saveMutation.isPending}>
+        {saveMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+        Save Section
+      </Button>
     </div>
   );
 }
 
-function ProgramFeaturesSection() {
-  const [features, setFeatures] = useState([
-    { title: "Global Immersion", description: "Study abroad opportunities in 3 countries", photo: "" },
-    { title: "Leadership Lab", description: "Hands-on leadership development program", photo: "" },
-  ]);
-  const [newFeature, setNewFeature] = useState({ title: "", description: "", photo: "" });
+// ============ Program Features Section ============
+
+function ProgramFeaturesSection({ programId, onSave }: SectionProps) {
+  const { data: features = [], isLoading } = useProgramFeatures(programId);
+  const saveMutation = useSaveProgramFeature();
+  const deleteMutation = useDeleteProgramFeature();
+  
+  const [newFeature, setNewFeature] = useState<Partial<ProgramFeature>>({ title: "", description: "", photo_url: "" });
 
   const addFeature = () => {
-    if (newFeature.title.trim()) {
-      setFeatures([...features, { ...newFeature }]);
-      setNewFeature({ title: "", description: "", photo: "" });
+    if (newFeature.title?.trim()) {
+      saveMutation.mutate({
+        programId,
+        feature: {
+          title: newFeature.title || "",
+          description: newFeature.description || "",
+          photo_url: newFeature.photo_url || "",
+        },
+      });
+      setNewFeature({ title: "", description: "", photo_url: "" });
     }
   };
-  const removeFeature = (index: number) => setFeatures(features.filter((_, i) => i !== index));
+
+  const removeFeature = (featureId: string) => {
+    deleteMutation.mutate({ programId, featureId });
+  };
+
+  if (isLoading) {
+    return <div className="space-y-4"><Skeleton className="h-32 w-full" /><Skeleton className="h-20 w-full" /></div>;
+  }
 
   return (
     <div className="space-y-6">
-      {/* Add New Feature Form */}
       <Card className="border-dashed">
         <CardContent className="p-4 space-y-4">
           <h4 className="font-medium text-sm text-muted-foreground">Add New Feature</h4>
           <div>
-            <Label>Program Title</Label>
+            <Label>Feature Title</Label>
             <Input 
-              value={newFeature.title}
+              value={newFeature.title || ""}
               onChange={(e) => setNewFeature({ ...newFeature, title: e.target.value })}
               placeholder="Enter feature title..." 
               className="mt-1.5" 
             />
           </div>
           <div>
-            <Label>Program Description</Label>
+            <Label>Feature Description</Label>
             <Textarea 
-              value={newFeature.description}
+              value={newFeature.description || ""}
               onChange={(e) => setNewFeature({ ...newFeature, description: e.target.value })}
               placeholder="Enter feature description..." 
               className="mt-1.5" 
@@ -385,34 +536,34 @@ function ProgramFeaturesSection() {
           <div>
             <Label>Feature Photo</Label>
             <ImageUpload
-              value={newFeature.photo}
-              onChange={(url) => setNewFeature({ ...newFeature, photo: url })}
+              value={newFeature.photo_url || ""}
+              onChange={(url) => setNewFeature({ ...newFeature, photo_url: url })}
               placeholder="Click to upload feature photo"
               aspectRatio="video"
               className="mt-1.5"
             />
           </div>
-          <Button onClick={addFeature} disabled={!newFeature.title.trim()}>
+          <Button onClick={addFeature} disabled={!newFeature.title?.trim() || saveMutation.isPending}>
+            {saveMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             <Plus className="h-4 w-4 mr-2" />
             Add Feature
           </Button>
         </CardContent>
       </Card>
 
-      {/* Added Features List */}
       <div>
         <h4 className="font-medium text-sm text-muted-foreground mb-3">Added Features ({features.length})</h4>
         {features.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4 border rounded-lg">No features added yet</p>
         ) : (
           <div className="space-y-3">
-            {features.map((feature, index) => (
-              <Card key={index}>
+            {features.map((feature) => (
+              <Card key={feature.id}>
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex gap-4 flex-1">
-                      {feature.photo ? (
-                        <img src={feature.photo} alt={feature.title} className="w-16 h-16 rounded-lg object-cover" />
+                      {feature.photo_url ? (
+                        <img src={feature.photo_url} alt={feature.title} className="w-16 h-16 rounded-lg object-cover" />
                       ) : (
                         <div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center shrink-0">
                           <Image className="h-6 w-6 text-muted-foreground" />
@@ -427,7 +578,8 @@ function ProgramFeaturesSection() {
                       variant="ghost"
                       size="icon"
                       className="text-destructive shrink-0"
-                      onClick={() => removeFeature(index)}
+                      onClick={() => feature.id && removeFeature(feature.id)}
+                      disabled={deleteMutation.isPending}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -438,69 +590,91 @@ function ProgramFeaturesSection() {
           </div>
         )}
       </div>
+
+      <Button onClick={onSave}>
+        Save & Continue
+      </Button>
     </div>
   );
 }
 
-// Reusable Person Form Component for Faculty, Students, Alumni
-interface PersonData {
-  firstName: string;
-  lastName: string;
-  email: string;
-  linkedinUrl: string;
-  designation: string;
-  organisation: string;
-  category: string;
-  callToAction: "email" | "linkedin";
-  profileImage: string;
-}
+// ============ Program Members Section (Faculty, Students, Alumni) ============
 
-const emptyPerson: PersonData = {
-  firstName: "",
-  lastName: "",
-  email: "",
-  linkedinUrl: "",
-  designation: "",
-  organisation: "",
-  category: "Faculty",
-  callToAction: "email",
-  profileImage: "",
-};
-
-interface PersonFormSectionProps {
+interface MembersSectionProps extends SectionProps {
+  category: "faculty" | "current_student" | "alumni";
   title: string;
-  defaultCategory: string;
-  persons: PersonData[];
-  setPersons: React.Dispatch<React.SetStateAction<PersonData[]>>;
-  addButtonLabel: string;
 }
 
-function PersonFormSection({ title, defaultCategory, persons, setPersons, addButtonLabel }: PersonFormSectionProps) {
-  const [newPerson, setNewPerson] = useState<PersonData>({ ...emptyPerson, category: defaultCategory });
+function ProgramMembersSection({ programId, category, title, onSave }: MembersSectionProps) {
+  const { data: members = [], isLoading } = useProgramMembers(programId, category);
+  const saveMutation = useSaveProgramMember();
+  const deleteMutation = useDeleteProgramMember();
 
-  const addPerson = () => {
-    if (newPerson.firstName.trim() && newPerson.lastName.trim()) {
-      setPersons([...persons, { ...newPerson }]);
-      setNewPerson({ ...emptyPerson, category: defaultCategory });
+  const defaultCategory = category === "faculty" ? "Faculty" : category === "current_student" ? "Current Student" : "Alumni";
+  
+  const [newMember, setNewMember] = useState<Partial<ProgramMember>>({
+    first_name: "",
+    last_name: "",
+    email: "",
+    linkedin_url: "",
+    designation: "",
+    organisation: "",
+    category,
+    call_to_action: "email",
+    profile_image: "",
+  });
+
+  const addMember = () => {
+    if (newMember.first_name?.trim() && newMember.last_name?.trim()) {
+      saveMutation.mutate({
+        programId,
+        category,
+        member: {
+          first_name: newMember.first_name || "",
+          last_name: newMember.last_name || "",
+          email: newMember.email || "",
+          linkedin_url: newMember.linkedin_url || "",
+          designation: newMember.designation || "",
+          organisation: newMember.organisation || "",
+          category,
+          call_to_action: newMember.call_to_action || "email",
+          profile_image: newMember.profile_image || "",
+        },
+      });
+      setNewMember({
+        first_name: "",
+        last_name: "",
+        email: "",
+        linkedin_url: "",
+        designation: "",
+        organisation: "",
+        category,
+        call_to_action: "email",
+        profile_image: "",
+      });
     }
   };
 
-  const removePerson = (index: number) => setPersons(persons.filter((_, i) => i !== index));
+  const removeMember = (memberId: string) => {
+    deleteMutation.mutate({ programId, category, memberId });
+  };
+
+  if (isLoading) {
+    return <div className="space-y-4"><Skeleton className="h-40 w-full" /><Skeleton className="h-20 w-full" /></div>;
+  }
 
   return (
     <div className="space-y-6">
-      {/* Add New Person Form */}
       <Card className="border-dashed">
         <CardContent className="p-4 space-y-4">
           <h4 className="font-medium text-sm text-muted-foreground">Add New {title}</h4>
           
-          {/* Row 1: First Name, Last Name, Email */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <Label>First Name</Label>
               <Input 
-                value={newPerson.firstName}
-                onChange={(e) => setNewPerson({ ...newPerson, firstName: e.target.value })}
+                value={newMember.first_name || ""}
+                onChange={(e) => setNewMember({ ...newMember, first_name: e.target.value })}
                 placeholder="First name..." 
                 className="mt-1.5" 
               />
@@ -508,8 +682,8 @@ function PersonFormSection({ title, defaultCategory, persons, setPersons, addBut
             <div>
               <Label>Last Name</Label>
               <Input 
-                value={newPerson.lastName}
-                onChange={(e) => setNewPerson({ ...newPerson, lastName: e.target.value })}
+                value={newMember.last_name || ""}
+                onChange={(e) => setNewMember({ ...newMember, last_name: e.target.value })}
                 placeholder="Last name..." 
                 className="mt-1.5" 
               />
@@ -518,22 +692,21 @@ function PersonFormSection({ title, defaultCategory, persons, setPersons, addBut
               <Label>Email</Label>
               <Input 
                 type="email"
-                value={newPerson.email}
-                onChange={(e) => setNewPerson({ ...newPerson, email: e.target.value })}
+                value={newMember.email || ""}
+                onChange={(e) => setNewMember({ ...newMember, email: e.target.value })}
                 placeholder="Email address..." 
                 className="mt-1.5" 
               />
             </div>
           </div>
 
-          {/* Row 2: LinkedIn, Designation, Organisation */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <Label>LinkedIn URL</Label>
               <Input 
                 type="url"
-                value={newPerson.linkedinUrl}
-                onChange={(e) => setNewPerson({ ...newPerson, linkedinUrl: e.target.value })}
+                value={newMember.linkedin_url || ""}
+                onChange={(e) => setNewMember({ ...newMember, linkedin_url: e.target.value })}
                 placeholder="https://linkedin.com/in/..." 
                 className="mt-1.5" 
               />
@@ -541,8 +714,8 @@ function PersonFormSection({ title, defaultCategory, persons, setPersons, addBut
             <div>
               <Label>Designation</Label>
               <Input 
-                value={newPerson.designation}
-                onChange={(e) => setNewPerson({ ...newPerson, designation: e.target.value })}
+                value={newMember.designation || ""}
+                onChange={(e) => setNewMember({ ...newMember, designation: e.target.value })}
                 placeholder="Title/Position..." 
                 className="mt-1.5" 
               />
@@ -550,20 +723,19 @@ function PersonFormSection({ title, defaultCategory, persons, setPersons, addBut
             <div>
               <Label>Organisation</Label>
               <Input 
-                value={newPerson.organisation}
-                onChange={(e) => setNewPerson({ ...newPerson, organisation: e.target.value })}
+                value={newMember.organisation || ""}
+                onChange={(e) => setNewMember({ ...newMember, organisation: e.target.value })}
                 placeholder="Organisation name..." 
                 className="mt-1.5" 
               />
             </div>
           </div>
 
-          {/* Row 3: Category, Call to Action */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <Label>Category</Label>
               <Input 
-                value={newPerson.category}
+                value={defaultCategory}
                 disabled
                 className="mt-1.5 bg-muted" 
               />
@@ -571,8 +743,8 @@ function PersonFormSection({ title, defaultCategory, persons, setPersons, addBut
             <div>
               <Label>Call to Action</Label>
               <Select 
-                value={newPerson.callToAction} 
-                onValueChange={(value: "email" | "linkedin") => setNewPerson({ ...newPerson, callToAction: value })}
+                value={newMember.call_to_action || "email"} 
+                onValueChange={(value: "email" | "linkedin") => setNewMember({ ...newMember, call_to_action: value })}
               >
                 <SelectTrigger className="mt-1.5">
                   <SelectValue placeholder="Select..." />
@@ -586,8 +758,8 @@ function PersonFormSection({ title, defaultCategory, persons, setPersons, addBut
             <div>
               <Label>Profile Image</Label>
               <ImageUpload
-                value={newPerson.profileImage}
-                onChange={(url) => setNewPerson({ ...newPerson, profileImage: url })}
+                value={newMember.profile_image || ""}
+                onChange={(url) => setNewMember({ ...newMember, profile_image: url })}
                 placeholder="Upload photo"
                 aspectRatio="square"
                 className="mt-1.5 h-[80px] w-[80px]"
@@ -595,27 +767,27 @@ function PersonFormSection({ title, defaultCategory, persons, setPersons, addBut
             </div>
           </div>
 
-          <Button onClick={addPerson} disabled={!newPerson.firstName.trim() || !newPerson.lastName.trim()}>
+          <Button onClick={addMember} disabled={!newMember.first_name?.trim() || !newMember.last_name?.trim() || saveMutation.isPending}>
+            {saveMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             <Plus className="h-4 w-4 mr-2" />
-            {addButtonLabel}
+            Add {title}
           </Button>
         </CardContent>
       </Card>
 
-      {/* Added Persons List */}
       <div>
-        <h4 className="font-medium text-sm text-muted-foreground mb-3">Added {title}s ({persons.length})</h4>
-        {persons.length === 0 ? (
+        <h4 className="font-medium text-sm text-muted-foreground mb-3">Added {title}s ({members.length})</h4>
+        {members.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4 border rounded-lg">No {title.toLowerCase()}s added yet</p>
         ) : (
           <div className="space-y-3">
-            {persons.map((person, index) => (
-              <Card key={index}>
+            {members.map((member) => (
+              <Card key={member.id}>
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex gap-4 flex-1">
-                      {person.profileImage ? (
-                        <img src={person.profileImage} alt={`${person.firstName} ${person.lastName}`} className="w-12 h-12 rounded-full object-cover" />
+                      {member.profile_image ? (
+                        <img src={member.profile_image} alt={`${member.first_name} ${member.last_name}`} className="w-12 h-12 rounded-full object-cover" />
                       ) : (
                         <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center shrink-0">
                           <User className="h-5 w-5 text-muted-foreground" />
@@ -623,17 +795,17 @@ function PersonFormSection({ title, defaultCategory, persons, setPersons, addBut
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <h5 className="font-medium text-foreground">{person.firstName} {person.lastName}</h5>
-                          <Badge variant="secondary" className="text-xs">{person.category}</Badge>
+                          <h5 className="font-medium text-foreground">{member.first_name} {member.last_name}</h5>
+                          <Badge variant="secondary" className="text-xs">{defaultCategory}</Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground">{person.designation} {person.organisation && `at ${person.organisation}`}</p>
+                        <p className="text-sm text-muted-foreground">{member.designation} {member.organisation && `at ${member.organisation}`}</p>
                         <div className="flex items-center gap-3 mt-1">
-                          {person.email && (
+                          {member.email && (
                             <span className="text-xs text-muted-foreground flex items-center gap-1">
-                              <Mail className="h-3 w-3" /> {person.email}
+                              <Mail className="h-3 w-3" /> {member.email}
                             </span>
                           )}
-                          {person.linkedinUrl && (
+                          {member.linkedin_url && (
                             <span className="text-xs text-muted-foreground flex items-center gap-1">
                               <Linkedin className="h-3 w-3" /> LinkedIn
                             </span>
@@ -645,7 +817,8 @@ function PersonFormSection({ title, defaultCategory, persons, setPersons, addBut
                       variant="ghost"
                       size="icon"
                       className="text-destructive shrink-0"
-                      onClick={() => removePerson(index)}
+                      onClick={() => member.id && removeMember(member.id)}
+                      disabled={deleteMutation.isPending}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -656,120 +829,72 @@ function PersonFormSection({ title, defaultCategory, persons, setPersons, addBut
           </div>
         )}
       </div>
+
+      <Button onClick={onSave}>
+        Save & Continue
+      </Button>
     </div>
   );
 }
 
-function ProgramFacultySection() {
-  const [faculty, setFaculty] = useState<PersonData[]>([
-    { firstName: "John", lastName: "Smith", email: "john.smith@university.edu", linkedinUrl: "https://linkedin.com/in/johnsmith", designation: "Professor of Finance", organisation: "Business School", category: "Faculty", callToAction: "email", profileImage: "" },
-    { firstName: "Sarah", lastName: "Johnson", email: "sarah.johnson@university.edu", linkedinUrl: "", designation: "Associate Professor", organisation: "Marketing Department", category: "Faculty", callToAction: "linkedin", profileImage: "" },
-  ]);
+// ============ Program Rankings Section ============
 
-  return (
-    <PersonFormSection 
-      title="Faculty Member" 
-      defaultCategory="Faculty" 
-      persons={faculty} 
-      setPersons={setFaculty}
-      addButtonLabel="Add Faculty Member"
-    />
-  );
-}
+function ProgramRankingsSection({ programId, onSave }: SectionProps) {
+  const { data: rankings = [], isLoading } = useProgramRankings(programId);
+  const { data: organizations = [] } = useRankingOrganizations();
+  const saveMutation = useSaveProgramRanking();
+  const deleteMutation = useDeleteProgramRanking();
 
-function CurrentStudentsSection() {
-  const [students, setStudents] = useState<PersonData[]>([
-    { firstName: "Emily", lastName: "Chen", email: "emily.chen@student.edu", linkedinUrl: "https://linkedin.com/in/emilychen", designation: "MBA Candidate", organisation: "Class of 2025", category: "Current Student", callToAction: "linkedin", profileImage: "" },
-  ]);
-
-  return (
-    <PersonFormSection 
-      title="Current Student" 
-      defaultCategory="Current Student" 
-      persons={students} 
-      setPersons={setStudents}
-      addButtonLabel="Add Current Student"
-    />
-  );
-}
-
-function ProgramAlumniSection() {
-  const [alumni, setAlumni] = useState<PersonData[]>([
-    { firstName: "Michael", lastName: "Chen", email: "michael.chen@google.com", linkedinUrl: "https://linkedin.com/in/michaelchen", designation: "Product Manager", organisation: "Google", category: "Alumni", callToAction: "linkedin", profileImage: "" },
-    { firstName: "Emily", lastName: "Rodriguez", email: "emily.r@mckinsey.com", linkedinUrl: "", designation: "Senior Consultant", organisation: "McKinsey", category: "Alumni", callToAction: "email", profileImage: "" },
-  ]);
-
-  return (
-    <PersonFormSection 
-      title="Alumni" 
-      defaultCategory="Alumni" 
-      persons={alumni} 
-      setPersons={setAlumni}
-      addButtonLabel="Add Alumni"
-    />
-  );
-}
-
-// Mock ranking organizations from backend
-const mockRankingOrganizations = [
-  { id: "1", name: "Financial Times" },
-  { id: "2", name: "QS World University Rankings" },
-  { id: "3", name: "The Economist" },
-  { id: "4", name: "Bloomberg Businessweek" },
-  { id: "5", name: "US News & World Report" },
-  { id: "6", name: "Forbes" },
-];
-
-interface RankingData {
-  organisation: string;
-  year: string;
-  level: string;
-  rank: string;
-  supportingText: string;
-}
-
-function ProgramRankingsSection() {
-  const [rankings, setRankings] = useState<RankingData[]>([
-    { organisation: "Financial Times", year: "2024", level: "Program", rank: "5", supportingText: "Top 5 globally for MBA programs" },
-    { organisation: "QS World University Rankings", year: "2024", level: "Program", rank: "8", supportingText: "Ranked 8th in the QS Global MBA Rankings" },
-  ]);
-  const [newRanking, setNewRanking] = useState<RankingData>({
+  const [newRanking, setNewRanking] = useState<Partial<ProgramRanking>>({
     organisation: "",
     year: "",
     level: "Program",
     rank: "",
-    supportingText: "",
+    supporting_text: "",
   });
 
   const addRanking = () => {
     if (newRanking.organisation && newRanking.year && newRanking.rank) {
-      setRankings([...rankings, { ...newRanking }]);
-      setNewRanking({ organisation: "", year: "", level: "Program", rank: "", supportingText: "" });
+      saveMutation.mutate({
+        programId,
+        ranking: {
+          organisation: newRanking.organisation || "",
+          year: newRanking.year || "",
+          level: "Program",
+          rank: newRanking.rank || "",
+          supporting_text: newRanking.supporting_text || "",
+        },
+      });
+      setNewRanking({ organisation: "", year: "", level: "Program", rank: "", supporting_text: "" });
     }
   };
 
-  const removeRanking = (index: number) => setRankings(rankings.filter((_, i) => i !== index));
+  const removeRanking = (rankingId: string) => {
+    deleteMutation.mutate({ programId, rankingId });
+  };
+
+  if (isLoading) {
+    return <div className="space-y-4"><Skeleton className="h-32 w-full" /><Skeleton className="h-20 w-full" /></div>;
+  }
 
   return (
     <div className="space-y-6">
-      {/* Add New Ranking Form */}
       <Card className="border-dashed">
         <CardContent className="p-4 space-y-4">
           <h4 className="font-medium text-sm text-muted-foreground">Add New Ranking</h4>
           
-          {/* Row 1: Organisation, Year, Level */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <Label>Ranking Organisation</Label>
               <Select 
-                value={newRanking.organisation} 
+                value={newRanking.organisation || ""} 
                 onValueChange={(value) => setNewRanking({ ...newRanking, organisation: value })}
               >
                 <SelectTrigger className="mt-1.5">
                   <SelectValue placeholder="Select organisation..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {mockRankingOrganizations.map((org) => (
+                  {organizations.map((org) => (
                     <SelectItem key={org.id} value={org.name}>{org.name}</SelectItem>
                   ))}
                 </SelectContent>
@@ -778,7 +903,7 @@ function ProgramRankingsSection() {
             <div>
               <Label>Ranking Year</Label>
               <Input 
-                value={newRanking.year}
+                value={newRanking.year || ""}
                 onChange={(e) => setNewRanking({ ...newRanking, year: e.target.value })}
                 placeholder="e.g., 2024" 
                 className="mt-1.5" 
@@ -787,20 +912,19 @@ function ProgramRankingsSection() {
             <div>
               <Label>Ranking Level</Label>
               <Input 
-                value={newRanking.level}
+                value="Program"
                 disabled
                 className="mt-1.5 bg-muted" 
               />
             </div>
           </div>
 
-          {/* Row 2: Rank, Supporting Text */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <Label>Rank</Label>
               <Input 
                 type="number"
-                value={newRanking.rank}
+                value={newRanking.rank || ""}
                 onChange={(e) => setNewRanking({ ...newRanking, rank: e.target.value })}
                 placeholder="e.g., 5" 
                 className="mt-1.5" 
@@ -810,30 +934,30 @@ function ProgramRankingsSection() {
             <div className="md:col-span-2">
               <Label>Supporting Text</Label>
               <Input 
-                value={newRanking.supportingText}
-                onChange={(e) => setNewRanking({ ...newRanking, supportingText: e.target.value })}
+                value={newRanking.supporting_text || ""}
+                onChange={(e) => setNewRanking({ ...newRanking, supporting_text: e.target.value })}
                 placeholder="Additional context about this ranking..." 
                 className="mt-1.5" 
               />
             </div>
           </div>
 
-          <Button onClick={addRanking} disabled={!newRanking.organisation || !newRanking.year || !newRanking.rank}>
+          <Button onClick={addRanking} disabled={!newRanking.organisation || !newRanking.year || !newRanking.rank || saveMutation.isPending}>
+            {saveMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             <Plus className="h-4 w-4 mr-2" />
             Add Ranking
           </Button>
         </CardContent>
       </Card>
 
-      {/* Added Rankings List */}
       <div>
         <h4 className="font-medium text-sm text-muted-foreground mb-3">Added Rankings ({rankings.length})</h4>
         {rankings.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4 border rounded-lg">No rankings added yet</p>
         ) : (
           <div className="space-y-3">
-            {rankings.map((ranking, index) => (
-              <Card key={index}>
+            {rankings.map((ranking) => (
+              <Card key={ranking.id}>
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex-1">
@@ -846,15 +970,16 @@ function ProgramRankingsSection() {
                           <p className="text-sm text-muted-foreground">{ranking.year} • {ranking.level} Level</p>
                         </div>
                       </div>
-                      {ranking.supportingText && (
-                        <p className="text-sm text-muted-foreground mt-2 ml-[52px]">{ranking.supportingText}</p>
+                      {ranking.supporting_text && (
+                        <p className="text-sm text-muted-foreground mt-2 ml-[52px]">{ranking.supporting_text}</p>
                       )}
                     </div>
                     <Button
                       variant="ghost"
                       size="icon"
                       className="text-destructive shrink-0"
-                      onClick={() => removeRanking(index)}
+                      onClick={() => ranking.id && removeRanking(ranking.id)}
+                      disabled={deleteMutation.isPending}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -865,25 +990,39 @@ function ProgramRankingsSection() {
           </div>
         )}
       </div>
+
+      <Button onClick={onSave}>
+        Save & Continue
+      </Button>
     </div>
   );
 }
 
-function ProgramRecruitersSection() {
-  const [recruiters, setRecruiters] = useState(["Google", "McKinsey & Company", "Goldman Sachs"]);
+// ============ Program Recruiters Section ============
+
+function ProgramRecruitersSection({ programId, onSave }: SectionProps) {
+  const { data: recruiters = [], isLoading } = useProgramRecruiters(programId);
+  const saveMutation = useSaveProgramRecruiter();
+  const deleteMutation = useDeleteProgramRecruiter();
   const [newRecruiter, setNewRecruiter] = useState("");
 
   const addRecruiter = () => {
     if (newRecruiter.trim()) {
-      setRecruiters([...recruiters, newRecruiter.trim()]);
+      saveMutation.mutate({ programId, recruiter: { company_name: newRecruiter.trim() } });
       setNewRecruiter("");
     }
   };
-  const removeRecruiter = (index: number) => setRecruiters(recruiters.filter((_, i) => i !== index));
+
+  const removeRecruiter = (recruiterId: string) => {
+    deleteMutation.mutate({ programId, recruiterId });
+  };
+
+  if (isLoading) {
+    return <Skeleton className="h-20 w-full" />;
+  }
 
   return (
     <div className="space-y-4">
-      {/* Add Recruiter */}
       <div className="flex gap-2">
         <Input
           value={newRecruiter}
@@ -891,26 +1030,27 @@ function ProgramRecruitersSection() {
           placeholder="Enter company name..."
           onKeyDown={(e) => e.key === "Enter" && addRecruiter()}
         />
-        <Button onClick={addRecruiter} disabled={!newRecruiter.trim()}>
+        <Button onClick={addRecruiter} disabled={!newRecruiter.trim() || saveMutation.isPending}>
+          {saveMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
           <Plus className="h-4 w-4 mr-2" />
           Add
         </Button>
       </div>
 
-      {/* Recruiters List */}
       <div>
         <h4 className="font-medium text-sm text-muted-foreground mb-3">Added Recruiters ({recruiters.length})</h4>
         {recruiters.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4 border rounded-lg">No recruiters added yet</p>
         ) : (
           <div className="flex flex-wrap gap-2">
-            {recruiters.map((recruiter, index) => (
-              <Badge key={index} variant="secondary" className="text-sm py-1.5 px-3 gap-2">
+            {recruiters.map((recruiter) => (
+              <Badge key={recruiter.id} variant="secondary" className="text-sm py-1.5 px-3 gap-2">
                 <Building2 className="h-3.5 w-3.5" />
-                {recruiter}
+                {recruiter.company_name}
                 <button 
-                  onClick={() => removeRecruiter(index)}
+                  onClick={() => recruiter.id && removeRecruiter(recruiter.id)}
                   className="ml-1 hover:text-destructive transition-colors"
+                  disabled={deleteMutation.isPending}
                 >
                   <Trash2 className="h-3 w-3" />
                 </button>
@@ -919,25 +1059,39 @@ function ProgramRecruitersSection() {
           </div>
         )}
       </div>
+
+      <Button onClick={onSave}>
+        Save & Continue
+      </Button>
     </div>
   );
 }
 
-function ProgramJobRolesSection() {
-  const [jobRoles, setJobRoles] = useState(["Product Manager", "Consultant", "Investment Banker"]);
+// ============ Program Job Roles Section ============
+
+function ProgramJobRolesSection({ programId, onSave }: SectionProps) {
+  const { data: jobRoles = [], isLoading } = useProgramJobRoles(programId);
+  const saveMutation = useSaveProgramJobRole();
+  const deleteMutation = useDeleteProgramJobRole();
   const [newJobRole, setNewJobRole] = useState("");
 
   const addJobRole = () => {
     if (newJobRole.trim()) {
-      setJobRoles([...jobRoles, newJobRole.trim()]);
+      saveMutation.mutate({ programId, jobRole: { role_name: newJobRole.trim() } });
       setNewJobRole("");
     }
   };
-  const removeJobRole = (index: number) => setJobRoles(jobRoles.filter((_, i) => i !== index));
+
+  const removeJobRole = (jobRoleId: string) => {
+    deleteMutation.mutate({ programId, jobRoleId });
+  };
+
+  if (isLoading) {
+    return <Skeleton className="h-20 w-full" />;
+  }
 
   return (
     <div className="space-y-4">
-      {/* Add Job Role */}
       <div className="flex gap-2">
         <Input
           value={newJobRole}
@@ -945,26 +1099,27 @@ function ProgramJobRolesSection() {
           placeholder="Enter job role name..."
           onKeyDown={(e) => e.key === "Enter" && addJobRole()}
         />
-        <Button onClick={addJobRole} disabled={!newJobRole.trim()}>
+        <Button onClick={addJobRole} disabled={!newJobRole.trim() || saveMutation.isPending}>
+          {saveMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
           <Plus className="h-4 w-4 mr-2" />
           Add
         </Button>
       </div>
 
-      {/* Job Roles List */}
       <div>
         <h4 className="font-medium text-sm text-muted-foreground mb-3">Added Job Roles ({jobRoles.length})</h4>
         {jobRoles.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4 border rounded-lg">No job roles added yet</p>
         ) : (
           <div className="flex flex-wrap gap-2">
-            {jobRoles.map((role, index) => (
-              <Badge key={index} variant="secondary" className="text-sm py-1.5 px-3 gap-2">
+            {jobRoles.map((role) => (
+              <Badge key={role.id} variant="secondary" className="text-sm py-1.5 px-3 gap-2">
                 <Briefcase className="h-3.5 w-3.5" />
-                {role}
+                {role.role_name}
                 <button 
-                  onClick={() => removeJobRole(index)}
+                  onClick={() => role.id && removeJobRole(role.id)}
                   className="ml-1 hover:text-destructive transition-colors"
+                  disabled={deleteMutation.isPending}
                 >
                   <Trash2 className="h-3 w-3" />
                 </button>
@@ -973,36 +1128,57 @@ function ProgramJobRolesSection() {
           </div>
         )}
       </div>
+
+      <Button onClick={onSave}>
+        Save & Continue
+      </Button>
     </div>
   );
 }
 
-function ProgramFAQsSection() {
-  const [faqs, setFaqs] = useState([
-    { question: "What is the application deadline?", answer: "Applications are reviewed on a rolling basis with final deadline in April." },
-    { question: "Is GMAT required?", answer: "Yes, we accept both GMAT and GRE scores." },
-  ]);
+// ============ Program FAQs Section ============
+
+function ProgramFAQsSection({ programId, onSave }: SectionProps) {
+  const { data: faqs = [], isLoading } = useProgramFAQs(programId);
+  const saveMutation = useSaveProgramFAQ();
+  const deleteMutation = useDeleteProgramFAQ();
+  
   const [isAdding, setIsAdding] = useState(false);
   const [newFaq, setNewFaq] = useState({ question: "", answer: "" });
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editData, setEditData] = useState({ question: "", answer: "" });
 
   const addFaq = () => {
     if (newFaq.question.trim() && newFaq.answer.trim()) {
-      setFaqs([...faqs, { ...newFaq }]);
+      saveMutation.mutate({ programId, faq: newFaq });
       setNewFaq({ question: "", answer: "" });
       setIsAdding(false);
     }
   };
-  const removeFaq = (index: number) => setFaqs(faqs.filter((_, i) => i !== index));
-  const updateFaq = (index: number, field: string, value: string) => {
-    const newFaqs = [...faqs];
-    newFaqs[index] = { ...newFaqs[index], [field]: value };
-    setFaqs(newFaqs);
+
+  const updateFaq = (faq: ProgramFAQ) => {
+    saveMutation.mutate({ 
+      programId, 
+      faq: { id: faq.id, question: editData.question, answer: editData.answer } 
+    });
+    setEditingId(null);
   };
+
+  const removeFaq = (faqId: string) => {
+    deleteMutation.mutate({ programId, faqId });
+  };
+
+  const startEditing = (faq: ProgramFAQ) => {
+    setEditingId(faq.id || null);
+    setEditData({ question: faq.question, answer: faq.answer });
+  };
+
+  if (isLoading) {
+    return <Skeleton className="h-32 w-full" />;
+  }
 
   return (
     <div className="space-y-4">
-      {/* Add FAQ Button */}
       {!isAdding ? (
         <Button onClick={() => setIsAdding(true)} variant="outline">
           <Plus className="h-4 w-4 mr-2" />
@@ -1032,7 +1208,8 @@ function ProgramFAQsSection() {
               />
             </div>
             <div className="flex gap-2">
-              <Button onClick={addFaq} disabled={!newFaq.question.trim() || !newFaq.answer.trim()}>
+              <Button onClick={addFaq} disabled={!newFaq.question.trim() || !newFaq.answer.trim() || saveMutation.isPending}>
+                {saveMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 <Plus className="h-4 w-4 mr-2" />
                 Add FAQ
               </Button>
@@ -1044,38 +1221,38 @@ function ProgramFAQsSection() {
         </Card>
       )}
 
-      {/* FAQs List */}
       <div>
         <h4 className="font-medium text-sm text-muted-foreground mb-3">Added FAQs ({faqs.length})</h4>
         {faqs.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4 border rounded-lg">No FAQs added yet</p>
         ) : (
           <div className="space-y-3">
-            {faqs.map((faq, index) => (
-              <Card key={index}>
+            {faqs.map((faq) => (
+              <Card key={faq.id}>
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 space-y-3">
-                      {editingIndex === index ? (
+                      {editingId === faq.id ? (
                         <>
                           <div>
                             <Label>Question</Label>
                             <Input
-                              value={faq.question}
-                              onChange={(e) => updateFaq(index, "question", e.target.value)}
+                              value={editData.question}
+                              onChange={(e) => setEditData({ ...editData, question: e.target.value })}
                               className="mt-1.5"
                             />
                           </div>
                           <div>
                             <Label>Answer</Label>
                             <Textarea
-                              value={faq.answer}
-                              onChange={(e) => updateFaq(index, "answer", e.target.value)}
+                              value={editData.answer}
+                              onChange={(e) => setEditData({ ...editData, answer: e.target.value })}
                               className="mt-1.5"
                               rows={3}
                             />
                           </div>
-                          <Button size="sm" onClick={() => setEditingIndex(null)}>
+                          <Button size="sm" onClick={() => updateFaq(faq)} disabled={saveMutation.isPending}>
+                            {saveMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                             <Check className="h-4 w-4 mr-2" />
                             Done
                           </Button>
@@ -1086,7 +1263,7 @@ function ProgramFAQsSection() {
                             <p className="font-medium text-foreground">{faq.question}</p>
                             <p className="text-sm text-muted-foreground mt-1">{faq.answer}</p>
                           </div>
-                          <Button size="sm" variant="outline" onClick={() => setEditingIndex(index)}>
+                          <Button size="sm" variant="outline" onClick={() => startEditing(faq)}>
                             Edit
                           </Button>
                         </>
@@ -1096,7 +1273,8 @@ function ProgramFAQsSection() {
                       variant="ghost"
                       size="icon"
                       className="text-destructive shrink-0"
-                      onClick={() => removeFaq(index)}
+                      onClick={() => faq.id && removeFaq(faq.id)}
+                      disabled={deleteMutation.isPending}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -1107,28 +1285,55 @@ function ProgramFAQsSection() {
           </div>
         )}
       </div>
+
+      <Button onClick={onSave}>
+        Save & Continue
+      </Button>
     </div>
   );
 }
 
-function ProgramPOCsSection() {
-  const [pocs, setPocs] = useState([
-    { fullName: "Sarah Williams", designation: "Admissions Director", organisation: "Harvard Business School", contactNo: "5550123", email: "sarah.w@school.edu" },
-    { fullName: "James Chen", designation: "Program Coordinator", organisation: "Harvard Business School", contactNo: "5550124", email: "james.c@school.edu" },
-  ]);
-  const [newPoc, setNewPoc] = useState({ fullName: "", designation: "", organisation: "Harvard Business School", contactNo: "", email: "" });
+// ============ Program POCs Section ============
+
+function ProgramPOCsSection({ programId, onSave }: SectionProps) {
+  const { data: pocs = [], isLoading } = useProgramPOCs(programId);
+  const saveMutation = useSaveProgramPOC();
+  const deleteMutation = useDeleteProgramPOC();
+
+  const [newPoc, setNewPoc] = useState<Partial<ProgramPOC>>({
+    full_name: "",
+    designation: "",
+    organisation: "",
+    contact_no: "",
+    email: "",
+  });
 
   const addPoc = () => {
-    if (newPoc.fullName.trim() && newPoc.email.trim()) {
-      setPocs([...pocs, { ...newPoc }]);
-      setNewPoc({ fullName: "", designation: "", organisation: "Harvard Business School", contactNo: "", email: "" });
+    if (newPoc.full_name?.trim() && newPoc.email?.trim()) {
+      saveMutation.mutate({
+        programId,
+        poc: {
+          full_name: newPoc.full_name || "",
+          designation: newPoc.designation || "",
+          organisation: newPoc.organisation || "",
+          contact_no: newPoc.contact_no || "",
+          email: newPoc.email || "",
+        },
+      });
+      setNewPoc({ full_name: "", designation: "", organisation: "", contact_no: "", email: "" });
     }
   };
-  const removePoc = (index: number) => setPocs(pocs.filter((_, i) => i !== index));
+
+  const removePoc = (pocId: string) => {
+    deleteMutation.mutate({ programId, pocId });
+  };
+
+  if (isLoading) {
+    return <Skeleton className="h-40 w-full" />;
+  }
 
   return (
     <div className="space-y-6">
-      {/* Add POC Form */}
       <Card className="border-dashed">
         <CardContent className="p-4 space-y-4">
           <h4 className="font-medium text-sm text-muted-foreground">Add New Point of Contact</h4>
@@ -1136,8 +1341,8 @@ function ProgramPOCsSection() {
             <div>
               <Label>Full Name</Label>
               <Input
-                value={newPoc.fullName}
-                onChange={(e) => setNewPoc({ ...newPoc, fullName: e.target.value })}
+                value={newPoc.full_name || ""}
+                onChange={(e) => setNewPoc({ ...newPoc, full_name: e.target.value })}
                 placeholder="Enter full name..."
                 className="mt-1.5"
               />
@@ -1145,7 +1350,7 @@ function ProgramPOCsSection() {
             <div>
               <Label>Designation</Label>
               <Input
-                value={newPoc.designation}
+                value={newPoc.designation || ""}
                 onChange={(e) => setNewPoc({ ...newPoc, designation: e.target.value })}
                 placeholder="Enter designation..."
                 className="mt-1.5"
@@ -1154,17 +1359,18 @@ function ProgramPOCsSection() {
             <div>
               <Label>Organisation (School)</Label>
               <Input
-                value={newPoc.organisation}
-                className="mt-1.5 bg-muted"
-                disabled
+                value={newPoc.organisation || ""}
+                onChange={(e) => setNewPoc({ ...newPoc, organisation: e.target.value })}
+                placeholder="Enter organisation..."
+                className="mt-1.5"
               />
             </div>
             <div>
               <Label>Contact No (without country code)</Label>
               <Input
                 type="tel"
-                value={newPoc.contactNo}
-                onChange={(e) => setNewPoc({ ...newPoc, contactNo: e.target.value })}
+                value={newPoc.contact_no || ""}
+                onChange={(e) => setNewPoc({ ...newPoc, contact_no: e.target.value })}
                 placeholder="5551234567"
                 className="mt-1.5"
               />
@@ -1173,29 +1379,29 @@ function ProgramPOCsSection() {
               <Label>Email Address</Label>
               <Input
                 type="email"
-                value={newPoc.email}
+                value={newPoc.email || ""}
                 onChange={(e) => setNewPoc({ ...newPoc, email: e.target.value })}
                 placeholder="email@example.com"
                 className="mt-1.5"
               />
             </div>
           </div>
-          <Button onClick={addPoc} disabled={!newPoc.fullName.trim() || !newPoc.email.trim()}>
+          <Button onClick={addPoc} disabled={!newPoc.full_name?.trim() || !newPoc.email?.trim() || saveMutation.isPending}>
+            {saveMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             <Plus className="h-4 w-4 mr-2" />
             Add POC
           </Button>
         </CardContent>
       </Card>
 
-      {/* POCs List */}
       <div>
         <h4 className="font-medium text-sm text-muted-foreground mb-3">Added Points of Contact ({pocs.length})</h4>
         {pocs.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4 border rounded-lg">No points of contact added yet</p>
         ) : (
           <div className="space-y-3">
-            {pocs.map((poc, index) => (
-              <Card key={index}>
+            {pocs.map((poc) => (
+              <Card key={poc.id}>
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-4 flex-1">
@@ -1203,17 +1409,17 @@ function ProgramPOCsSection() {
                         <User className="h-5 w-5 text-primary" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h5 className="font-medium text-foreground">{poc.fullName}</h5>
+                        <h5 className="font-medium text-foreground">{poc.full_name}</h5>
                         <p className="text-sm text-muted-foreground">{poc.designation} • {poc.organisation}</p>
                         <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <Mail className="h-3.5 w-3.5" />
                             {poc.email}
                           </span>
-                          {poc.contactNo && (
+                          {poc.contact_no && (
                             <span className="flex items-center gap-1">
                               <Phone className="h-3.5 w-3.5" />
-                              {poc.contactNo}
+                              {poc.contact_no}
                             </span>
                           )}
                         </div>
@@ -1223,7 +1429,8 @@ function ProgramPOCsSection() {
                       variant="ghost"
                       size="icon"
                       className="text-destructive shrink-0"
-                      onClick={() => removePoc(index)}
+                      onClick={() => poc.id && removePoc(poc.id)}
+                      disabled={deleteMutation.isPending}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -1234,6 +1441,10 @@ function ProgramPOCsSection() {
           </div>
         )}
       </div>
+
+      <Button onClick={onSave}>
+        Save & Continue
+      </Button>
     </div>
   );
 }
