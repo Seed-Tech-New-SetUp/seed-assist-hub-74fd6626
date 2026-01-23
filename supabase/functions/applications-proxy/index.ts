@@ -67,34 +67,43 @@ serve(async (req) => {
 
     // Handle export action - always treat as binary
     if (action === "export") {
-      const contentType = backendResponse.headers.get("Content-Type") || "application/octet-stream";
-      const binaryData = await backendResponse.arrayBuffer();
-      
-      // Check if we got an error response (small size, likely JSON error)
-      if (binaryData.byteLength < 500) {
-        const textDecoder = new TextDecoder();
-        const text = textDecoder.decode(binaryData);
-        try {
-          const errorJson = JSON.parse(text);
-          if (errorJson.error || errorJson.success === false) {
-            return new Response(text, {
-              status: 400,
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-            });
-          }
-        } catch {
-          // Not JSON, continue with binary response
-        }
+      const contentTypeRaw = backendResponse.headers.get("Content-Type") || "";
+      const contentType = contentTypeRaw.toLowerCase();
+
+      // If backend returned JSON (often an error like { success:false, error:"..." }),
+      // do NOT force an XLSX download. Pass JSON through to the client.
+      if (contentType.includes("application/json") || contentType.includes("text/json")) {
+        const text = await backendResponse.text();
+        return new Response(text, {
+          // Backend sometimes responds 200 even for errors; normalize to 400 so frontend treats it as failure.
+          status: backendResponse.ok ? 400 : backendResponse.status,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
-      
+
+      // If backend returned HTML/text (common for PHP fatal/error pages), convert to a safe JSON error.
+      if (contentType.includes("text/html") || contentType.includes("text/plain")) {
+        const text = await backendResponse.text();
+        return new Response(
+          JSON.stringify({ success: false, error: "Server returned a non-file response", raw: text.slice(0, 300) }),
+          {
+            status: backendResponse.ok ? 500 : backendResponse.status,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      // Otherwise treat as binary XLSX
+      const binaryData = await backendResponse.arrayBuffer();
       return new Response(binaryData, {
         status: backendResponse.status,
         headers: {
           ...corsHeaders,
-          "Content-Type": contentType.includes("spreadsheet") || contentType.includes("excel") 
-            ? contentType 
+          "Content-Type": contentTypeRaw.includes("spreadsheet") || contentTypeRaw.includes("excel")
+            ? contentTypeRaw
             : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-          "Content-Disposition": backendResponse.headers.get("Content-Disposition") || 
+          "Content-Disposition":
+            backendResponse.headers.get("Content-Disposition") ||
             `attachment; filename="applications-export-${new Date().toISOString().split("T")[0]}.xlsx"`,
         },
       });
