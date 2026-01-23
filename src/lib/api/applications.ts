@@ -91,14 +91,28 @@ export async function downloadApplicationsExport(): Promise<void> {
     throw new Error("Authentication required");
   }
 
-  // Create a hidden form to POST with auth headers via a different approach
-  // Since we can't add headers to direct links, we'll use the proxy with token in URL
+  // We can't attach Authorization headers to a plain <a href> download.
+  // So we pass the token to the proxy via query string and let the browser handle the attachment download.
+  // Use an iframe instead of window.open() to avoid popup blockers and blank tabs.
   const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/applications-proxy`;
   const params = new URLSearchParams({
     action: "export",
     token: token, // Pass token as query param for direct download
   });
-  
-  // Open in new tab - the proxy will handle auth from query param
-  window.open(`${baseUrl}?${params.toString()}`, "_blank");
+
+  const downloadUrl = `${baseUrl}?${params.toString()}`;
+
+  const iframe = document.createElement("iframe");
+  iframe.style.display = "none";
+  iframe.src = downloadUrl;
+  document.body.appendChild(iframe);
+
+  // Clean up later (download will continue)
+  window.setTimeout(() => {
+    try {
+      document.body.removeChild(iframe);
+    } catch {
+      // noop
+    }
+  }, 30_000);
 }

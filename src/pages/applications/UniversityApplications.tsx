@@ -84,8 +84,8 @@ export default function UniversityApplications() {
     try {
       await downloadApplicationsExport();
       toast({
-        title: "Success",
-        description: "Export downloaded successfully",
+        title: "Download started",
+        description: "Your browser should begin downloading the Excel file.",
       });
     } catch (error) {
       toast({
