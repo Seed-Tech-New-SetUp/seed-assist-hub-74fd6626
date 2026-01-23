@@ -17,7 +17,7 @@ import { toast } from "@/hooks/use-toast";
 import {
   UniversityApplication,
   fetchApplications,
-  downloadApplicationsExport,
+  downloadApplicationsAsExcel,
 } from "@/lib/api/applications";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
@@ -79,13 +79,13 @@ export default function UniversityApplications() {
       app.program_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleDownload = async () => {
+  const handleDownload = () => {
     setIsExporting(true);
     try {
-      await downloadApplicationsExport();
+      downloadApplicationsAsExcel(applications);
       toast({
-        title: "Download started",
-        description: "Your browser should begin downloading the Excel file.",
+        title: "Success",
+        description: "Excel file downloaded successfully",
       });
     } catch (error) {
       toast({
