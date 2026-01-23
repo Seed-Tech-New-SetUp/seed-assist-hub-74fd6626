@@ -116,13 +116,13 @@ export default function UniversityApplications() {
               <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
               Refresh
             </Button>
-            <Button onClick={handleDownload} disabled={isExporting} className="gap-2">
+            <Button variant="success" onClick={handleDownload} disabled={isExporting} className="gap-2">
               {isExporting ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Download className="h-4 w-4" />
               )}
-              Download XLSX
+              {isExporting ? "Downloading..." : "Download"}
             </Button>
           </div>
         </div>
