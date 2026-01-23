@@ -195,12 +195,12 @@ export default function UniversityApplications() {
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-muted/50">
-                        <TableHead>First Name</TableHead>
-                        <TableHead>Last Name</TableHead>
+                        <TableHead className="w-24">First Name</TableHead>
+                        <TableHead className="w-24">Last Name</TableHead>
                         <TableHead>Email</TableHead>
                         <TableHead>Phone Number</TableHead>
                         <TableHead>Program Name</TableHead>
-                        <TableHead>Intake</TableHead>
+                        <TableHead className="w-36">Intake</TableHead>
                         <TableHead>Status</TableHead>
                       </TableRow>
                     </TableHeader>
