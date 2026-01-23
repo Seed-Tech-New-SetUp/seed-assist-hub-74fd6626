@@ -1,4 +1,5 @@
 import { getCookie, AUTH_COOKIES } from "@/lib/utils/cookies";
+import * as XLSX from "xlsx";
 
 export interface UniversityApplication {
   record_id: string;
@@ -85,34 +86,51 @@ export function getApplicationsExportUrl(): string {
   return `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/applications-proxy?action=export`;
 }
 
-export async function downloadApplicationsExport(): Promise<void> {
-  const token = getAuthToken();
-  if (!token) {
-    throw new Error("Authentication required");
+/**
+ * Generate and download an Excel file from the provided applications data (client-side).
+ */
+export function downloadApplicationsAsExcel(applications: UniversityApplication[], schoolName?: string): void {
+  if (!applications || applications.length === 0) {
+    throw new Error("No applications data to export");
   }
 
-  // We can't attach Authorization headers to a plain <a href> download.
-  // So we pass the token to the proxy via query string and let the browser handle the attachment download.
-  // Use an iframe instead of window.open() to avoid popup blockers and blank tabs.
-  const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/applications-proxy`;
-  const params = new URLSearchParams({
-    action: "export",
-    token: token, // Pass token as query param for direct download
-  });
+  // Prepare data for Excel
+  const excelData = applications.map((app, index) => ({
+    "S.No": index + 1,
+    "First Name": app.first_name?.trim() || "",
+    "Last Name": app.last_name?.trim() || "",
+    "Email": app.email || "",
+    "Phone": app.phone_number || "",
+    "Program": app.program_name || "",
+    "Intake": app.intake || "",
+    "Status": app.status || "",
+    "Applied Date": app.created_at ? new Date(app.created_at).toLocaleDateString() : "",
+  }));
 
-  const downloadUrl = `${baseUrl}?${params.toString()}`;
+  // Create workbook and worksheet
+  const worksheet = XLSX.utils.json_to_sheet(excelData);
+  const workbook = XLSX.utils.book_new();
+  
+  // Set column widths for better readability
+  worksheet["!cols"] = [
+    { wch: 6 },   // S.No
+    { wch: 15 },  // First Name
+    { wch: 15 },  // Last Name
+    { wch: 30 },  // Email
+    { wch: 15 },  // Phone
+    { wch: 25 },  // Program
+    { wch: 12 },  // Intake
+    { wch: 12 },  // Status
+    { wch: 12 },  // Applied Date
+  ];
 
-  const iframe = document.createElement("iframe");
-  iframe.style.display = "none";
-  iframe.src = downloadUrl;
-  document.body.appendChild(iframe);
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Applications");
 
-  // Clean up later (download will continue)
-  window.setTimeout(() => {
-    try {
-      document.body.removeChild(iframe);
-    } catch {
-      // noop
-    }
-  }, 30_000);
+  // Generate filename
+  const dateStr = new Date().toISOString().split("T")[0];
+  const sanitizedSchool = schoolName ? schoolName.replace(/[^a-zA-Z0-9]/g, "_").slice(0, 30) : "University";
+  const filename = `Applications_${sanitizedSchool}_${dateStr}.xlsx`;
+
+  // Trigger download
+  XLSX.writeFile(workbook, filename);
 }
