@@ -35,7 +35,7 @@ serve(async (req) => {
         backendUrl = `${BACKEND_BASE_URL}/index.php`;
         break;
       case "export":
-        backendUrl = `${BACKEND_BASE_URL}/export.php`;
+        backendUrl = `${BACKEND_BASE_URL}/download.php`;
         break;
       default:
         backendUrl = `${BACKEND_BASE_URL}/index.php`;
