@@ -65,29 +65,58 @@ serve(async (req) => {
       body: req.method !== "GET" ? await req.text() : undefined,
     });
 
-    // Handle binary export response
+    // Handle export action - always treat as binary
     if (action === "export") {
-      const contentType = backendResponse.headers.get("Content-Type") || "";
-      if (contentType.includes("spreadsheet") || contentType.includes("octet-stream")) {
-        const binaryData = await backendResponse.arrayBuffer();
-        return new Response(binaryData, {
-          status: backendResponse.status,
-          headers: {
-            ...corsHeaders,
-            "Content-Type": contentType,
-            "Content-Disposition": backendResponse.headers.get("Content-Disposition") || 
-              `attachment; filename="applications-export.xlsx"`,
-          },
-        });
+      const contentType = backendResponse.headers.get("Content-Type") || "application/octet-stream";
+      const binaryData = await backendResponse.arrayBuffer();
+      
+      // Check if we got an error response (small size, likely JSON error)
+      if (binaryData.byteLength < 500) {
+        const textDecoder = new TextDecoder();
+        const text = textDecoder.decode(binaryData);
+        try {
+          const errorJson = JSON.parse(text);
+          if (errorJson.error || errorJson.success === false) {
+            return new Response(text, {
+              status: 400,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+        } catch {
+          // Not JSON, continue with binary response
+        }
       }
+      
+      return new Response(binaryData, {
+        status: backendResponse.status,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": contentType.includes("spreadsheet") || contentType.includes("excel") 
+            ? contentType 
+            : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "Content-Disposition": backendResponse.headers.get("Content-Disposition") || 
+            `attachment; filename="applications-export-${new Date().toISOString().split("T")[0]}.xlsx"`,
+        },
+      });
     }
 
-    const data = await backendResponse.json();
+    // Handle list/other actions as JSON
+    const responseText = await backendResponse.text();
     
-    return new Response(JSON.stringify(data), {
-      status: backendResponse.status,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    // Try to parse as JSON
+    try {
+      const data = JSON.parse(responseText);
+      return new Response(JSON.stringify(data), {
+        status: backendResponse.status,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    } catch {
+      // If JSON parse fails, return raw text with error
+      return new Response(
+        JSON.stringify({ success: false, error: "Invalid response from server", raw: responseText.substring(0, 200) }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
   } catch (error) {
     console.error("Applications proxy error:", error);
