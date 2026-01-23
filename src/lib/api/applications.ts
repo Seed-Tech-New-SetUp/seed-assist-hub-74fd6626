@@ -95,8 +95,7 @@ export function downloadApplicationsAsExcel(applications: UniversityApplication[
   }
 
   // Prepare data for Excel
-  const excelData = applications.map((app, index) => ({
-    "S.No": index + 1,
+  const excelData = applications.map((app) => ({
     "First Name": app.first_name?.trim() || "",
     "Last Name": app.last_name?.trim() || "",
     "Email": app.email || "",
@@ -104,7 +103,6 @@ export function downloadApplicationsAsExcel(applications: UniversityApplication[
     "Program": app.program_name || "",
     "Intake": app.intake || "",
     "Status": app.status || "",
-    "Applied Date": app.created_at ? new Date(app.created_at).toLocaleDateString() : "",
   }));
 
   // Create workbook and worksheet
@@ -113,7 +111,6 @@ export function downloadApplicationsAsExcel(applications: UniversityApplication[
   
   // Set column widths for better readability
   worksheet["!cols"] = [
-    { wch: 6 },   // S.No
     { wch: 15 },  // First Name
     { wch: 15 },  // Last Name
     { wch: 30 },  // Email
@@ -121,7 +118,6 @@ export function downloadApplicationsAsExcel(applications: UniversityApplication[
     { wch: 25 },  // Program
     { wch: 12 },  // Intake
     { wch: 12 },  // Status
-    { wch: 12 },  // Applied Date
   ];
 
   XLSX.utils.book_append_sheet(workbook, worksheet, "Applications");
