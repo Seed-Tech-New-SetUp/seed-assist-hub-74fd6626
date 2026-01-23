@@ -93,12 +93,18 @@ serve(async (req) => {
         });
       }
 
-      // If backend returned HTML/text (PHP error page), convert to JSON error
+      // If backend returned HTML/text (PHP error page), log full response and convert to JSON error
       if (contentType.includes("text/html") || contentType.includes("text/plain")) {
         const text = await backendResponse.text();
-        console.log("Applications Proxy Export: HTML/text response (error)", text.slice(0, 200));
+        console.error("Applications Proxy Export: FULL BACKEND ERROR RESPONSE:", text);
+        console.error("Applications Proxy Export: Response headers:", JSON.stringify(Object.fromEntries(backendResponse.headers.entries())));
         return new Response(
-          JSON.stringify({ success: false, error: "Server returned a non-file response", raw: text.slice(0, 300) }),
+          JSON.stringify({ 
+            success: false, 
+            error: "Server returned a non-file response", 
+            status: backendResponse.status,
+            raw: text.slice(0, 1000) // Show more of the error
+          }),
           {
             status: 500,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
