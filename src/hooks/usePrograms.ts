@@ -1,0 +1,406 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import {
+  fetchPrograms,
+  fetchProgramInfo,
+  saveProgramInfo,
+  fetchProgramFeatures,
+  saveProgramFeature,
+  deleteProgramFeature,
+  fetchProgramMembers,
+  saveProgramMember,
+  deleteProgramMember,
+  fetchProgramRankings,
+  fetchRankingOrganizations,
+  saveProgramRanking,
+  deleteProgramRanking,
+  fetchProgramRecruiters,
+  saveProgramRecruiter,
+  deleteProgramRecruiter,
+  fetchProgramJobRoles,
+  saveProgramJobRole,
+  deleteProgramJobRole,
+  fetchProgramFAQs,
+  saveProgramFAQ,
+  deleteProgramFAQ,
+  fetchProgramPOCs,
+  saveProgramPOC,
+  deleteProgramPOC,
+  Program,
+  ProgramInfo,
+  ProgramFeature,
+  ProgramMember,
+  ProgramRanking,
+  ProgramRecruiter,
+  ProgramJobRole,
+  ProgramFAQ,
+  ProgramPOC,
+  RankingOrganization,
+} from "@/lib/api/programs";
+
+// ============ Programs List Hook ============
+
+export function usePrograms() {
+  return useQuery({
+    queryKey: ["programs"],
+    queryFn: fetchPrograms,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+// ============ Program Info Hook ============
+
+export function useProgramInfo(programId: string | null) {
+  return useQuery({
+    queryKey: ["program-info", programId],
+    queryFn: () => (programId ? fetchProgramInfo(programId) : null),
+    enabled: !!programId,
+  });
+}
+
+export function useSaveProgramInfo() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: ({ programId, info }: { programId: string; info: Partial<ProgramInfo> }) =>
+      saveProgramInfo(programId, info),
+    onSuccess: (_, { programId }) => {
+      queryClient.invalidateQueries({ queryKey: ["program-info", programId] });
+      toast({ title: "Success", description: "Program information saved successfully." });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+}
+
+// ============ Program Features Hook ============
+
+export function useProgramFeatures(programId: string | null) {
+  return useQuery({
+    queryKey: ["program-features", programId],
+    queryFn: () => (programId ? fetchProgramFeatures(programId) : []),
+    enabled: !!programId,
+  });
+}
+
+export function useSaveProgramFeature() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: ({ programId, feature }: { programId: string; feature: ProgramFeature }) =>
+      saveProgramFeature(programId, feature),
+    onSuccess: (_, { programId }) => {
+      queryClient.invalidateQueries({ queryKey: ["program-features", programId] });
+      toast({ title: "Success", description: "Feature added successfully." });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+}
+
+export function useDeleteProgramFeature() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: ({ programId, featureId }: { programId: string; featureId: string }) =>
+      deleteProgramFeature(programId, featureId),
+    onSuccess: (_, { programId }) => {
+      queryClient.invalidateQueries({ queryKey: ["program-features", programId] });
+      toast({ title: "Success", description: "Feature removed." });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+}
+
+// ============ Program Members Hook ============
+
+export function useProgramMembers(programId: string | null, category: "faculty" | "current_student" | "alumni") {
+  return useQuery({
+    queryKey: ["program-members", programId, category],
+    queryFn: () => (programId ? fetchProgramMembers(programId, category) : []),
+    enabled: !!programId,
+  });
+}
+
+export function useSaveProgramMember() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: ({
+      programId,
+      category,
+      member,
+    }: {
+      programId: string;
+      category: "faculty" | "current_student" | "alumni";
+      member: ProgramMember;
+    }) => saveProgramMember(programId, category, member),
+    onSuccess: (_, { programId, category }) => {
+      queryClient.invalidateQueries({ queryKey: ["program-members", programId, category] });
+      toast({ title: "Success", description: "Member added successfully." });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+}
+
+export function useDeleteProgramMember() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: ({
+      programId,
+      category,
+      memberId,
+    }: {
+      programId: string;
+      category: "faculty" | "current_student" | "alumni";
+      memberId: string;
+    }) => deleteProgramMember(programId, category, memberId),
+    onSuccess: (_, { programId, category }) => {
+      queryClient.invalidateQueries({ queryKey: ["program-members", programId, category] });
+      toast({ title: "Success", description: "Member removed." });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+}
+
+// ============ Program Rankings Hook ============
+
+export function useRankingOrganizations() {
+  return useQuery({
+    queryKey: ["ranking-organizations"],
+    queryFn: fetchRankingOrganizations,
+    staleTime: 30 * 60 * 1000, // 30 minutes
+  });
+}
+
+export function useProgramRankings(programId: string | null) {
+  return useQuery({
+    queryKey: ["program-rankings", programId],
+    queryFn: () => (programId ? fetchProgramRankings(programId) : []),
+    enabled: !!programId,
+  });
+}
+
+export function useSaveProgramRanking() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: ({ programId, ranking }: { programId: string; ranking: ProgramRanking }) =>
+      saveProgramRanking(programId, ranking),
+    onSuccess: (_, { programId }) => {
+      queryClient.invalidateQueries({ queryKey: ["program-rankings", programId] });
+      toast({ title: "Success", description: "Ranking added successfully." });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+}
+
+export function useDeleteProgramRanking() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: ({ programId, rankingId }: { programId: string; rankingId: string }) =>
+      deleteProgramRanking(programId, rankingId),
+    onSuccess: (_, { programId }) => {
+      queryClient.invalidateQueries({ queryKey: ["program-rankings", programId] });
+      toast({ title: "Success", description: "Ranking removed." });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+}
+
+// ============ Program Recruiters Hook ============
+
+export function useProgramRecruiters(programId: string | null) {
+  return useQuery({
+    queryKey: ["program-recruiters", programId],
+    queryFn: () => (programId ? fetchProgramRecruiters(programId) : []),
+    enabled: !!programId,
+  });
+}
+
+export function useSaveProgramRecruiter() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: ({ programId, recruiter }: { programId: string; recruiter: ProgramRecruiter }) =>
+      saveProgramRecruiter(programId, recruiter),
+    onSuccess: (_, { programId }) => {
+      queryClient.invalidateQueries({ queryKey: ["program-recruiters", programId] });
+      toast({ title: "Success", description: "Recruiter added successfully." });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+}
+
+export function useDeleteProgramRecruiter() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: ({ programId, recruiterId }: { programId: string; recruiterId: string }) =>
+      deleteProgramRecruiter(programId, recruiterId),
+    onSuccess: (_, { programId }) => {
+      queryClient.invalidateQueries({ queryKey: ["program-recruiters", programId] });
+      toast({ title: "Success", description: "Recruiter removed." });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+}
+
+// ============ Program Job Roles Hook ============
+
+export function useProgramJobRoles(programId: string | null) {
+  return useQuery({
+    queryKey: ["program-jobroles", programId],
+    queryFn: () => (programId ? fetchProgramJobRoles(programId) : []),
+    enabled: !!programId,
+  });
+}
+
+export function useSaveProgramJobRole() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: ({ programId, jobRole }: { programId: string; jobRole: ProgramJobRole }) =>
+      saveProgramJobRole(programId, jobRole),
+    onSuccess: (_, { programId }) => {
+      queryClient.invalidateQueries({ queryKey: ["program-jobroles", programId] });
+      toast({ title: "Success", description: "Job role added successfully." });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+}
+
+export function useDeleteProgramJobRole() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: ({ programId, jobRoleId }: { programId: string; jobRoleId: string }) =>
+      deleteProgramJobRole(programId, jobRoleId),
+    onSuccess: (_, { programId }) => {
+      queryClient.invalidateQueries({ queryKey: ["program-jobroles", programId] });
+      toast({ title: "Success", description: "Job role removed." });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+}
+
+// ============ Program FAQs Hook ============
+
+export function useProgramFAQs(programId: string | null) {
+  return useQuery({
+    queryKey: ["program-faqs", programId],
+    queryFn: () => (programId ? fetchProgramFAQs(programId) : []),
+    enabled: !!programId,
+  });
+}
+
+export function useSaveProgramFAQ() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: ({ programId, faq }: { programId: string; faq: ProgramFAQ }) =>
+      saveProgramFAQ(programId, faq),
+    onSuccess: (_, { programId }) => {
+      queryClient.invalidateQueries({ queryKey: ["program-faqs", programId] });
+      toast({ title: "Success", description: "FAQ saved successfully." });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+}
+
+export function useDeleteProgramFAQ() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: ({ programId, faqId }: { programId: string; faqId: string }) =>
+      deleteProgramFAQ(programId, faqId),
+    onSuccess: (_, { programId }) => {
+      queryClient.invalidateQueries({ queryKey: ["program-faqs", programId] });
+      toast({ title: "Success", description: "FAQ removed." });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+}
+
+// ============ Program POCs Hook ============
+
+export function useProgramPOCs(programId: string | null) {
+  return useQuery({
+    queryKey: ["program-pocs", programId],
+    queryFn: () => (programId ? fetchProgramPOCs(programId) : []),
+    enabled: !!programId,
+  });
+}
+
+export function useSaveProgramPOC() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: ({ programId, poc }: { programId: string; poc: ProgramPOC }) =>
+      saveProgramPOC(programId, poc),
+    onSuccess: (_, { programId }) => {
+      queryClient.invalidateQueries({ queryKey: ["program-pocs", programId] });
+      toast({ title: "Success", description: "Contact added successfully." });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+}
+
+export function useDeleteProgramPOC() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: ({ programId, pocId }: { programId: string; pocId: string }) =>
+      deleteProgramPOC(programId, pocId),
+    onSuccess: (_, { programId }) => {
+      queryClient.invalidateQueries({ queryKey: ["program-pocs", programId] });
+      toast({ title: "Success", description: "Contact removed." });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+}

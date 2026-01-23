@@ -105,3 +105,11 @@ export const AUTH_COOKIES = {
 export function clearAuthCookies(): void {
   Object.values(AUTH_COOKIES).forEach(name => removeCookie(name));
 }
+
+/**
+ * Get the portal authentication token
+ * Returns the portal_token or falls back to auth_token for backward compatibility
+ */
+export function getPortalToken(): string | null {
+  return getCookie(AUTH_COOKIES.TOKEN) || getCookie('auth_token');
+}
