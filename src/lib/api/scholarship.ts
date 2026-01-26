@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { getCookie } from "@/lib/utils/cookies";
 import { decodeObjectStrings } from "@/lib/utils/decode-utf8";
+import { handleUnauthorized, checkSupabaseResponseForAuthError } from "@/lib/utils/auth-handler";
 
 // ===========================================
 // Scholarship API Types
@@ -468,7 +469,7 @@ export async function fetchApplicants(): Promise<{
   const token = getCookie("portal_token");
   
   if (!token) {
-    throw new Error("Authentication required");
+    handleUnauthorized("Authentication required");
   }
 
   const { data, error } = await supabase.functions.invoke("scholarship-proxy?action=list", {
@@ -476,6 +477,9 @@ export async function fetchApplicants(): Promise<{
       Authorization: `Bearer ${token}`,
     },
   });
+
+  // Check for auth errors
+  checkSupabaseResponseForAuthError(data, error);
 
   if (error) {
     console.error("Error fetching applicants:", error);
@@ -499,7 +503,7 @@ export async function fetchApplicantProfile(contactId: string): Promise<Applican
   const token = getCookie("portal_token");
   
   if (!token) {
-    throw new Error("Authentication required");
+    handleUnauthorized("Authentication required");
   }
 
   const { data, error } = await supabase.functions.invoke(`scholarship-proxy?action=profile&contact_id=${contactId}`, {
@@ -507,6 +511,9 @@ export async function fetchApplicantProfile(contactId: string): Promise<Applican
       Authorization: `Bearer ${token}`,
     },
   });
+
+  // Check for auth errors
+  checkSupabaseResponseForAuthError(data, error);
 
   if (error) {
     console.error("Error fetching applicant profile:", error);
@@ -526,7 +533,7 @@ export async function updateApplicantStatus(request: StatusAssignmentRequest): P
   const token = getCookie("portal_token");
   
   if (!token) {
-    throw new Error("Authentication required");
+    handleUnauthorized("Authentication required");
   }
 
   // Map UI status to API status (API accepts: shortlisted, selected, onHold, rejected)
@@ -549,6 +556,9 @@ export async function updateApplicantStatus(request: StatusAssignmentRequest): P
     },
     body: apiRequest,
   });
+
+  // Check for auth errors
+  checkSupabaseResponseForAuthError(data, error);
 
   if (error) {
     console.error("Error updating applicant status:", error);

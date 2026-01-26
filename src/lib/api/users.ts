@@ -4,6 +4,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { decodeUTF8, decodeObjectStrings } from "@/lib/utils/decode-utf8";
+import { handleUnauthorized, isUnauthorizedError } from "@/lib/utils/auth-handler";
 
 export interface ActiveUser {
   client_id: string;
@@ -95,6 +96,10 @@ export interface DeleteInvitationResponse {
 }
 
 export async function fetchUsers(authToken: string): Promise<UsersResponse> {
+  if (!authToken) {
+    handleUnauthorized("Authentication required");
+  }
+
   const response = await fetch(
     `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/users-proxy?action=list`,
     {
@@ -110,6 +115,10 @@ export async function fetchUsers(authToken: string): Promise<UsersResponse> {
   const data = await response.json();
 
   if (!response.ok || !data.success) {
+    // Check for auth errors
+    if (isUnauthorizedError(response.status, data)) {
+      handleUnauthorized(data.error || data.message);
+    }
     console.error("Error fetching users:", data);
     throw new Error(data.error || data.message || "Failed to fetch users");
   }
@@ -122,6 +131,10 @@ export async function inviteUser(
   authToken: string,
   payload: InviteUserPayload
 ): Promise<InviteUserResponse> {
+  if (!authToken) {
+    handleUnauthorized("Authentication required");
+  }
+
   const response = await fetch(
     `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/users-proxy?action=invite`,
     {
@@ -138,6 +151,10 @@ export async function inviteUser(
   const result = await response.json();
 
   if (!response.ok || !result.success) {
+    // Check for auth errors
+    if (isUnauthorizedError(response.status, result)) {
+      handleUnauthorized(result.error?.message || result.message);
+    }
     const errorMessage = result.error?.message || result.message || "Failed to send invitation";
     throw new Error(errorMessage);
   }
@@ -149,6 +166,10 @@ export async function deleteInvitation(
   authToken: string,
   invitationId: number
 ): Promise<DeleteInvitationResponse> {
+  if (!authToken) {
+    handleUnauthorized("Authentication required");
+  }
+
   const response = await fetch(
     `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/users-proxy?action=delete-invitation&id=${invitationId}`,
     {
@@ -164,6 +185,10 @@ export async function deleteInvitation(
   const result = await response.json();
 
   if (!response.ok || !result.success) {
+    // Check for auth errors
+    if (isUnauthorizedError(response.status, result)) {
+      handleUnauthorized(result.error?.message || result.message);
+    }
     const errorMessage = result.error?.message || result.message || "Failed to delete invitation";
     throw new Error(errorMessage);
   }
