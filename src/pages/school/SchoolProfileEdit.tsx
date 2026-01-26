@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ImageUpload } from "@/components/ui/image-upload";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Building2, 
   Globe, 
@@ -28,9 +29,12 @@ import {
   Plus,
   Trash2,
   Check,
+  Loader2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useSchoolFAQs, useSaveSchoolFAQs } from "@/hooks/useSchoolProfile";
+import { SchoolFAQ } from "@/lib/api/school-profile";
 
 const sections = [
   { id: "info", label: "Organisation Details", icon: Building2 },
@@ -271,29 +275,91 @@ function SocialMediaSection() {
 }
 
 function FAQsSection() {
-  const [faqs, setFaqs] = useState([{ question: "", answer: "" }]);
+  const { data: apiFaqs, isLoading } = useSchoolFAQs();
+  const saveFAQs = useSaveSchoolFAQs();
+  const [faqs, setFaqs] = useState<SchoolFAQ[]>([]);
+  const [hasChanges, setHasChanges] = useState(false);
 
-  const addFaq = () => setFaqs([...faqs, { question: "", answer: "" }]);
-  const removeFaq = (index: number) => setFaqs(faqs.filter((_, i) => i !== index));
+  // Initialize local state from API data
+  useEffect(() => {
+    if (apiFaqs && apiFaqs.length > 0) {
+      setFaqs(apiFaqs);
+    } else if (apiFaqs && apiFaqs.length === 0) {
+      setFaqs([{ question: "", answer: "" }]);
+    }
+  }, [apiFaqs]);
+
+  const addFaq = () => {
+    setFaqs([...faqs, { question: "", answer: "" }]);
+    setHasChanges(true);
+  };
+
+  const removeFaq = (index: number) => {
+    setFaqs(faqs.filter((_, i) => i !== index));
+    setHasChanges(true);
+  };
+
+  const updateFaq = (index: number, field: "question" | "answer", value: string) => {
+    const updated = [...faqs];
+    updated[index] = { ...updated[index], [field]: value };
+    setFaqs(updated);
+    setHasChanges(true);
+  };
+
+  const handleSaveFAQs = () => {
+    // Filter out empty FAQs
+    const validFaqs = faqs.filter(faq => faq.question.trim() || faq.answer.trim());
+    saveFAQs.mutate(validFaqs, {
+      onSuccess: () => setHasChanges(false),
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-10 w-32" />
+        <Skeleton className="h-40 w-full" />
+        <Skeleton className="h-40 w-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
-      <Button onClick={addFaq} variant="outline" size="sm">
-        <Plus className="h-4 w-4 mr-2" />
-        Add FAQ
-      </Button>
+      <div className="flex items-center justify-between">
+        <Button onClick={addFaq} variant="outline" size="sm">
+          <Plus className="h-4 w-4 mr-2" />
+          Add FAQ
+        </Button>
+        {hasChanges && (
+          <Button onClick={handleSaveFAQs} disabled={saveFAQs.isPending} size="sm">
+            {saveFAQs.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            Save FAQs
+          </Button>
+        )}
+      </div>
       {faqs.map((faq, index) => (
-        <Card key={index}>
+        <Card key={faq.faq_id || index}>
           <CardContent className="p-4 space-y-3">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 space-y-3">
                 <div>
                   <Label>Question</Label>
-                  <Input placeholder="Enter question..." className="mt-1.5" />
+                  <Input 
+                    placeholder="Enter question..." 
+                    className="mt-1.5"
+                    value={faq.question}
+                    onChange={(e) => updateFaq(index, "question", e.target.value)}
+                  />
                 </div>
                 <div>
                   <Label>Answer</Label>
-                  <Textarea placeholder="Enter answer..." className="mt-1.5" />
+                  <Textarea 
+                    placeholder="Enter answer..." 
+                    className="mt-1.5"
+                    value={faq.answer}
+                    onChange={(e) => updateFaq(index, "answer", e.target.value)}
+                  />
                 </div>
               </div>
               <Button
@@ -308,6 +374,11 @@ function FAQsSection() {
           </CardContent>
         </Card>
       ))}
+      {faqs.length === 0 && (
+        <div className="text-sm text-muted-foreground text-center py-8">
+          No FAQs added yet. Click "Add FAQ" to create your first one.
+        </div>
+      )}
     </div>
   );
 }
