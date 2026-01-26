@@ -442,9 +442,9 @@ function SchoolInfoSection({ info, setInfo, isLoading, setHasChanges }: SchoolIn
           />
         </div>
         <div>
-          <Label>Scholarship Amount (USD)</Label>
+          <Label>Scholarship Amount</Label>
           <Input 
-            placeholder="3,000,000" 
+            placeholder="3 Million USD" 
             className="mt-1.5" 
             value={info.scholarship_amount || ""}
             onChange={(e) => updateField("scholarship_amount", e.target.value)}
