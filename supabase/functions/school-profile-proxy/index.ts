@@ -79,13 +79,16 @@ serve(async (req) => {
 
     const backendResponse = await fetch(backendUrl, requestOptions);
 
+    // Log response details for debugging
+    console.log(`[school-profile-proxy] Response status: ${backendResponse.status}, Content-Type: ${backendResponse.headers.get("Content-Type")}`);
+
     // Check content type
     const contentType = backendResponse.headers.get("Content-Type") || "";
 
     // Handle non-JSON (HTML error pages) gracefully
     if (!contentType.includes("application/json")) {
       const textBody = await backendResponse.text();
-      console.error(`[school-profile-proxy] Non-JSON response: ${textBody.substring(0, 500)}`);
+      console.error(`[school-profile-proxy] Non-JSON response (status ${backendResponse.status}): ${textBody.substring(0, 1000)}`);
 
       // Return empty safe state based on action
       if (action === "faqs") {
@@ -94,7 +97,7 @@ serve(async (req) => {
         });
       }
 
-      return new Response(JSON.stringify({ success: false, error: "Backend returned non-JSON response" }), {
+      return new Response(JSON.stringify({ success: false, error: `Backend returned non-JSON response (status ${backendResponse.status})` }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
