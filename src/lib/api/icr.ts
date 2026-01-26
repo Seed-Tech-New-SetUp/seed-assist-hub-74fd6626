@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { AUTH_COOKIES, getCookie } from "@/lib/utils/cookies";
+import { handleUnauthorized, isUnauthorizedError } from "@/lib/utils/auth-handler";
 
 // ===========================================
 // ICR (In-Country Representation) API
@@ -84,7 +85,7 @@ export async function fetchICRReports(
   const token = getCookie(AUTH_COOKIES.TOKEN) ?? getCookie("auth_token");
 
   if (!token) {
-    return { success: false, error: "Not authenticated" };
+    handleUnauthorized("Not authenticated");
   }
 
   try {
@@ -103,10 +104,20 @@ export async function fetchICRReports(
 
     if (response.error) {
       console.error("ICR API Error:", response.error);
+      // Check for auth errors
+      if (isUnauthorizedError((response.error as { status?: number }).status || 0, { error: response.error.message })) {
+        handleUnauthorized(response.error.message);
+      }
       return { success: false, error: response.error.message };
     }
 
-    return response.data as ICRReportsResponse;
+    // Check response data for auth errors
+    const data = response.data as ICRReportsResponse;
+    if (!data.success && data.error && isUnauthorizedError(401, { error: data.error })) {
+      handleUnauthorized(data.error);
+    }
+
+    return data;
   } catch (error) {
     console.error("ICR fetch error:", error);
     return { success: false, error: "Failed to fetch ICR reports" };

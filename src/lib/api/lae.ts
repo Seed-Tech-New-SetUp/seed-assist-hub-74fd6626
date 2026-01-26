@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { getCookie, AUTH_COOKIES } from "@/lib/utils/cookies";
+import { handleUnauthorized, isUnauthorizedError } from "@/lib/utils/auth-handler";
 
 // Types
 export interface LAEFile {
@@ -57,16 +58,27 @@ const getAuthToken = (): string | null => {
   return getCookie(AUTH_COOKIES.TOKEN) || getCookie("auth_token");
 };
 
+// Helper to check response for auth errors
+function checkAuthError(data: { success?: boolean; error?: string; message?: string }, error?: { message?: string; status?: number }) {
+  if (error?.status === 401 || error?.status === 403) {
+    handleUnauthorized(error.message);
+  }
+  if (data && !data.success && isUnauthorizedError(401, data)) {
+    handleUnauthorized(data.error || data.message);
+  }
+}
+
 // API Functions
 export async function fetchLAEFiles(): Promise<LAEFile[]> {
   const token = getAuthToken();
-  if (!token) throw new Error("No authentication token");
+  if (!token) handleUnauthorized("No authentication token");
 
   const { data, error } = await supabase.functions.invoke("lae-proxy", {
     body: { action: "list" },
     headers: { Authorization: `Bearer ${token}` },
   });
 
+  checkAuthError(data, error as { message?: string; status?: number });
   if (error) throw new Error(error.message);
   if (!data?.success) throw new Error(data?.error || "Failed to fetch files");
 

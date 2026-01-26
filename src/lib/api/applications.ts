@@ -1,4 +1,5 @@
 import { getCookie, AUTH_COOKIES } from "@/lib/utils/cookies";
+import { handleUnauthorized, isUnauthorizedError } from "@/lib/utils/auth-handler";
 import * as XLSX from "xlsx";
 
 export interface UniversityApplication {
@@ -49,7 +50,7 @@ export async function fetchApplications(params?: {
 }): Promise<ApplicationsResponse> {
   const token = getAuthToken();
   if (!token) {
-    throw new Error("Authentication required");
+    handleUnauthorized("Authentication required");
   }
 
   // Build query string
@@ -73,6 +74,12 @@ export async function fetchApplications(params?: {
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
+    
+    // Check for unauthorized/expired token
+    if (isUnauthorizedError(response.status, errorData)) {
+      handleUnauthorized(errorData.error || errorData.message);
+    }
+    
     throw new Error(errorData.error || "Failed to fetch applications");
   }
 
