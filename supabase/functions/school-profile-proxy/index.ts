@@ -2,8 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 const BACKEND_BASE_URL = "https://seedglobaleducation.com/api/assist/school-profile";
@@ -23,10 +22,10 @@ serve(async (req) => {
     const token = authHeader.replace("Bearer ", "");
 
     if (!token) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Missing authorization token" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ success: false, error: "Missing authorization token" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     let backendUrl: string;
@@ -34,7 +33,7 @@ serve(async (req) => {
     // Route to appropriate PHP endpoint based on action
     switch (action) {
       case "info":
-        backendUrl = `${BACKEND_BASE_URL}/update_general_info.php`;
+        backendUrl = `${BACKEND_BASE_URL}/info.php`;
         break;
       case "social":
         backendUrl = `${BACKEND_BASE_URL}/update_social_media.php`;
@@ -87,19 +86,18 @@ serve(async (req) => {
     if (!contentType.includes("application/json")) {
       const textBody = await backendResponse.text();
       console.error(`[school-profile-proxy] Non-JSON response: ${textBody.substring(0, 500)}`);
-      
+
       // Return empty safe state based on action
       if (action === "faqs") {
-        return new Response(
-          JSON.stringify({ success: true, data: { faqs: [], count: 0 } }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        return new Response(JSON.stringify({ success: true, data: { faqs: [], count: 0 } }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
-      
-      return new Response(
-        JSON.stringify({ success: false, error: "Backend returned non-JSON response" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+
+      return new Response(JSON.stringify({ success: false, error: "Backend returned non-JSON response" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const data = await backendResponse.json();
@@ -112,9 +110,9 @@ serve(async (req) => {
   } catch (error) {
     console.error("[school-profile-proxy] Error:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    return new Response(
-      JSON.stringify({ success: false, error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ success: false, error: errorMessage }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });
