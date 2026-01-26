@@ -1,4 +1,5 @@
 import { getPortalToken } from "@/lib/utils/cookies";
+import { decodeObjectStrings } from "@/lib/utils/decode-utf8";
 
 // ============ Types ============
 
@@ -60,7 +61,8 @@ async function callSchoolProfileProxy<T>(
 
 export async function fetchSchoolFAQs(): Promise<SchoolFAQ[]> {
   const result = await callSchoolProfileProxy<SchoolFAQsResponse>("faqs", "GET");
-  return result.data?.faqs || [];
+  const faqs = result.data?.faqs || [];
+  return decodeObjectStrings(faqs);
 }
 
 export async function saveSchoolFAQs(faqs: SchoolFAQ[]): Promise<boolean> {
