@@ -34,8 +34,8 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { useSchoolFAQs, useSaveSchoolFAQs, useSchoolInfo, useSaveSchoolInfo } from "@/hooks/useSchoolProfile";
-import { SchoolFAQ, SchoolInfo } from "@/lib/api/school-profile";
+import { useSchoolFAQs, useSaveSchoolFAQs, useSchoolInfo, useSaveSchoolInfo, useSchoolSocialMedia, useSaveSchoolSocialMedia } from "@/hooks/useSchoolProfile";
+import { SchoolFAQ, SchoolInfo, SchoolSocialMedia } from "@/lib/api/school-profile";
 
 const sections = [
   { id: "info", label: "Organisation Details", icon: Building2 },
@@ -81,6 +81,19 @@ export default function SchoolProfileEdit() {
     }
   }, [apiFaqs]);
 
+  // Social Media state and mutation - lifted up for global save button
+  const { data: apiSocialMedia, isLoading: socialLoading } = useSchoolSocialMedia();
+  const saveSocialMedia = useSaveSchoolSocialMedia();
+  const [socialMedia, setSocialMedia] = useState<SchoolSocialMedia>({});
+  const [socialHasChanges, setSocialHasChanges] = useState(false);
+
+  // Initialize Social Media from API data
+  useEffect(() => {
+    if (apiSocialMedia) {
+      setSocialMedia(apiSocialMedia);
+    }
+  }, [apiSocialMedia]);
+
   const handleSave = (sectionId: string) => {
     // Handle section-specific save logic
     if (sectionId === "info") {
@@ -103,6 +116,21 @@ export default function SchoolProfileEdit() {
       saveFAQs.mutate(validFaqs, {
         onSuccess: () => {
           setFaqsHasChanges(false);
+          setCompletedSections(prev => [...new Set([...prev, sectionId])]);
+          // Auto-advance to next section
+          const currentIndex = sections.findIndex(s => s.id === sectionId);
+          if (currentIndex < sections.length - 1) {
+            setActiveSection(sections[currentIndex + 1].id);
+          }
+        },
+      });
+      return;
+    }
+
+    if (sectionId === "social") {
+      saveSocialMedia.mutate(socialMedia, {
+        onSuccess: () => {
+          setSocialHasChanges(false);
           setCompletedSections(prev => [...new Set([...prev, sectionId])]);
           // Auto-advance to next section
           const currentIndex = sections.findIndex(s => s.id === sectionId);
@@ -202,7 +230,14 @@ export default function SchoolProfileEdit() {
                     setHasChanges={setInfoHasChanges}
                   />
                 )}
-                {activeSection === "social" && <SocialMediaSection />}
+                {activeSection === "social" && (
+                  <SocialMediaSection 
+                    socialMedia={socialMedia}
+                    setSocialMedia={setSocialMedia}
+                    isLoading={socialLoading}
+                    setHasChanges={setSocialHasChanges}
+                  />
+                )}
                 {activeSection === "faqs" && (
                   <FAQsSection 
                     faqs={faqs}
@@ -235,11 +270,13 @@ export default function SchoolProfileEdit() {
                       onClick={() => handleSave(activeSection)}
                       disabled={
                         (activeSection === "info" && saveInfo.isPending) ||
-                        (activeSection === "faqs" && saveFAQs.isPending)
+                        (activeSection === "faqs" && saveFAQs.isPending) ||
+                        (activeSection === "social" && saveSocialMedia.isPending)
                       }
                     >
                       {((activeSection === "info" && saveInfo.isPending) ||
-                        (activeSection === "faqs" && saveFAQs.isPending)) && (
+                        (activeSection === "faqs" && saveFAQs.isPending) ||
+                        (activeSection === "social" && saveSocialMedia.isPending)) && (
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       )}
                       Save Section
@@ -456,24 +493,67 @@ function SchoolInfoSection({ info, setInfo, isLoading, setHasChanges }: SchoolIn
   );
 }
 
-function SocialMediaSection() {
+interface SocialMediaSectionProps {
+  socialMedia: SchoolSocialMedia;
+  setSocialMedia: React.Dispatch<React.SetStateAction<SchoolSocialMedia>>;
+  isLoading: boolean;
+  setHasChanges: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+function SocialMediaSection({ socialMedia, setSocialMedia, isLoading, setHasChanges }: SocialMediaSectionProps) {
+  const updateField = (field: keyof SchoolSocialMedia, value: string) => {
+    setSocialMedia(prev => ({ ...prev, [field]: value }));
+    setHasChanges(true);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div>
         <Label>Instagram URL</Label>
-        <Input placeholder="https://instagram.com/..." className="mt-1.5" />
+        <Input 
+          placeholder="https://instagram.com/..." 
+          className="mt-1.5" 
+          value={socialMedia.instagram || ""}
+          onChange={(e) => updateField("instagram", e.target.value)}
+        />
       </div>
       <div>
         <Label>X (Twitter) URL</Label>
-        <Input placeholder="https://x.com/..." className="mt-1.5" />
+        <Input 
+          placeholder="https://x.com/..." 
+          className="mt-1.5" 
+          value={socialMedia.twitter || ""}
+          onChange={(e) => updateField("twitter", e.target.value)}
+        />
       </div>
       <div>
         <Label>LinkedIn URL</Label>
-        <Input placeholder="https://linkedin.com/..." className="mt-1.5" />
+        <Input 
+          placeholder="https://linkedin.com/..." 
+          className="mt-1.5" 
+          value={socialMedia.linkedin || ""}
+          onChange={(e) => updateField("linkedin", e.target.value)}
+        />
       </div>
       <div>
         <Label>YouTube URL</Label>
-        <Input placeholder="https://youtube.com/..." className="mt-1.5" />
+        <Input 
+          placeholder="https://youtube.com/..." 
+          className="mt-1.5" 
+          value={socialMedia.youtube || ""}
+          onChange={(e) => updateField("youtube", e.target.value)}
+        />
       </div>
     </div>
   );
