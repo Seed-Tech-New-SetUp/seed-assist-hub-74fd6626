@@ -44,6 +44,21 @@ export interface SchoolFAQsResponse {
   error?: string;
 }
 
+export interface SchoolSocialMedia {
+  instagram?: string;
+  twitter?: string;
+  linkedin?: string;
+  youtube?: string;
+}
+
+export interface SchoolSocialMediaResponse {
+  success: boolean;
+  data?: {
+    social_media: SchoolSocialMedia;
+  };
+  error?: string;
+}
+
 // ============ API Helper ============
 
 async function callSchoolProfileProxy<T>(
@@ -125,6 +140,23 @@ export async function saveSchoolFAQs(faqs: SchoolFAQ[]): Promise<boolean> {
     "faqs",
     "POST",
     { faqs }
+  );
+  return result.success;
+}
+
+// ============ Social Media API ============
+
+export async function fetchSchoolSocialMedia(): Promise<SchoolSocialMedia> {
+  const result = await callSchoolProfileProxy<SchoolSocialMediaResponse>("social", "GET");
+  const socialMedia = result.data?.social_media || {};
+  return decodeObjectStrings(socialMedia);
+}
+
+export async function saveSchoolSocialMedia(socialMedia: SchoolSocialMedia): Promise<boolean> {
+  const result = await callSchoolProfileProxy<{ success: boolean }>(
+    "social",
+    "POST",
+    socialMedia
   );
   return result.success;
 }
