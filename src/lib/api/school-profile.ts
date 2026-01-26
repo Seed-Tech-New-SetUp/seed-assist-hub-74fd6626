@@ -6,21 +6,25 @@ import { decodeObjectStrings } from "@/lib/utils/decode-utf8";
 export interface SchoolInfo {
   school_id?: string;
   school_name?: string;
-  description?: string;
+  university?: string;
+  about?: string;
   currency?: string;
   city?: string;
   state?: string;
   country?: string;
-  background_image?: string;
-  graduate_programs?: number;
-  phd_programs?: number;
-  international_students_percentage?: number;
-  scholarship_amount?: number;
+  school_banner?: string;
+  school_logo?: string;
+  graduate_phd_programs?: string;
+  school_brochure_link?: string;
+  international_students?: string;
+  scholarship_amount?: string | null;
 }
 
 export interface SchoolInfoResponse {
   success: boolean;
-  data?: SchoolInfo;
+  data?: {
+    school: SchoolInfo;
+  };
   error?: string;
 }
 
@@ -82,7 +86,7 @@ async function callSchoolProfileProxy<T>(
 
 export async function fetchSchoolInfo(): Promise<SchoolInfo> {
   const result = await callSchoolProfileProxy<SchoolInfoResponse>("info", "GET");
-  const info = result.data || {};
+  const info = result.data?.school || {};
   return decodeObjectStrings(info);
 }
 

@@ -289,15 +289,40 @@ function SchoolInfoSection({ info, setInfo, isLoading, setHasChanges }: SchoolIn
 
   return (
     <div className="space-y-4">
+      {/* School Name & University */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>School Name</Label>
+          <Input 
+            placeholder="School name" 
+            className="mt-1.5" 
+            value={info.school_name || ""}
+            onChange={(e) => updateField("school_name", e.target.value)}
+          />
+        </div>
+        <div>
+          <Label>University</Label>
+          <Input 
+            placeholder="University name" 
+            className="mt-1.5" 
+            value={info.university || ""}
+            onChange={(e) => updateField("university", e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* About / Description */}
       <div>
-        <Label>School Description</Label>
+        <Label>About</Label>
         <Textarea 
           placeholder="Describe your school..." 
           className="mt-1.5 min-h-[120px]"
-          value={info.description || ""}
-          onChange={(e) => updateField("description", e.target.value)}
+          value={info.about || ""}
+          onChange={(e) => updateField("about", e.target.value)}
         />
       </div>
+
+      {/* Location & Currency */}
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>Currency</Label>
@@ -346,34 +371,39 @@ function SchoolInfoSection({ info, setInfo, isLoading, setHasChanges }: SchoolIn
           />
         </div>
       </div>
-      <div>
-        <Label>Background Image URL</Label>
-        <Input 
-          placeholder="https://example.com/image.jpg" 
-          className="mt-1.5" 
-          value={info.background_image || ""}
-          onChange={(e) => updateField("background_image", e.target.value)}
-        />
-      </div>
-      <div className="grid grid-cols-3 gap-4">
+
+      {/* Images */}
+      <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label>Graduate Programs</Label>
+          <Label>School Banner</Label>
           <Input 
-            type="number" 
-            placeholder="0" 
+            placeholder="Banner filename or URL" 
             className="mt-1.5" 
-            value={info.graduate_programs || ""}
-            onChange={(e) => updateField("graduate_programs", parseInt(e.target.value) || 0)}
+            value={info.school_banner || ""}
+            onChange={(e) => updateField("school_banner", e.target.value)}
           />
         </div>
         <div>
-          <Label>PhD Programs</Label>
+          <Label>School Logo</Label>
+          <Input 
+            placeholder="Logo filename or URL" 
+            className="mt-1.5" 
+            value={info.school_logo || ""}
+            onChange={(e) => updateField("school_logo", e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* Programs & Stats */}
+      <div className="grid grid-cols-3 gap-4">
+        <div>
+          <Label>Graduate/PhD Programs</Label>
           <Input 
             type="number" 
             placeholder="0" 
             className="mt-1.5" 
-            value={info.phd_programs || ""}
-            onChange={(e) => updateField("phd_programs", parseInt(e.target.value) || 0)}
+            value={info.graduate_phd_programs || ""}
+            onChange={(e) => updateField("graduate_phd_programs", e.target.value)}
           />
         </div>
         <div>
@@ -382,19 +412,30 @@ function SchoolInfoSection({ info, setInfo, isLoading, setHasChanges }: SchoolIn
             type="number" 
             placeholder="0" 
             className="mt-1.5" 
-            value={info.international_students_percentage || ""}
-            onChange={(e) => updateField("international_students_percentage", parseInt(e.target.value) || 0)}
+            value={info.international_students || ""}
+            onChange={(e) => updateField("international_students", e.target.value)}
+          />
+        </div>
+        <div>
+          <Label>Scholarship Amount</Label>
+          <Input 
+            type="number" 
+            placeholder="0" 
+            className="mt-1.5" 
+            value={info.scholarship_amount || ""}
+            onChange={(e) => updateField("scholarship_amount", e.target.value)}
           />
         </div>
       </div>
+
+      {/* Brochure Link */}
       <div>
-        <Label>Scholarship Amount</Label>
+        <Label>School Brochure Link</Label>
         <Input 
-          type="number" 
-          placeholder="0" 
+          placeholder="https://example.com/brochure.pdf" 
           className="mt-1.5" 
-          value={info.scholarship_amount || ""}
-          onChange={(e) => updateField("scholarship_amount", parseInt(e.target.value) || 0)}
+          value={info.school_brochure_link || ""}
+          onChange={(e) => updateField("school_brochure_link", e.target.value)}
         />
       </div>
     </div>
