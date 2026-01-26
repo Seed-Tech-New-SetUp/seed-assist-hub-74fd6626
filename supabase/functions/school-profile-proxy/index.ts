@@ -36,7 +36,7 @@ serve(async (req) => {
         backendUrl = `${BACKEND_BASE_URL}/info.php`;
         break;
       case "social":
-        backendUrl = `${BACKEND_BASE_URL}/update_social_media.php`;
+        backendUrl = `${BACKEND_BASE_URL}/social_media.php`;
         break;
       case "faqs":
         backendUrl = `${BACKEND_BASE_URL}/faqs.php`;
