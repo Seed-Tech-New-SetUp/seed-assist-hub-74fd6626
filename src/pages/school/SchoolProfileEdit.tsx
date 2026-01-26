@@ -33,8 +33,8 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { useSchoolFAQs, useSaveSchoolFAQs } from "@/hooks/useSchoolProfile";
-import { SchoolFAQ } from "@/lib/api/school-profile";
+import { useSchoolFAQs, useSaveSchoolFAQs, useSchoolInfo, useSaveSchoolInfo } from "@/hooks/useSchoolProfile";
+import { SchoolFAQ, SchoolInfo } from "@/lib/api/school-profile";
 
 const sections = [
   { id: "info", label: "Organisation Details", icon: Building2 },
@@ -52,6 +52,19 @@ export default function SchoolProfileEdit() {
   const [completedSections, setCompletedSections] = useState<string[]>([]);
   const { toast } = useToast();
   
+  // School Info state and mutation - lifted up for global save button
+  const { data: apiInfo, isLoading: infoLoading } = useSchoolInfo();
+  const saveInfo = useSaveSchoolInfo();
+  const [schoolInfo, setSchoolInfo] = useState<SchoolInfo>({});
+  const [infoHasChanges, setInfoHasChanges] = useState(false);
+
+  // Initialize School Info from API data
+  useEffect(() => {
+    if (apiInfo) {
+      setSchoolInfo(apiInfo);
+    }
+  }, [apiInfo]);
+
   // FAQs state and mutation - lifted up for global save button
   const { data: apiFaqs, isLoading: faqsLoading } = useSchoolFAQs();
   const saveFAQs = useSaveSchoolFAQs();
@@ -69,6 +82,21 @@ export default function SchoolProfileEdit() {
 
   const handleSave = (sectionId: string) => {
     // Handle section-specific save logic
+    if (sectionId === "info") {
+      saveInfo.mutate(schoolInfo, {
+        onSuccess: () => {
+          setInfoHasChanges(false);
+          setCompletedSections(prev => [...new Set([...prev, sectionId])]);
+          // Auto-advance to next section
+          const currentIndex = sections.findIndex(s => s.id === sectionId);
+          if (currentIndex < sections.length - 1) {
+            setActiveSection(sections[currentIndex + 1].id);
+          }
+        },
+      });
+      return;
+    }
+
     if (sectionId === "faqs") {
       const validFaqs = faqs.filter(faq => faq.question.trim() || faq.answer.trim());
       saveFAQs.mutate(validFaqs, {
@@ -165,7 +193,14 @@ export default function SchoolProfileEdit() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                {activeSection === "info" && <SchoolInfoSection />}
+                {activeSection === "info" && (
+                  <SchoolInfoSection 
+                    info={schoolInfo}
+                    setInfo={setSchoolInfo}
+                    isLoading={infoLoading}
+                    setHasChanges={setInfoHasChanges}
+                  />
+                )}
                 {activeSection === "social" && <SocialMediaSection />}
                 {activeSection === "faqs" && (
                   <FAQsSection 
@@ -197,9 +232,13 @@ export default function SchoolProfileEdit() {
                   <div className="flex gap-2">
                     <Button 
                       onClick={() => handleSave(activeSection)}
-                      disabled={activeSection === "faqs" && saveFAQs.isPending}
+                      disabled={
+                        (activeSection === "info" && saveInfo.isPending) ||
+                        (activeSection === "faqs" && saveFAQs.isPending)
+                      }
                     >
-                      {activeSection === "faqs" && saveFAQs.isPending && (
+                      {((activeSection === "info" && saveInfo.isPending) ||
+                        (activeSection === "faqs" && saveFAQs.isPending)) && (
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       )}
                       Save Section
@@ -220,8 +259,33 @@ export default function SchoolProfileEdit() {
   );
 }
 
-function SchoolInfoSection() {
-  const [backgroundImage, setBackgroundImage] = useState("");
+interface SchoolInfoSectionProps {
+  info: SchoolInfo;
+  setInfo: React.Dispatch<React.SetStateAction<SchoolInfo>>;
+  isLoading: boolean;
+  setHasChanges: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+function SchoolInfoSection({ info, setInfo, isLoading, setHasChanges }: SchoolInfoSectionProps) {
+  const updateField = (field: keyof SchoolInfo, value: string | number) => {
+    setInfo(prev => ({ ...prev, [field]: value }));
+    setHasChanges(true);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-32 w-full" />
+        <div className="grid grid-cols-2 gap-4">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </div>
+        <Skeleton className="h-40 w-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -230,71 +294,108 @@ function SchoolInfoSection() {
         <Textarea 
           placeholder="Describe your school..." 
           className="mt-1.5 min-h-[120px]"
+          value={info.description || ""}
+          onChange={(e) => updateField("description", e.target.value)}
         />
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>Currency</Label>
-          <Select>
+          <Select 
+            value={info.currency || ""} 
+            onValueChange={(value) => updateField("currency", value)}
+          >
             <SelectTrigger className="mt-1.5">
               <SelectValue placeholder="Select currency" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="usd">USD</SelectItem>
-              <SelectItem value="eur">EUR</SelectItem>
-              <SelectItem value="gbp">GBP</SelectItem>
+              <SelectItem value="USD">USD</SelectItem>
+              <SelectItem value="EUR">EUR</SelectItem>
+              <SelectItem value="GBP">GBP</SelectItem>
+              <SelectItem value="INR">INR</SelectItem>
+              <SelectItem value="SGD">SGD</SelectItem>
+              <SelectItem value="AED">AED</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div>
           <Label>City</Label>
-          <Input placeholder="City" className="mt-1.5" />
+          <Input 
+            placeholder="City" 
+            className="mt-1.5" 
+            value={info.city || ""}
+            onChange={(e) => updateField("city", e.target.value)}
+          />
         </div>
         <div>
           <Label>State</Label>
-          <Input placeholder="State/Province" className="mt-1.5" />
+          <Input 
+            placeholder="State/Province" 
+            className="mt-1.5" 
+            value={info.state || ""}
+            onChange={(e) => updateField("state", e.target.value)}
+          />
         </div>
         <div>
           <Label>Country</Label>
-          <Select>
-            <SelectTrigger className="mt-1.5">
-              <SelectValue placeholder="Select country" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="us">United States</SelectItem>
-              <SelectItem value="uk">United Kingdom</SelectItem>
-              <SelectItem value="sg">Singapore</SelectItem>
-            </SelectContent>
-          </Select>
+          <Input 
+            placeholder="Country" 
+            className="mt-1.5" 
+            value={info.country || ""}
+            onChange={(e) => updateField("country", e.target.value)}
+          />
         </div>
       </div>
       <div>
-        <Label>Background Image</Label>
-        <ImageUpload
-          value={backgroundImage}
-          onChange={setBackgroundImage}
-          placeholder="Click to upload background image"
-          aspectRatio="video"
-          className="mt-1.5"
+        <Label>Background Image URL</Label>
+        <Input 
+          placeholder="https://example.com/image.jpg" 
+          className="mt-1.5" 
+          value={info.background_image || ""}
+          onChange={(e) => updateField("background_image", e.target.value)}
         />
       </div>
       <div className="grid grid-cols-3 gap-4">
         <div>
           <Label>Graduate Programs</Label>
-          <Input type="number" placeholder="0" className="mt-1.5" />
+          <Input 
+            type="number" 
+            placeholder="0" 
+            className="mt-1.5" 
+            value={info.graduate_programs || ""}
+            onChange={(e) => updateField("graduate_programs", parseInt(e.target.value) || 0)}
+          />
         </div>
         <div>
           <Label>PhD Programs</Label>
-          <Input type="number" placeholder="0" className="mt-1.5" />
+          <Input 
+            type="number" 
+            placeholder="0" 
+            className="mt-1.5" 
+            value={info.phd_programs || ""}
+            onChange={(e) => updateField("phd_programs", parseInt(e.target.value) || 0)}
+          />
         </div>
         <div>
           <Label>International Students %</Label>
-          <Input type="number" placeholder="0" className="mt-1.5" />
+          <Input 
+            type="number" 
+            placeholder="0" 
+            className="mt-1.5" 
+            value={info.international_students_percentage || ""}
+            onChange={(e) => updateField("international_students_percentage", parseInt(e.target.value) || 0)}
+          />
         </div>
       </div>
       <div>
         <Label>Scholarship Amount</Label>
-        <Input type="number" placeholder="0" className="mt-1.5" />
+        <Input 
+          type="number" 
+          placeholder="0" 
+          className="mt-1.5" 
+          value={info.scholarship_amount || ""}
+          onChange={(e) => updateField("scholarship_amount", parseInt(e.target.value) || 0)}
+        />
       </div>
     </div>
   );

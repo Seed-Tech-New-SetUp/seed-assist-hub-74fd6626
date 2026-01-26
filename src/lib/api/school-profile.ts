@@ -3,6 +3,27 @@ import { decodeObjectStrings } from "@/lib/utils/decode-utf8";
 
 // ============ Types ============
 
+export interface SchoolInfo {
+  school_id?: string;
+  school_name?: string;
+  description?: string;
+  currency?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  background_image?: string;
+  graduate_programs?: number;
+  phd_programs?: number;
+  international_students_percentage?: number;
+  scholarship_amount?: number;
+}
+
+export interface SchoolInfoResponse {
+  success: boolean;
+  data?: SchoolInfo;
+  error?: string;
+}
+
 export interface SchoolFAQ {
   faq_id?: string;
   question: string;
@@ -55,6 +76,23 @@ async function callSchoolProfileProxy<T>(
   }
 
   return response.json();
+}
+
+// ============ School Info API ============
+
+export async function fetchSchoolInfo(): Promise<SchoolInfo> {
+  const result = await callSchoolProfileProxy<SchoolInfoResponse>("info", "GET");
+  const info = result.data || {};
+  return decodeObjectStrings(info);
+}
+
+export async function saveSchoolInfo(info: Partial<SchoolInfo>): Promise<boolean> {
+  const result = await callSchoolProfileProxy<{ success: boolean }>(
+    "info",
+    "POST",
+    info
+  );
+  return result.success;
 }
 
 // ============ FAQs API ============
