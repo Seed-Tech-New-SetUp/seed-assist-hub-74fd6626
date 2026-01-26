@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -311,14 +312,14 @@ function SchoolInfoSection({ info, setInfo, isLoading, setHasChanges }: SchoolIn
         </div>
       </div>
 
-      {/* About / Description */}
+      {/* About / Description - Rich Text Editor */}
       <div>
         <Label>About</Label>
-        <Textarea 
-          placeholder="Describe your school..." 
-          className="mt-1.5 min-h-[120px]"
+        <RichTextEditor
           value={info.about || ""}
-          onChange={(e) => updateField("about", e.target.value)}
+          onChange={(value) => updateField("about", value)}
+          placeholder="Describe your school..."
+          className="mt-1.5"
         />
       </div>
 
