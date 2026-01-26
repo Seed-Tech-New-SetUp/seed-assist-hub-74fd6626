@@ -91,10 +91,23 @@ export async function fetchSchoolInfo(): Promise<SchoolInfo> {
 }
 
 export async function saveSchoolInfo(info: Partial<SchoolInfo>): Promise<boolean> {
+  // Sanitize data: convert false/undefined values to empty strings for text fields
+  // The backend sometimes returns 'false' as a boolean for empty fields
+  const sanitizedInfo: Record<string, string> = {};
+  for (const [key, value] of Object.entries(info)) {
+    // Use type coercion to check for falsy boolean values
+    const val = value as unknown;
+    if (val === false || val === undefined || val === null) {
+      sanitizedInfo[key] = "";
+    } else {
+      sanitizedInfo[key] = String(val);
+    }
+  }
+  
   const result = await callSchoolProfileProxy<{ success: boolean }>(
     "info",
     "POST",
-    info
+    sanitizedInfo
   );
   return result.success;
 }
