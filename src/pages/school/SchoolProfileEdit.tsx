@@ -51,8 +51,41 @@ export default function SchoolProfileEdit() {
   const [activeSection, setActiveSection] = useState("info");
   const [completedSections, setCompletedSections] = useState<string[]>([]);
   const { toast } = useToast();
+  
+  // FAQs state and mutation - lifted up for global save button
+  const { data: apiFaqs, isLoading: faqsLoading } = useSchoolFAQs();
+  const saveFAQs = useSaveSchoolFAQs();
+  const [faqs, setFaqs] = useState<SchoolFAQ[]>([]);
+  const [faqsHasChanges, setFaqsHasChanges] = useState(false);
+
+  // Initialize FAQs from API data
+  useEffect(() => {
+    if (apiFaqs && apiFaqs.length > 0) {
+      setFaqs(apiFaqs);
+    } else if (apiFaqs && apiFaqs.length === 0) {
+      setFaqs([{ question: "", answer: "" }]);
+    }
+  }, [apiFaqs]);
 
   const handleSave = (sectionId: string) => {
+    // Handle section-specific save logic
+    if (sectionId === "faqs") {
+      const validFaqs = faqs.filter(faq => faq.question.trim() || faq.answer.trim());
+      saveFAQs.mutate(validFaqs, {
+        onSuccess: () => {
+          setFaqsHasChanges(false);
+          setCompletedSections(prev => [...new Set([...prev, sectionId])]);
+          // Auto-advance to next section
+          const currentIndex = sections.findIndex(s => s.id === sectionId);
+          if (currentIndex < sections.length - 1) {
+            setActiveSection(sections[currentIndex + 1].id);
+          }
+        },
+      });
+      return;
+    }
+    
+    // Default save behavior for other sections
     setCompletedSections(prev => [...new Set([...prev, sectionId])]);
     toast({
       title: "Section Saved",
@@ -134,7 +167,17 @@ export default function SchoolProfileEdit() {
               <CardContent className="space-y-6">
                 {activeSection === "info" && <SchoolInfoSection />}
                 {activeSection === "social" && <SocialMediaSection />}
-                {activeSection === "faqs" && <FAQsSection />}
+                {activeSection === "faqs" && (
+                  <FAQsSection 
+                    faqs={faqs}
+                    setFaqs={setFaqs}
+                    isLoading={faqsLoading}
+                    hasChanges={faqsHasChanges}
+                    setHasChanges={setFaqsHasChanges}
+                    onSave={() => handleSave("faqs")}
+                    isSaving={saveFAQs.isPending}
+                  />
+                )}
                 {activeSection === "features" && <FeaturesSection />}
                 {activeSection === "logos" && <LogosSection />}
                 {activeSection === "rankings" && <RankingsSection />}
@@ -152,7 +195,13 @@ export default function SchoolProfileEdit() {
                     Previous
                   </Button>
                   <div className="flex gap-2">
-                    <Button onClick={() => handleSave(activeSection)}>
+                    <Button 
+                      onClick={() => handleSave(activeSection)}
+                      disabled={activeSection === "faqs" && saveFAQs.isPending}
+                    >
+                      {activeSection === "faqs" && saveFAQs.isPending && (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      )}
                       Save Section
                     </Button>
                     {activeSection !== sections[sections.length - 1].id && (
@@ -274,21 +323,17 @@ function SocialMediaSection() {
   );
 }
 
-function FAQsSection() {
-  const { data: apiFaqs, isLoading } = useSchoolFAQs();
-  const saveFAQs = useSaveSchoolFAQs();
-  const [faqs, setFaqs] = useState<SchoolFAQ[]>([]);
-  const [hasChanges, setHasChanges] = useState(false);
+interface FAQsSectionProps {
+  faqs: SchoolFAQ[];
+  setFaqs: React.Dispatch<React.SetStateAction<SchoolFAQ[]>>;
+  isLoading: boolean;
+  hasChanges: boolean;
+  setHasChanges: React.Dispatch<React.SetStateAction<boolean>>;
+  onSave: () => void;
+  isSaving: boolean;
+}
 
-  // Initialize local state from API data
-  useEffect(() => {
-    if (apiFaqs && apiFaqs.length > 0) {
-      setFaqs(apiFaqs);
-    } else if (apiFaqs && apiFaqs.length === 0) {
-      setFaqs([{ question: "", answer: "" }]);
-    }
-  }, [apiFaqs]);
-
+function FAQsSection({ faqs, setFaqs, isLoading, hasChanges, setHasChanges, onSave, isSaving }: FAQsSectionProps) {
   const addFaq = () => {
     setFaqs([...faqs, { question: "", answer: "" }]);
     setHasChanges(true);
@@ -304,14 +349,6 @@ function FAQsSection() {
     updated[index] = { ...updated[index], [field]: value };
     setFaqs(updated);
     setHasChanges(true);
-  };
-
-  const handleSaveFAQs = () => {
-    // Filter out empty FAQs
-    const validFaqs = faqs.filter(faq => faq.question.trim() || faq.answer.trim());
-    saveFAQs.mutate(validFaqs, {
-      onSuccess: () => setHasChanges(false),
-    });
   };
 
   if (isLoading) {
@@ -332,8 +369,8 @@ function FAQsSection() {
           Add FAQ
         </Button>
         {hasChanges && (
-          <Button onClick={handleSaveFAQs} disabled={saveFAQs.isPending} size="sm">
-            {saveFAQs.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+          <Button onClick={onSave} disabled={isSaving} size="sm">
+            {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             Save FAQs
           </Button>
         )}
