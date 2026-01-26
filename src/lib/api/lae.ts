@@ -87,7 +87,7 @@ export async function fetchLAEFiles(): Promise<LAEFile[]> {
 
 export async function uploadLAEFile(file: File): Promise<{ success: boolean; file_id?: string }> {
   const token = getAuthToken();
-  if (!token) throw new Error("No authentication token");
+  if (!token) handleUnauthorized("No authentication token");
 
   // Convert file to base64
   const reader = new FileReader();
@@ -115,19 +115,21 @@ export async function uploadLAEFile(file: File): Promise<{ success: boolean; fil
     headers: { Authorization: `Bearer ${token}` },
   });
 
+  checkAuthError(data, error as { message?: string; status?: number });
   if (error) throw new Error(error.message);
   return data;
 }
 
 export async function deleteLAEFile(fileId: number): Promise<{ success: boolean }> {
   const token = getAuthToken();
-  if (!token) throw new Error("No authentication token");
+  if (!token) handleUnauthorized("No authentication token");
 
   const { data, error } = await supabase.functions.invoke("lae-proxy", {
     body: { action: "delete", file_id: fileId },
     headers: { Authorization: `Bearer ${token}` },
   });
 
+  checkAuthError(data, error as { message?: string; status?: number });
   if (error) throw new Error(error.message);
   if (!data?.success) throw new Error(data?.error || "Failed to delete file");
 
@@ -136,13 +138,14 @@ export async function deleteLAEFile(fileId: number): Promise<{ success: boolean 
 
 export async function fetchLAEAssignments(): Promise<LAEAssignment[]> {
   const token = getAuthToken();
-  if (!token) throw new Error("No authentication token");
+  if (!token) handleUnauthorized("No authentication token");
 
   const { data, error } = await supabase.functions.invoke("lae-proxy", {
     body: { action: "assignments" },
     headers: { Authorization: `Bearer ${token}` },
   });
 
+  checkAuthError(data, error as { message?: string; status?: number });
   if (error) throw new Error(error.message);
   if (!data?.success) throw new Error(data?.error || "Failed to fetch assignments");
 
@@ -162,7 +165,7 @@ export async function fetchAnalyticsData(
   programFilter: string = "all"
 ): Promise<AnalyticsData> {
   const token = getAuthToken();
-  if (!token) throw new Error("No authentication token");
+  if (!token) handleUnauthorized("No authentication token");
 
   const { data, error } = await supabase.functions.invoke("lae-proxy", {
     body: {
@@ -174,6 +177,7 @@ export async function fetchAnalyticsData(
     headers: { Authorization: `Bearer ${token}` },
   });
 
+  checkAuthError(data, error as { message?: string; status?: number });
   if (error) throw new Error(error.message);
   if (!data?.success) throw new Error(data?.error || "Failed to fetch analytics");
 
@@ -187,7 +191,7 @@ export async function fetchDetailData(
   crossFilters?: { status?: string; program?: string }
 ): Promise<DetailDataResponse> {
   const token = getAuthToken();
-  if (!token) throw new Error("No authentication token");
+  if (!token) handleUnauthorized("No authentication token");
 
   const { data, error } = await supabase.functions.invoke("lae-proxy", {
     body: {
@@ -201,6 +205,7 @@ export async function fetchDetailData(
     headers: { Authorization: `Bearer ${token}` },
   });
 
+  checkAuthError(data, error as { message?: string; status?: number });
   if (error) throw new Error(error.message);
   if (!data?.success) throw new Error(data?.error || "Failed to fetch detail data");
 

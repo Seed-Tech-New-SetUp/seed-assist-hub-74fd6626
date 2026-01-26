@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { getPortalToken } from "@/lib/utils/cookies";
+import { handleUnauthorized, isUnauthorizedError } from "@/lib/utils/auth-handler";
 
 // ============ Types ============
 
@@ -91,7 +92,7 @@ async function callProgramsProxy<T>(
 ): Promise<T> {
   const token = getPortalToken();
   if (!token) {
-    throw new Error("No authentication token found");
+    handleUnauthorized("No authentication token found");
   }
 
   // Build query string
@@ -115,6 +116,12 @@ async function callProgramsProxy<T>(
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
+    
+    // Check for unauthorized/expired token
+    if (isUnauthorizedError(response.status, errorData)) {
+      handleUnauthorized(errorData.error || errorData.message);
+    }
+    
     throw new Error(errorData.error || `Request failed with status ${response.status}`);
   }
 
