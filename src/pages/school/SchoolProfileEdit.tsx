@@ -373,18 +373,39 @@ function SchoolInfoSection({ info, setInfo, isLoading, setHasChanges }: SchoolIn
         </div>
       </div>
 
-      {/* School Banner Preview */}
+      {/* School Banner Preview with Upload Option */}
       <div>
         <Label>School Banner</Label>
-        {info.school_banner && (
-          <div className="mt-2 rounded-lg overflow-hidden border">
-            <img 
-              src={`http://admin.seedglobaleducation.com/assets/img/school_banners/${info.school_banner}`}
-              alt="School Banner"
-              className="w-full h-48 object-cover"
-            />
-          </div>
-        )}
+        <div className="mt-2 space-y-3">
+          {info.school_banner && (
+            <div className="rounded-lg overflow-hidden border relative group">
+              <img 
+                src={`http://admin.seedglobaleducation.com/assets/img/school_banners/${info.school_banner}`}
+                alt="School Banner"
+                className="w-full h-48 object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = "/placeholder.svg";
+                }}
+              />
+              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <span className="text-white text-sm font-medium">Current Banner</span>
+              </div>
+            </div>
+          )}
+          <ImageUpload
+            value=""
+            onChange={(url) => {
+              // For now, just update the field - actual upload would need backend integration
+              updateField("school_banner", url);
+            }}
+            placeholder={info.school_banner ? "Click to replace banner" : "Click to upload banner"}
+            aspectRatio="wide"
+            className="h-32"
+          />
+          <p className="text-xs text-muted-foreground">
+            Recommended size: 1200x400 pixels. Supported formats: JPG, PNG, WebP
+          </p>
+        </div>
       </div>
 
       {/* Brochure Link */}
@@ -404,7 +425,7 @@ function SchoolInfoSection({ info, setInfo, isLoading, setHasChanges }: SchoolIn
           <Label>Graduate/PhD Programs</Label>
           <Input 
             type="number" 
-            placeholder="0" 
+            placeholder="25" 
             className="mt-1.5" 
             value={info.graduate_phd_programs || ""}
             onChange={(e) => updateField("graduate_phd_programs", e.target.value)}
@@ -414,17 +435,16 @@ function SchoolInfoSection({ info, setInfo, isLoading, setHasChanges }: SchoolIn
           <Label>International Students %</Label>
           <Input 
             type="number" 
-            placeholder="0" 
+            placeholder="35" 
             className="mt-1.5" 
             value={info.international_students || ""}
             onChange={(e) => updateField("international_students", e.target.value)}
           />
         </div>
         <div>
-          <Label>Scholarship Amount</Label>
+          <Label>Scholarship Amount (USD)</Label>
           <Input 
-            type="number" 
-            placeholder="0" 
+            placeholder="3,000,000" 
             className="mt-1.5" 
             value={info.scholarship_amount || ""}
             onChange={(e) => updateField("scholarship_amount", e.target.value)}
