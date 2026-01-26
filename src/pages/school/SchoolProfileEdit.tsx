@@ -429,16 +429,6 @@ function SchoolInfoSection({ info, setInfo, isLoading, setHasChanges }: SchoolIn
         </div>
       </div>
 
-      {/* Brochure Link */}
-      <div>
-        <Label>School Brochure Link</Label>
-        <Input 
-          placeholder="https://example.com/brochure.pdf" 
-          className="mt-1.5" 
-          value={info.school_brochure_link || ""}
-          onChange={(e) => updateField("school_brochure_link", e.target.value)}
-        />
-      </div>
     </div>
   );
 }
