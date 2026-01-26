@@ -42,24 +42,28 @@ function fixMojibake(str: string): string {
   if (!str) return str;
   
   // Common mojibake patterns: UTF-8 bytes interpreted as Windows-1252
-  // Using explicit character codes to avoid encoding issues in source file
+  // Using literal strings that appear in corrupted text
   const mojibakePatterns: Array<[string, string]> = [
-    // RIGHT SINGLE QUOTATION MARK (') - â€™
-    [String.fromCharCode(0xE2, 0x80, 0x99), '\u2019'],
-    // LEFT SINGLE QUOTATION MARK (') - â€˜
-    [String.fromCharCode(0xE2, 0x80, 0x98), '\u2018'],
-    // LEFT DOUBLE QUOTATION MARK (") - â€œ
-    [String.fromCharCode(0xE2, 0x80, 0x9C), '\u201C'],
-    // RIGHT DOUBLE QUOTATION MARK (") - â€
-    [String.fromCharCode(0xE2, 0x80, 0x9D), '\u201D'],
-    // EN DASH (–) - â€"
-    [String.fromCharCode(0xE2, 0x80, 0x93), '\u2013'],
-    // EM DASH (—) - â€"
-    [String.fromCharCode(0xE2, 0x80, 0x94), '\u2014'],
-    // BULLET (•) - â€¢
-    [String.fromCharCode(0xE2, 0x80, 0xA2), '\u2022'],
-    // HORIZONTAL ELLIPSIS (…) - â€¦
-    [String.fromCharCode(0xE2, 0x80, 0xA6), '\u2026'],
+    // RIGHT SINGLE QUOTATION MARK (') - various representations
+    ['â€™', "'"],
+    ['â€˜', "'"],
+    // DOUBLE QUOTATION MARKS
+    ['â€œ', '"'],
+    ['â€', '"'],
+    // DASHES
+    ['â€"', '–'],
+    ['â€"', '—'],
+    // BULLET
+    ['â€¢', '•'],
+    // ELLIPSIS
+    ['â€¦', '…'],
+    // Also try with character codes for edge cases
+    [String.fromCharCode(0xE2, 0x80, 0x99), "'"],
+    [String.fromCharCode(0xE2, 0x80, 0x98), "'"],
+    [String.fromCharCode(0xE2, 0x80, 0x9C), '"'],
+    [String.fromCharCode(0xE2, 0x80, 0x9D), '"'],
+    [String.fromCharCode(0xE2, 0x80, 0x93), '–'],
+    [String.fromCharCode(0xE2, 0x80, 0x94), '—'],
     // Common accented characters
     ['Ã©', 'é'],
     ['Ã¨', 'è'],
