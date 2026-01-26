@@ -670,7 +670,7 @@ function FAQsSection({ faqs, setFaqs, isLoading, hasChanges, setHasChanges, onSa
   );
 }
 
-const FEATURES_IMAGE_BASE_URL = "https://admin.seedglobaleducation.com/assets/img/school_usp/";
+const FEATURES_IMAGE_BASE_URL = "https://assist.seedglobaleducation.com/school_usp_uploads/";
 
 interface FeaturesSectionProps {
   features: SchoolFeature[];
