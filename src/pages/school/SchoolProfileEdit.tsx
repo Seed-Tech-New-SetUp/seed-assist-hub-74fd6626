@@ -1023,14 +1023,22 @@ function LogosSection() {
                     </div>
                   ) : (
                     <>
-                      <img
-                        src={`${LOGO_BASE_URL}${logo.logo_file_name}`}
-                        alt={`Logo ${logo.logo_ratio}`}
-                        className="w-full h-24 object-contain bg-muted rounded"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = "/placeholder.svg";
+                      <div 
+                        className="bg-muted rounded flex items-center justify-center p-2"
+                        style={{
+                          aspectRatio: logo.logo_ratio?.replace(":", "/") || "1/1",
+                          maxHeight: "120px",
                         }}
-                      />
+                      >
+                        <img
+                          src={`${LOGO_BASE_URL}${logo.logo_file_name}`}
+                          alt={`Logo ${logo.logo_ratio}`}
+                          className="max-w-full max-h-full object-contain"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = "/placeholder.svg";
+                          }}
+                        />
+                      </div>
                       <div className="mt-2 flex items-center justify-between">
                         <span className="text-sm text-muted-foreground">
                           Ratio: {logo.logo_ratio || "Unknown"}
