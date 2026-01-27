@@ -477,20 +477,34 @@ export async function deleteProgramMember(
 
 // ============ Program Rankings ============
 
-export async function fetchRankingOrganizations(): Promise<RankingOrganization[]> {
-  const result = await callProgramsProxy<{ success: boolean; data?: { organizations: RankingOrganization[] } }>(
-    "ranking-orgs"
-  );
-  return result.data?.organizations || [];
+interface RankingsReadResponse {
+  success: boolean;
+  data?: {
+    rankings: ProgramRanking[];
+    rankings_count: number;
+    ranking_organizations: Array<{ org_id: number; org_name: string }>;
+    organizations_count: number;
+    program_id: string;
+  };
 }
 
-export async function fetchProgramRankings(programId: string): Promise<ProgramRanking[]> {
-  const result = await callProgramsProxy<{ success: boolean; data?: { rankings: ProgramRanking[] } }>(
+export async function fetchProgramRankingsWithOrganizations(programId: string): Promise<{
+  rankings: ProgramRanking[];
+  organizations: RankingOrganization[];
+}> {
+  const result = await callProgramsProxy<RankingsReadResponse>(
     "rankings",
     "GET",
     { program_id: programId }
   );
-  return result.data?.rankings || [];
+  
+  const rankings = result.data?.rankings || [];
+  const organizations = (result.data?.ranking_organizations || []).map(org => ({
+    id: String(org.org_id),
+    name: org.org_name,
+  }));
+  
+  return { rankings, organizations };
 }
 
 export async function saveProgramRanking(programId: string, ranking: ProgramRanking): Promise<boolean> {

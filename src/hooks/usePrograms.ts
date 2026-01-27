@@ -10,8 +10,7 @@ import {
   fetchProgramMembers,
   saveProgramMember,
   deleteProgramMember,
-  fetchProgramRankings,
-  fetchRankingOrganizations,
+  fetchProgramRankingsWithOrganizations,
   saveProgramRanking,
   deleteProgramRanking,
   fetchProgramRecruiters,
@@ -179,18 +178,10 @@ export function useDeleteProgramMember() {
 
 // ============ Program Rankings Hook ============
 
-export function useRankingOrganizations() {
-  return useQuery({
-    queryKey: ["ranking-organizations"],
-    queryFn: fetchRankingOrganizations,
-    staleTime: 30 * 60 * 1000, // 30 minutes
-  });
-}
-
-export function useProgramRankings(programId: string | null) {
+export function useProgramRankingsWithOrganizations(programId: string | null) {
   return useQuery({
     queryKey: ["program-rankings", programId],
-    queryFn: () => (programId ? fetchProgramRankings(programId) : []),
+    queryFn: () => (programId ? fetchProgramRankingsWithOrganizations(programId) : { rankings: [], organizations: [] }),
     enabled: !!programId,
   });
 }

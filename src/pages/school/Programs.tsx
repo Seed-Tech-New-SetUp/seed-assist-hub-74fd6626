@@ -54,8 +54,7 @@ import {
   useProgramMembers,
   useSaveProgramMember,
   useDeleteProgramMember,
-  useProgramRankings,
-  useRankingOrganizations,
+  useProgramRankingsWithOrganizations,
   useSaveProgramRanking,
   useDeleteProgramRanking,
   useProgramRecruiters,
@@ -1259,8 +1258,9 @@ function ProgramMembersSection({ programId, category, title, onSave }: MembersSe
 // ============ Program Rankings Section ============
 
 function ProgramRankingsSection({ programId, onSave }: SectionProps) {
-  const { data: rankings = [], isLoading } = useProgramRankings(programId);
-  const { data: organizations = [] } = useRankingOrganizations();
+  const { data: rankingsData, isLoading } = useProgramRankingsWithOrganizations(programId);
+  const rankings = rankingsData?.rankings || [];
+  const organizations = rankingsData?.organizations || [];
   const saveMutation = useSaveProgramRanking();
   const deleteMutation = useDeleteProgramRanking();
 

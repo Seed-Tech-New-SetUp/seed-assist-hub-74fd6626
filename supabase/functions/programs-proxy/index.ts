@@ -76,6 +76,7 @@ serve(async (req) => {
         backendUrl = `${PROGRAM_PROFILE_URL}/members/delete.php`;
         break;
       case "rankings":
+        // read.php returns both rankings and ranking_organizations
         backendUrl = `${PROGRAM_PROFILE_URL}/rankings/read.php?program_id=${programId}`;
         break;
       case "rankings-create":
