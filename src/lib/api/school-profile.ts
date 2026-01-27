@@ -145,24 +145,52 @@ export async function fetchSchoolInfo(): Promise<SchoolInfo> {
 }
 
 export async function saveSchoolInfo(info: Partial<SchoolInfo>): Promise<boolean> {
-  // Sanitize data: convert false/undefined values to empty strings for text fields
-  // The backend sometimes returns 'false' as a boolean for empty fields
-  const sanitizedInfo: Record<string, string> = {};
+  const token = getPortalToken();
+  if (!token) {
+    handleUnauthorized("No authentication token found");
+  }
+
+  const formData = new FormData();
+  
+  // Sanitize and add text fields
   for (const [key, value] of Object.entries(info)) {
-    // Use type coercion to check for falsy boolean values
+    // Skip school_banner as it will be handled as imageUpload
+    if (key === "school_banner") continue;
+    
     const val = value as unknown;
     if (val === false || val === undefined || val === null) {
-      sanitizedInfo[key] = "";
+      formData.append(key, "");
     } else {
-      sanitizedInfo[key] = String(val);
+      formData.append(key, String(val));
     }
   }
+
+  // Handle banner image upload with the field name "imageUpload"
+  if (info.school_banner && info.school_banner.startsWith("data:")) {
+    const blob = dataURLtoBlob(info.school_banner);
+    formData.append("imageUpload", blob, "banner-image.jpg");
+  }
+
+  const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/school-profile-proxy?action=info`;
   
-  const result = await callSchoolProfileProxy<{ success: boolean }>(
-    "info",
-    "POST",
-    sanitizedInfo
-  );
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    if (isUnauthorizedError(response.status, errorData)) {
+      handleUnauthorized(errorData.error || errorData.message);
+    }
+    throw new Error(errorData.error || `Request failed with status ${response.status}`);
+  }
+
+  const result = await response.json();
   return result.success;
 }
 
