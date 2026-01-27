@@ -866,7 +866,7 @@ function FeaturesSection({ features, isLoading, onCreate, onUpdate, onDelete, is
   );
 }
 
-const LOGO_BASE_URL = "https://assist.seedglobaleducation.com/school_usp_uploads/";
+const LOGO_BASE_URL = "https://assist.seedglobaleducation.com/school_logo_uploads/";
 
 function LogosSection() {
   const { data: logos, isLoading } = useSchoolLogos();
