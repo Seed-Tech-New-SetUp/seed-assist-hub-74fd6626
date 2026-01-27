@@ -59,8 +59,7 @@ import {
   useSaveProgramRanking,
   useDeleteProgramRanking,
   useProgramRecruiters,
-  useSaveProgramRecruiter,
-  useDeleteProgramRecruiter,
+  useSaveProgramRecruiters,
   useProgramJobRoles,
   useSaveProgramJobRole,
   useDeleteProgramJobRole,
@@ -1551,19 +1550,28 @@ function ProgramRankingsSection({ programId, onSave }: SectionProps) {
 
 function ProgramRecruitersSection({ programId, onSave }: SectionProps) {
   const { data: recruiters = [], isLoading } = useProgramRecruiters(programId);
-  const saveMutation = useSaveProgramRecruiter();
-  const deleteMutation = useDeleteProgramRecruiter();
+  const saveMutation = useSaveProgramRecruiters();
+  const [localRecruiters, setLocalRecruiters] = useState<string[]>([]);
   const [newRecruiter, setNewRecruiter] = useState("");
 
+  // Sync local state when data loads
+  useEffect(() => {
+    setLocalRecruiters(recruiters);
+  }, [recruiters]);
+
   const addRecruiter = () => {
-    if (newRecruiter.trim()) {
-      saveMutation.mutate({ programId, recruiter: { company_name: newRecruiter.trim() } });
+    if (newRecruiter.trim() && !localRecruiters.includes(newRecruiter.trim())) {
+      const updated = [...localRecruiters, newRecruiter.trim()];
+      setLocalRecruiters(updated);
+      saveMutation.mutate({ programId, recruiters: updated });
       setNewRecruiter("");
     }
   };
 
-  const removeRecruiter = (recruiterId: string) => {
-    deleteMutation.mutate({ programId, recruiterId });
+  const removeRecruiter = (name: string) => {
+    const updated = localRecruiters.filter((r) => r !== name);
+    setLocalRecruiters(updated);
+    saveMutation.mutate({ programId, recruiters: updated });
   };
 
   if (isLoading) {
@@ -1587,19 +1595,19 @@ function ProgramRecruitersSection({ programId, onSave }: SectionProps) {
       </div>
 
       <div>
-        <h4 className="font-medium text-sm text-muted-foreground mb-3">Added Recruiters ({recruiters.length})</h4>
-        {recruiters.length === 0 ? (
+        <h4 className="font-medium text-sm text-muted-foreground mb-3">Added Recruiters ({localRecruiters.length})</h4>
+        {localRecruiters.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4 border rounded-lg">No recruiters added yet</p>
         ) : (
           <div className="flex flex-wrap gap-2">
-            {recruiters.map((recruiter) => (
-              <Badge key={recruiter.id} variant="secondary" className="text-sm py-1.5 px-3 gap-2">
+            {localRecruiters.map((name, idx) => (
+              <Badge key={`${name}-${idx}`} variant="secondary" className="text-sm py-1.5 px-3 gap-2">
                 <Building2 className="h-3.5 w-3.5" />
-                {recruiter.company_name}
+                {name}
                 <button
-                  onClick={() => recruiter.id && removeRecruiter(recruiter.id)}
+                  onClick={() => removeRecruiter(name)}
                   className="ml-1 hover:text-destructive transition-colors"
-                  disabled={deleteMutation.isPending}
+                  disabled={saveMutation.isPending}
                 >
                   <Trash2 className="h-3 w-3" />
                 </button>

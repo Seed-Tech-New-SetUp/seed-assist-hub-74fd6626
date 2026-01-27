@@ -14,8 +14,7 @@ import {
   saveProgramRanking,
   deleteProgramRanking,
   fetchProgramRecruiters,
-  saveProgramRecruiter,
-  deleteProgramRecruiter,
+  saveProgramRecruiters,
   fetchProgramJobRoles,
   saveProgramJobRole,
   deleteProgramJobRole,
@@ -234,33 +233,16 @@ export function useProgramRecruiters(programId: string | null) {
   });
 }
 
-export function useSaveProgramRecruiter() {
+export function useSaveProgramRecruiters() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: ({ programId, recruiter }: { programId: string; recruiter: ProgramRecruiter }) =>
-      saveProgramRecruiter(programId, recruiter),
+    mutationFn: ({ programId, recruiters }: { programId: string; recruiters: string[] }) =>
+      saveProgramRecruiters(programId, recruiters),
     onSuccess: (_, { programId }) => {
       queryClient.invalidateQueries({ queryKey: ["program-recruiters", programId] });
-      toast({ title: "Success", description: "Recruiter added successfully." });
-    },
-    onError: (error: Error) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    },
-  });
-}
-
-export function useDeleteProgramRecruiter() {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-
-  return useMutation({
-    mutationFn: ({ programId, recruiterId }: { programId: string; recruiterId: string }) =>
-      deleteProgramRecruiter(programId, recruiterId),
-    onSuccess: (_, { programId }) => {
-      queryClient.invalidateQueries({ queryKey: ["program-recruiters", programId] });
-      toast({ title: "Success", description: "Recruiter removed." });
+      toast({ title: "Success", description: "Recruiters updated successfully." });
     },
     onError: (error: Error) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });

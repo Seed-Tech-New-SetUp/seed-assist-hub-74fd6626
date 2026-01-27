@@ -97,10 +97,8 @@ export interface ProgramRanking {
   supporting_text: string;
 }
 
-export interface ProgramRecruiter {
-  id?: string;
-  company_name: string;
-}
+// Recruiters are now simple strings (company names)
+export type ProgramRecruiter = string;
 
 export interface ProgramJobRole {
   id?: string;
@@ -561,7 +559,7 @@ export async function deleteProgramRanking(
 // ============ Program Recruiters ============
 
 export async function fetchProgramRecruiters(programId: string): Promise<ProgramRecruiter[]> {
-  const result = await callProgramsProxy<{ success: boolean; data?: { recruiters: ProgramRecruiter[] } }>(
+  const result = await callProgramsProxy<{ success: boolean; data?: { recruiters: string[] } }>(
     "recruiters",
     "GET",
     { program_id: programId }
@@ -569,22 +567,13 @@ export async function fetchProgramRecruiters(programId: string): Promise<Program
   return result.data?.recruiters || [];
 }
 
-export async function saveProgramRecruiter(programId: string, recruiter: ProgramRecruiter): Promise<boolean> {
+// Save all recruiters at once (replaces existing)
+export async function saveProgramRecruiters(programId: string, recruiters: string[]): Promise<boolean> {
   const result = await callProgramsProxy<{ success: boolean }>(
     "recruiters",
     "POST",
-    { program_id: programId },
-    recruiter
-  );
-  return result.success;
-}
-
-export async function deleteProgramRecruiter(programId: string, recruiterId: string): Promise<boolean> {
-  const result = await callProgramsProxy<{ success: boolean }>(
-    "recruiters",
-    "DELETE",
-    { program_id: programId },
-    { id: recruiterId }
+    {},
+    { program_id: programId, recruiters }
   );
   return result.success;
 }

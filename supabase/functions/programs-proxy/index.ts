@@ -89,7 +89,10 @@ serve(async (req) => {
         backendUrl = `${PROGRAM_PROFILE_URL}/rankings/delete.php`;
         break;
       case "recruiters":
-        backendUrl = `${PROGRAMS_BASE_URL}/update_program_recruiters.php?program_id=${programId}`;
+        // New single-file endpoint for GET & POST
+        backendUrl = req.method === "GET" 
+          ? `${PROGRAM_PROFILE_URL}/recruiters.php?program_id=${programId}`
+          : `${PROGRAM_PROFILE_URL}/recruiters.php`;
         break;
       case "jobroles":
         backendUrl = `${PROGRAMS_BASE_URL}/update_program_job_roles.php?program_id=${programId}`;
