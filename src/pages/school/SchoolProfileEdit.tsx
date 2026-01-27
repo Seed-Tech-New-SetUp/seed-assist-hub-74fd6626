@@ -1090,14 +1090,22 @@ function OrganizationCombobox({
   organizations,
   value,
   onValueChange,
+  selectedYear,
 }: {
   organizations: RankingOrganization[];
   value: string;
   onValueChange: (value: string) => void;
+  selectedYear?: string;
 }) {
   const [open, setOpen] = useState(false);
 
   const selectedOrg = organizations.find((org) => org.ranking_org_id === value);
+
+  const displayText = selectedOrg
+    ? selectedYear
+      ? `${selectedOrg.ranking_org_name} (${selectedYear})`
+      : selectedOrg.ranking_org_name
+    : "Select organization...";
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -1108,7 +1116,7 @@ function OrganizationCombobox({
           aria-expanded={open}
           className="w-full justify-between mt-1.5 font-normal"
         >
-          {selectedOrg ? selectedOrg.ranking_org_name : "Select organization..."}
+          <span className="truncate">{displayText}</span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -1276,6 +1284,7 @@ function RankingsSection() {
                 organizations={organizations}
                 value={formData.ranking_organisation}
                 onValueChange={(value) => setFormData((prev) => ({ ...prev, ranking_organisation: value }))}
+                selectedYear={formData.ranking_year}
               />
             </div>
             <div>
@@ -1394,6 +1403,7 @@ function RankingsSection() {
                           organizations={organizations}
                           value={editData.ranking_organisation}
                           onValueChange={(value) => setEditData((prev) => prev ? { ...prev, ranking_organisation: value } : null)}
+                          selectedYear={editData.ranking_year}
                         />
                       </div>
                       <div>
