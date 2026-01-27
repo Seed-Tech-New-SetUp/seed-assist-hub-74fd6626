@@ -19,7 +19,7 @@ import {
   saveProgramJobRoles,
   fetchProgramFAQs,
   saveProgramFAQs,
-  fetchProgramPOCs,
+  fetchProgramPOC,
   saveProgramPOC,
   Program,
   ProgramInfo,
@@ -300,12 +300,12 @@ export function useSaveProgramFAQs() {
   });
 }
 
-// ============ Program POCs Hook ============
+// ============ Program POC Hook ============
 
-export function useProgramPOCs(programId: string | null) {
+export function useProgramPOC(programId: string | null) {
   return useQuery({
-    queryKey: ["program-pocs", programId],
-    queryFn: () => (programId ? fetchProgramPOCs(programId) : []),
+    queryKey: ["program-poc", programId],
+    queryFn: () => (programId ? fetchProgramPOC(programId) : null),
     enabled: !!programId,
   });
 }
@@ -318,7 +318,7 @@ export function useSaveProgramPOC() {
     mutationFn: ({ programId, poc }: { programId: string; poc: ProgramPOC }) =>
       saveProgramPOC(programId, poc),
     onSuccess: (_, { programId }) => {
-      queryClient.invalidateQueries({ queryKey: ["program-pocs", programId] });
+      queryClient.invalidateQueries({ queryKey: ["program-poc", programId] });
       toast({ title: "Success", description: "Contact saved successfully." });
     },
     onError: (error: Error) => {

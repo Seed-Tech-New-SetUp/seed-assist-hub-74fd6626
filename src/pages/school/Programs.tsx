@@ -64,7 +64,7 @@ import {
   useSaveProgramJobRoles,
   useProgramFAQs,
   useSaveProgramFAQs,
-  useProgramPOCs,
+  useProgramPOC,
   useSaveProgramPOC,
 } from "@/hooks/usePrograms";
 import type {
@@ -1876,13 +1876,13 @@ function ProgramFAQsSection({ programId, onSave }: SectionProps) {
   );
 }
 
-// ============ Program POCs Section ============
+// ============ Program POC Section ============
 
 function ProgramPOCsSection({ programId, onSave }: SectionProps) {
-  const { data: pocs = [], isLoading } = useProgramPOCs(programId);
+  const { data: poc, isLoading } = useProgramPOC(programId);
   const saveMutation = useSaveProgramPOC();
 
-  const [newPoc, setNewPoc] = useState<Partial<ProgramPOC>>({
+  const [formData, setFormData] = useState<ProgramPOC>({
     name: "",
     designation: "",
     organisation: "",
@@ -1890,19 +1890,23 @@ function ProgramPOCsSection({ programId, onSave }: SectionProps) {
     email: "",
   });
 
-  const addPoc = () => {
-    if (newPoc.name?.trim() && newPoc.email?.trim()) {
-      saveMutation.mutate({
-        programId,
-        poc: {
-          name: newPoc.name || "",
-          designation: newPoc.designation || "",
-          organisation: newPoc.organisation || "",
-          contact: newPoc.contact || "",
-          email: newPoc.email || "",
-        },
+  // Sync form data when POC loads
+  useEffect(() => {
+    if (poc) {
+      setFormData({
+        poc_id: poc.poc_id,
+        name: poc.name || "",
+        designation: poc.designation || "",
+        organisation: poc.organisation || "",
+        contact: poc.contact || "",
+        email: poc.email || "",
       });
-      setNewPoc({ name: "", designation: "", organisation: "", contact: "", email: "" });
+    }
+  }, [poc]);
+
+  const handleSave = () => {
+    if (formData.name?.trim() && formData.email?.trim()) {
+      saveMutation.mutate({ programId, poc: formData });
     }
   };
 
@@ -1912,15 +1916,20 @@ function ProgramPOCsSection({ programId, onSave }: SectionProps) {
 
   return (
     <div className="space-y-6">
-      <Card className="border-dashed">
-        <CardContent className="p-4 space-y-4">
-          <h4 className="font-medium text-sm text-muted-foreground">Add New Point of Contact</h4>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <User className="h-4 w-4" />
+            Point of Contact
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label>Full Name</Label>
+              <Label>Full Name *</Label>
               <Input
-                value={newPoc.name || ""}
-                onChange={(e) => setNewPoc({ ...newPoc, name: e.target.value })}
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Enter full name..."
                 className="mt-1.5"
               />
@@ -1928,8 +1937,8 @@ function ProgramPOCsSection({ programId, onSave }: SectionProps) {
             <div>
               <Label>Designation</Label>
               <Input
-                value={newPoc.designation || ""}
-                onChange={(e) => setNewPoc({ ...newPoc, designation: e.target.value })}
+                value={formData.designation}
+                onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
                 placeholder="Enter designation..."
                 className="mt-1.5"
               />
@@ -1937,84 +1946,42 @@ function ProgramPOCsSection({ programId, onSave }: SectionProps) {
             <div>
               <Label>Organisation (School)</Label>
               <Input
-                value={newPoc.organisation || ""}
-                onChange={(e) => setNewPoc({ ...newPoc, organisation: e.target.value })}
+                value={formData.organisation}
+                onChange={(e) => setFormData({ ...formData, organisation: e.target.value })}
                 placeholder="Enter organisation..."
                 className="mt-1.5"
               />
             </div>
             <div>
-              <Label>Contact No (without country code)</Label>
+              <Label>Contact No</Label>
               <Input
                 type="tel"
-                value={newPoc.contact || ""}
-                onChange={(e) => setNewPoc({ ...newPoc, contact: e.target.value })}
-                placeholder="5551234567"
+                value={formData.contact}
+                onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
+                placeholder="(555) 123-4567"
                 className="mt-1.5"
               />
             </div>
             <div className="md:col-span-2">
-              <Label>Email Address</Label>
+              <Label>Email Address *</Label>
               <Input
                 type="email"
-                value={newPoc.email || ""}
-                onChange={(e) => setNewPoc({ ...newPoc, email: e.target.value })}
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 placeholder="email@example.com"
                 className="mt-1.5"
               />
             </div>
           </div>
           <Button
-            onClick={addPoc}
-            disabled={!newPoc.name?.trim() || !newPoc.email?.trim() || saveMutation.isPending}
+            onClick={handleSave}
+            disabled={!formData.name?.trim() || !formData.email?.trim() || saveMutation.isPending}
           >
             {saveMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            <Plus className="h-4 w-4 mr-2" />
-            Add POC
+            {poc?.poc_id ? "Update Contact" : "Save Contact"}
           </Button>
         </CardContent>
       </Card>
-
-      <div>
-        <h4 className="font-medium text-sm text-muted-foreground mb-3">Added Points of Contact ({pocs.length})</h4>
-        {pocs.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4 border rounded-lg">
-            No points of contact added yet
-          </p>
-        ) : (
-          <div className="space-y-3">
-            {pocs.map((poc, index) => (
-              <Card key={poc.poc_id || index}>
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                      <User className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h5 className="font-medium text-foreground">{poc.name}</h5>
-                      <p className="text-sm text-muted-foreground">
-                        {poc.designation} • {poc.organisation}
-                      </p>
-                      <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Mail className="h-3.5 w-3.5" />
-                          {poc.email}
-                        </span>
-                        {poc.contact && (
-                          <span className="flex items-center gap-1">
-                            <Phone className="h-3.5 w-3.5" />
-                            {poc.contact}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
 
       <Button onClick={onSave}>Save & Continue</Button>
     </div>
