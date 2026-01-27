@@ -315,17 +315,17 @@ function ProgramInfoSection({ programId, onSave }: SectionProps) {
   const saveMutation = useSaveProgramInfo();
 
   const [formData, setFormData] = useState<Partial<ProgramInfo>>({
-    class_size: "",
+    class_size: 0,
     avg_age: "",
     avg_work_experience: "",
     median_earnings_after_graduation: "",
     graduation_rate: "",
     brochure_link: "",
-    is_hero_program: false,
+    hero_category: 0,
     diversity: [],
   });
 
-  const [newDiversity, setNewDiversity] = useState<Partial<ProgramDiversity>>({ country: "", percentage: "" });
+  const [newDiversity, setNewDiversity] = useState({ country: "", percentage: "" });
 
   useEffect(() => {
     if (info) {
@@ -348,9 +348,10 @@ function ProgramInfoSection({ programId, onSave }: SectionProps) {
   const addDiversity = () => {
     if (newDiversity.country?.trim() && newDiversity.percentage?.trim()) {
       const currentDiversity = formData.diversity || [];
+      const percentageNum = parseFloat(newDiversity.percentage) || 0;
       setFormData((prev) => ({
         ...prev,
-        diversity: [...currentDiversity, { country: newDiversity.country!, percentage: newDiversity.percentage! }],
+        diversity: [...currentDiversity, { country: newDiversity.country!, percentage: percentageNum }],
       }));
       setNewDiversity({ country: "", percentage: "" });
     }
@@ -401,9 +402,9 @@ function ProgramInfoSection({ programId, onSave }: SectionProps) {
           <div>
             <Label>Class Size</Label>
             <Input
-              type="text"
-              value={formData.class_size || ""}
-              onChange={(e) => setFormData((prev) => ({ ...prev, class_size: e.target.value }))}
+              type="number"
+              value={formData.class_size ?? ""}
+              onChange={(e) => setFormData((prev) => ({ ...prev, class_size: parseInt(e.target.value) || 0 }))}
               className="mt-1.5"
               placeholder="e.g. 950"
             />
@@ -479,12 +480,12 @@ function ProgramInfoSection({ programId, onSave }: SectionProps) {
           <div className="flex items-center gap-3 pt-6">
             <input
               type="checkbox"
-              id="is_hero_program"
-              checked={formData.is_hero_program || false}
-              onChange={(e) => setFormData((prev) => ({ ...prev, is_hero_program: e.target.checked }))}
+              id="hero_category"
+              checked={(formData.hero_category ?? 0) > 0}
+              onChange={(e) => setFormData((prev) => ({ ...prev, hero_category: e.target.checked ? 1 : 0 }))}
               className="h-4 w-4 rounded border-input"
             />
-            <Label htmlFor="is_hero_program" className="cursor-pointer">
+            <Label htmlFor="hero_category" className="cursor-pointer">
               Mark as Hero Program
             </Label>
           </div>

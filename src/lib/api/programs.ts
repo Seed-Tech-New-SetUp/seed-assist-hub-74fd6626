@@ -18,7 +18,7 @@ export interface Program {
 export interface ProgramDiversity {
   id?: string;
   country: string;
-  percentage: string;
+  percentage: number;
 }
 
 export interface ProgramInfo {
@@ -29,14 +29,17 @@ export interface ProgramInfo {
   program_id: string;
   program_name: string;
   program_internal_name: string;
-  class_size: string;
-  avg_age: string;
-  avg_work_experience: string;
-  median_earnings_after_graduation: string;
-  graduation_rate: string;
+  hero_category: number;
   brochure_link: string;
-  is_hero_program: boolean;
-  diversity: ProgramDiversity[];
+  avg_age: string;
+  class_size: number;
+  avg_work_experience: string;
+  graduation_rate: string;
+  median_earnings_after_graduation: string;
+  created_by?: string;
+  created_on?: string;
+  is_approved_by?: string;
+  diversity?: ProgramDiversity[];
 }
 
 export interface ProgramFeature {
@@ -154,12 +157,24 @@ export async function fetchPrograms(): Promise<Program[]> {
 // ============ Program Information ============
 
 export async function fetchProgramInfo(programId: string): Promise<ProgramInfo | null> {
-  const result = await callProgramsProxy<{ success: boolean; data?: { program: ProgramInfo } }>(
+  const result = await callProgramsProxy<{ 
+    success: boolean; 
+    data?: { 
+      program: Omit<ProgramInfo, 'diversity'>; 
+      diversity?: ProgramDiversity[];
+    } 
+  }>(
     "info",
     "GET",
     { program_id: programId }
   );
-  return result.data?.program || null;
+  if (result.data?.program) {
+    return {
+      ...result.data.program,
+      diversity: result.data.diversity || [],
+    };
+  }
+  return null;
 }
 
 export async function saveProgramInfo(programId: string, info: Partial<ProgramInfo>): Promise<boolean> {
