@@ -899,7 +899,7 @@ function MemberForm({
         <div>
           <Label>Organization</Label>
           <Input
-            value={member?.orgnaisation || ""}
+            value={member?.orgnaization || ""}
             onChange={(e) => onChange({ ...member, organization: e.target.value })}
             placeholder="Organization name..."
             className="mt-1.5"
