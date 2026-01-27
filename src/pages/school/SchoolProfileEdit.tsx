@@ -818,14 +818,14 @@ function FeaturesSection({ features, isLoading, onCreate, onUpdate, onDelete, is
                     <img 
                       src={getFeatureImageUrl(feature)} 
                       alt={feature.usp_title} 
-                      className="w-10 h-10 rounded object-cover shrink-0"
+                      className="w-16 h-16 rounded object-cover shrink-0"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = "/placeholder.svg";
                       }}
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded bg-muted flex items-center justify-center shrink-0">
-                      <Image className="h-4 w-4 text-muted-foreground" />
+                    <div className="w-16 h-16 rounded bg-muted flex items-center justify-center shrink-0">
+                      <Image className="h-6 w-6 text-muted-foreground" />
                     </div>
                   )}
                   <div>
