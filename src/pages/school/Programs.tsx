@@ -1264,6 +1264,7 @@ function ProgramRankingsSection({ programId, onSave }: SectionProps) {
   const saveMutation = useSaveProgramRanking();
   const deleteMutation = useDeleteProgramRanking();
 
+  const [editingRanking, setEditingRanking] = useState<ProgramRanking | null>(null);
   const [newRanking, setNewRanking] = useState<Partial<ProgramRanking>>({
     ranking_organisation: "",
     ranking_year: "",
@@ -1271,18 +1272,45 @@ function ProgramRankingsSection({ programId, onSave }: SectionProps) {
     supporting_text: "",
   });
 
-  const addRanking = () => {
-    if (newRanking.ranking_organisation && newRanking.ranking_year && newRanking.rank) {
-      saveMutation.mutate({
-        programId,
-        ranking: {
-          ranking_organisation: newRanking.ranking_organisation || "",
-          ranking_year: newRanking.ranking_year || "",
-          rank: newRanking.rank || "",
-          supporting_text: newRanking.supporting_text || "",
+  const currentRanking = editingRanking || newRanking;
+  const isEditing = !!editingRanking;
+
+  const handleSave = () => {
+    if (currentRanking.ranking_organisation && currentRanking.ranking_year && currentRanking.rank) {
+      saveMutation.mutate(
+        {
+          programId,
+          ranking: {
+            ...currentRanking,
+            ranking_organisation: currentRanking.ranking_organisation || "",
+            ranking_year: currentRanking.ranking_year || "",
+            rank: currentRanking.rank || "",
+            supporting_text: currentRanking.supporting_text || "",
+          } as ProgramRanking,
         },
-      });
-      setNewRanking({ ranking_organisation: "", ranking_year: "", rank: "", supporting_text: "" });
+        {
+          onSuccess: () => {
+            setEditingRanking(null);
+            setNewRanking({ ranking_organisation: "", ranking_year: "", rank: "", supporting_text: "" });
+          },
+        }
+      );
+    }
+  };
+
+  const handleEdit = (ranking: ProgramRanking) => {
+    setEditingRanking({ ...ranking });
+  };
+
+  const cancelEdit = () => {
+    setEditingRanking(null);
+  };
+
+  const updateCurrentRanking = (updates: Partial<ProgramRanking>) => {
+    if (isEditing) {
+      setEditingRanking({ ...editingRanking!, ...updates });
+    } else {
+      setNewRanking({ ...newRanking, ...updates });
     }
   };
 
@@ -1307,16 +1335,25 @@ function ProgramRankingsSection({ programId, onSave }: SectionProps) {
 
   return (
     <div className="space-y-6">
-      <Card className="border-dashed">
+      <Card className={isEditing ? "border-primary" : "border-dashed"}>
         <CardContent className="p-4 space-y-4">
-          <h4 className="font-medium text-sm text-muted-foreground">Add New Ranking</h4>
+          <div className="flex items-center justify-between">
+            <h4 className="font-medium text-sm text-muted-foreground">
+              {isEditing ? "Edit Ranking" : "Add New Ranking"}
+            </h4>
+            {isEditing && (
+              <Button variant="ghost" size="sm" onClick={cancelEdit}>
+                Cancel
+              </Button>
+            )}
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label>Ranking Organisation</Label>
               <Select
-                value={newRanking.ranking_organisation || ""}
-                onValueChange={(value) => setNewRanking({ ...newRanking, ranking_organisation: value })}
+                value={currentRanking.ranking_organisation || ""}
+                onValueChange={(value) => updateCurrentRanking({ ranking_organisation: value })}
               >
                 <SelectTrigger className="mt-1.5">
                   <SelectValue placeholder="Select organisation..." />
@@ -1333,8 +1370,8 @@ function ProgramRankingsSection({ programId, onSave }: SectionProps) {
             <div>
               <Label>Ranking Year</Label>
               <Input
-                value={newRanking.ranking_year || ""}
-                onChange={(e) => setNewRanking({ ...newRanking, ranking_year: e.target.value })}
+                value={currentRanking.ranking_year || ""}
+                onChange={(e) => updateCurrentRanking({ ranking_year: e.target.value })}
                 placeholder="e.g., 2024"
                 className="mt-1.5"
               />
@@ -1346,8 +1383,8 @@ function ProgramRankingsSection({ programId, onSave }: SectionProps) {
               <Label>Rank</Label>
               <Input
                 type="number"
-                value={newRanking.rank || ""}
-                onChange={(e) => setNewRanking({ ...newRanking, rank: e.target.value })}
+                value={currentRanking.rank || ""}
+                onChange={(e) => updateCurrentRanking({ rank: e.target.value })}
                 placeholder="e.g., 5"
                 className="mt-1.5"
                 min="1"
@@ -1356,8 +1393,8 @@ function ProgramRankingsSection({ programId, onSave }: SectionProps) {
             <div className="md:col-span-2">
               <Label>Supporting Text</Label>
               <Input
-                value={newRanking.supporting_text || ""}
-                onChange={(e) => setNewRanking({ ...newRanking, supporting_text: e.target.value })}
+                value={currentRanking.supporting_text || ""}
+                onChange={(e) => updateCurrentRanking({ supporting_text: e.target.value })}
                 placeholder="Additional context about this ranking..."
                 className="mt-1.5"
               />
@@ -1365,12 +1402,21 @@ function ProgramRankingsSection({ programId, onSave }: SectionProps) {
           </div>
 
           <Button
-            onClick={addRanking}
-            disabled={!newRanking.ranking_organisation || !newRanking.ranking_year || !newRanking.rank || saveMutation.isPending}
+            onClick={handleSave}
+            disabled={!currentRanking.ranking_organisation || !currentRanking.ranking_year || !currentRanking.rank || saveMutation.isPending}
           >
             {saveMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            <Plus className="h-4 w-4 mr-2" />
-            Add Ranking
+            {isEditing ? (
+              <>
+                <Check className="h-4 w-4 mr-2" />
+                Update Ranking
+              </>
+            ) : (
+              <>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Ranking
+              </>
+            )}
           </Button>
         </CardContent>
       </Card>
@@ -1382,7 +1428,7 @@ function ProgramRankingsSection({ programId, onSave }: SectionProps) {
         ) : (
           <div className="space-y-3">
             {rankings.map((ranking, idx) => (
-              <Card key={ranking.ranking_addition_id || idx}>
+              <Card key={ranking.ranking_addition_id || idx} className={editingRanking?.ranking_addition_id === ranking.ranking_addition_id ? "ring-2 ring-primary" : ""}>
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex-1">
@@ -1401,15 +1447,26 @@ function ProgramRankingsSection({ programId, onSave }: SectionProps) {
                         <p className="text-sm text-muted-foreground mt-2 ml-[52px]">{ranking.supporting_text}</p>
                       )}
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive shrink-0"
-                      onClick={() => removeRanking(ranking)}
-                      disabled={deleteMutation.isPending}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="shrink-0"
+                        onClick={() => handleEdit(ranking)}
+                        disabled={saveMutation.isPending}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive shrink-0"
+                        onClick={() => removeRanking(ranking)}
+                        disabled={deleteMutation.isPending}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
