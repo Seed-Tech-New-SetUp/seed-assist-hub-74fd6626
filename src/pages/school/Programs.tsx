@@ -631,7 +631,7 @@ function ProgramFeaturesSection({ programId, onSave }: SectionProps) {
               onChange={(url) => setNewFeature({ ...newFeature, usp_image_name: url })}
               placeholder="Click to upload feature photo"
               aspectRatio="video"
-              className="mt-1.5"
+              className="mt-1.5 max-w-[200px] max-h-[100px]"
             />
           </div>
           <Button onClick={addFeature} disabled={!newFeature.usp_title?.trim() || saveMutation.isPending}>
