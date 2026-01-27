@@ -17,6 +17,8 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { 
   Building2, 
   Globe, 
@@ -32,6 +34,7 @@ import {
   Check,
   Loader2,
   Pencil,
+  ChevronsUpDown,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -1082,6 +1085,65 @@ function LogosSection() {
   );
 }
 
+// Searchable Organization Combobox for Rankings
+function OrganizationCombobox({
+  organizations,
+  value,
+  onValueChange,
+}: {
+  organizations: RankingOrganization[];
+  value: string;
+  onValueChange: (value: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  const selectedOrg = organizations.find((org) => org.ranking_org_id === value);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between mt-1.5 font-normal"
+        >
+          {selectedOrg ? selectedOrg.ranking_org_name : "Select organization..."}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[300px] p-0" align="start">
+        <Command>
+          <CommandInput placeholder="Search organization..." />
+          <CommandList>
+            <CommandEmpty>No organization found.</CommandEmpty>
+            <CommandGroup>
+              {organizations.map((org) => (
+                <CommandItem
+                  key={org.ranking_org_id}
+                  value={org.ranking_org_name}
+                  onSelect={() => {
+                    onValueChange(org.ranking_org_id);
+                    setOpen(false);
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      value === org.ranking_org_id ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  {org.ranking_org_name}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 function RankingsSection() {
   const { data: rankingsData, isLoading } = useSchoolRankings();
   const createRanking = useCreateSchoolRanking();
@@ -1210,21 +1272,11 @@ function RankingsSection() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Organization</Label>
-              <Select
+              <OrganizationCombobox
+                organizations={organizations}
                 value={formData.ranking_organisation}
                 onValueChange={(value) => setFormData((prev) => ({ ...prev, ranking_organisation: value }))}
-              >
-                <SelectTrigger className="mt-1.5">
-                  <SelectValue placeholder="Select organization" />
-                </SelectTrigger>
-                <SelectContent>
-                  {organizations.map((org) => (
-                    <SelectItem key={org.ranking_org_id} value={org.ranking_org_id}>
-                      {org.ranking_org_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              />
             </div>
             <div>
               <Label>Year</Label>
@@ -1338,21 +1390,11 @@ function RankingsSection() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label>Organization</Label>
-                        <Select
+                        <OrganizationCombobox
+                          organizations={organizations}
                           value={editData.ranking_organisation}
                           onValueChange={(value) => setEditData((prev) => prev ? { ...prev, ranking_organisation: value } : null)}
-                        >
-                          <SelectTrigger className="mt-1.5">
-                            <SelectValue placeholder="Select organization" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {organizations.map((org) => (
-                              <SelectItem key={org.ranking_org_id} value={org.ranking_org_id}>
-                                {org.ranking_org_name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        />
                       </div>
                       <div>
                         <Label>Year</Label>
