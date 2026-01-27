@@ -30,9 +30,9 @@ export interface ProgramInfo {
   program_name: string;
   program_internal_name: string;
   class_size: string;
-  average_age: string;
-  average_work_experience: string;
-  median_earnings: string;
+  avg_age: string;
+  avg_work_experience: string;
+  median_earnings_after_graduation: string;
   graduation_rate: string;
   brochure_link: string;
   is_hero_program: boolean;
