@@ -58,11 +58,13 @@ export interface ProgramMember {
   member_id?: string;
   program_id?: string;
   category: "faculty" | "current_student" | "alumni";
-  name: string;
-  designation: string;
+  first_name: string;
+  last_name: string;
   email: string;
-  bio: string;
   linkedin_url: string;
+  designation: string;
+  organization: string;
+  call_to_action: string;
   image_name?: string;
   created_on?: string;
   created_by?: string;
@@ -361,11 +363,13 @@ export async function saveProgramMember(
     const formData = new FormData();
     formData.append("program_id", programId);
     formData.append("category", category);
-    formData.append("name", member.name);
-    formData.append("designation", member.designation);
+    formData.append("first_name", member.first_name);
+    formData.append("last_name", member.last_name);
     formData.append("email", member.email);
-    formData.append("bio", member.bio || "");
     formData.append("linkedin_url", member.linkedin_url || "");
+    formData.append("designation", member.designation || "");
+    formData.append("organization", member.organization || "");
+    formData.append("call_to_action", member.call_to_action || "");
     
     if (isUpdate && member.member_id) {
       formData.append("member_id", member.member_id);
@@ -411,11 +415,13 @@ export async function saveProgramMember(
         program_id: programId,
         member_id: member.member_id,
         category,
-        name: member.name,
-        designation: member.designation,
+        first_name: member.first_name,
+        last_name: member.last_name,
         email: member.email,
-        bio: member.bio || "",
         linkedin_url: member.linkedin_url || "",
+        designation: member.designation || "",
+        organization: member.organization || "",
+        call_to_action: member.call_to_action || "",
       }),
     };
   }

@@ -832,11 +832,13 @@ function ProgramMembersSection({ programId, category, title, onSave }: MembersSe
     category === "faculty" ? "Faculty" : category === "current_student" ? "Current Student" : "Alumni";
 
   const [newMember, setNewMember] = useState<Partial<ProgramMember>>({
-    name: "",
-    designation: "",
+    first_name: "",
+    last_name: "",
     email: "",
-    bio: "",
     linkedin_url: "",
+    designation: "",
+    organization: "",
+    call_to_action: "",
     category,
     image_name: "",
   });
@@ -864,7 +866,7 @@ function ProgramMembersSection({ programId, category, title, onSave }: MembersSe
 
   const handleSaveMember = () => {
     const memberData = isEditing ? editingMember : newMember;
-    if (memberData?.name?.trim()) {
+    if (memberData?.first_name?.trim() && memberData?.last_name?.trim()) {
       saveMutation.mutate(
         {
           programId,
@@ -872,11 +874,13 @@ function ProgramMembersSection({ programId, category, title, onSave }: MembersSe
           member: {
             member_id: memberData.member_id,
             category,
-            name: memberData.name || "",
-            designation: memberData.designation || "",
+            first_name: memberData.first_name || "",
+            last_name: memberData.last_name || "",
             email: memberData.email || "",
-            bio: memberData.bio || "",
             linkedin_url: memberData.linkedin_url || "",
+            designation: memberData.designation || "",
+            organization: memberData.organization || "",
+            call_to_action: memberData.call_to_action || "",
             image_name: memberData.image_name || "",
           },
         },
@@ -886,11 +890,13 @@ function ProgramMembersSection({ programId, category, title, onSave }: MembersSe
               setEditingMember(null);
             } else {
               setNewMember({
-                name: "",
-                designation: "",
+                first_name: "",
+                last_name: "",
                 email: "",
-                bio: "",
                 linkedin_url: "",
+                designation: "",
+                organization: "",
+                call_to_action: "",
                 category,
                 image_name: "",
               });
@@ -929,7 +935,7 @@ function ProgramMembersSection({ programId, category, title, onSave }: MembersSe
           <AlertDialogHeader>
             <AlertDialogTitle>Delete {title}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete {deleteConfirmMember?.name}? This action cannot be undone.
+              Are you sure you want to delete {deleteConfirmMember?.first_name} {deleteConfirmMember?.last_name}? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -952,18 +958,34 @@ function ProgramMembersSection({ programId, category, title, onSave }: MembersSe
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label>Full Name *</Label>
+              <Label>First Name *</Label>
               <Input
-                value={formMember?.name || ""}
+                value={formMember?.first_name || ""}
                 onChange={(e) =>
                   isEditing
-                    ? setEditingMember({ ...editingMember!, name: e.target.value })
-                    : setNewMember({ ...newMember, name: e.target.value })
+                    ? setEditingMember({ ...editingMember!, first_name: e.target.value })
+                    : setNewMember({ ...newMember, first_name: e.target.value })
                 }
-                placeholder="Full name..."
+                placeholder="First name..."
                 className="mt-1.5"
               />
             </div>
+            <div>
+              <Label>Last Name *</Label>
+              <Input
+                value={formMember?.last_name || ""}
+                onChange={(e) =>
+                  isEditing
+                    ? setEditingMember({ ...editingMember!, last_name: e.target.value })
+                    : setNewMember({ ...newMember, last_name: e.target.value })
+                }
+                placeholder="Last name..."
+                className="mt-1.5"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label>Email</Label>
               <Input
@@ -975,22 +997,6 @@ function ProgramMembersSection({ programId, category, title, onSave }: MembersSe
                     : setNewMember({ ...newMember, email: e.target.value })
                 }
                 placeholder="Email address..."
-                className="mt-1.5"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label>Designation</Label>
-              <Input
-                value={formMember?.designation || ""}
-                onChange={(e) =>
-                  isEditing
-                    ? setEditingMember({ ...editingMember!, designation: e.target.value })
-                    : setNewMember({ ...newMember, designation: e.target.value })
-                }
-                placeholder="Title/Position..."
                 className="mt-1.5"
               />
             </div>
@@ -1012,39 +1018,70 @@ function ProgramMembersSection({ programId, category, title, onSave }: MembersSe
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label>Bio</Label>
-              <Textarea
-                value={formMember?.bio || ""}
+              <Label>Designation</Label>
+              <Input
+                value={formMember?.designation || ""}
                 onChange={(e) =>
                   isEditing
-                    ? setEditingMember({ ...editingMember!, bio: e.target.value })
-                    : setNewMember({ ...newMember, bio: e.target.value })
+                    ? setEditingMember({ ...editingMember!, designation: e.target.value })
+                    : setNewMember({ ...newMember, designation: e.target.value })
                 }
-                placeholder="Short bio..."
+                placeholder="Title/Position..."
                 className="mt-1.5"
-                rows={3}
+              />
+            </div>
+            <div>
+              <Label>Organization</Label>
+              <Input
+                value={formMember?.organization || ""}
+                onChange={(e) =>
+                  isEditing
+                    ? setEditingMember({ ...editingMember!, organization: e.target.value })
+                    : setNewMember({ ...newMember, organization: e.target.value })
+                }
+                placeholder="Organization name..."
+                className="mt-1.5"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label>Call to Action</Label>
+              <Input
+                value={formMember?.call_to_action || ""}
+                onChange={(e) =>
+                  isEditing
+                    ? setEditingMember({ ...editingMember!, call_to_action: e.target.value })
+                    : setNewMember({ ...newMember, call_to_action: e.target.value })
+                }
+                placeholder="e.g., Contact Me, View Profile..."
+                className="mt-1.5"
               />
             </div>
             <div>
               <Label>Category</Label>
               <Input value={defaultCategory} disabled className="mt-1.5 bg-muted" />
-              <Label className="mt-3 block">Profile Photo</Label>
-              <ImageUpload
-                value={formMember?.image_name || ""}
-                onChange={(url) =>
-                  isEditing
-                    ? setEditingMember({ ...editingMember!, image_name: url })
-                    : setNewMember({ ...newMember, image_name: url })
-                }
-                placeholder="Upload photo"
-                aspectRatio="square"
-                className="mt-1.5 h-[80px] w-[80px]"
-              />
             </div>
           </div>
 
+          <div>
+            <Label>Profile Photo</Label>
+            <ImageUpload
+              value={formMember?.image_name || ""}
+              onChange={(url) =>
+                isEditing
+                  ? setEditingMember({ ...editingMember!, image_name: url })
+                  : setNewMember({ ...newMember, image_name: url })
+              }
+              placeholder="Upload photo"
+              aspectRatio="square"
+              className="mt-1.5 h-[80px] w-[80px]"
+            />
+          </div>
+
           <div className="flex gap-2">
-            <Button onClick={handleSaveMember} disabled={!formMember?.name?.trim() || saveMutation.isPending}>
+            <Button onClick={handleSaveMember} disabled={!formMember?.first_name?.trim() || !formMember?.last_name?.trim() || saveMutation.isPending}>
               {saveMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {isEditing ? (
                 <>
@@ -1085,7 +1122,7 @@ function ProgramMembersSection({ programId, category, title, onSave }: MembersSe
                       {member.image_name ? (
                         <img
                           src={`https://assist.seedglobaleducation.com/school_member_uploads/${member.image_name}`}
-                          alt={member.name}
+                          alt={`${member.first_name} ${member.last_name}`}
                           className="w-12 h-12 rounded-full object-cover"
                           onError={(e) => {
                             (e.target as HTMLImageElement).src = "/placeholder.svg";
@@ -1098,18 +1135,17 @@ function ProgramMembersSection({ programId, category, title, onSave }: MembersSe
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <h5 className="font-medium text-foreground">{member.name}</h5>
+                          <h5 className="font-medium text-foreground">{member.first_name} {member.last_name}</h5>
                           <Badge variant="secondary" className="text-xs">
                             {defaultCategory}
                           </Badge>
                         </div>
-                        {member.designation && (
-                          <p className="text-sm text-muted-foreground">{member.designation}</p>
+                        {(member.designation || member.organization) && (
+                          <p className="text-sm text-muted-foreground">
+                            {member.designation}{member.designation && member.organization ? " at " : ""}{member.organization}
+                          </p>
                         )}
-                        {member.bio && (
-                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{member.bio}</p>
-                        )}
-                        <div className="flex items-center gap-3 mt-1">
+                        <div className="flex items-center gap-3 mt-1 flex-wrap">
                           {member.email && (
                             <span className="text-xs text-muted-foreground flex items-center gap-1">
                               <Mail className="h-3 w-3" /> {member.email}
@@ -1124,6 +1160,11 @@ function ProgramMembersSection({ programId, category, title, onSave }: MembersSe
                             >
                               <Linkedin className="h-3 w-3" /> LinkedIn
                             </a>
+                          )}
+                          {member.call_to_action && (
+                            <span className="text-xs text-primary font-medium">
+                              {member.call_to_action}
+                            </span>
                           )}
                         </div>
                       </div>
