@@ -224,21 +224,98 @@ export async function fetchProgramFeatures(programId: string): Promise<ProgramFe
 }
 
 export async function saveProgramFeature(programId: string, feature: ProgramFeature): Promise<boolean> {
-  const result = await callProgramsProxy<{ success: boolean }>(
-    "features",
-    "POST",
-    { program_id: programId },
-    feature
-  );
+  const token = getPortalToken();
+  if (!token) {
+    handleUnauthorized("No authentication token found");
+  }
+
+  const isUpdate = !!feature.usp_id;
+  const action = isUpdate ? "features-update" : "features-create";
+  
+  // Check if there's an image (base64 data)
+  const hasImage = feature.usp_image_name?.startsWith("data:");
+  
+  const queryParams = new URLSearchParams({ action });
+  const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/programs-proxy?${queryParams}`;
+  
+  let options: RequestInit;
+  
+  if (hasImage || !isUpdate) {
+    // Use FormData for create (always) or update with new image
+    const formData = new FormData();
+    formData.append("program_id", programId);
+    formData.append("usp_title", feature.usp_title);
+    formData.append("usp_description", feature.usp_description);
+    
+    if (isUpdate && feature.usp_id) {
+      formData.append("usp_id", feature.usp_id);
+    }
+    
+    if (hasImage && feature.usp_image_name) {
+      // Convert base64 to Blob
+      const base64Data = feature.usp_image_name;
+      const matches = base64Data.match(/^data:(.+);base64,(.+)$/);
+      if (matches) {
+        const mimeType = matches[1];
+        const base64 = matches[2];
+        const byteCharacters = atob(base64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: mimeType });
+        const extension = mimeType.split("/")[1] || "jpg";
+        formData.append("usp_image", blob, `feature.${extension}`);
+      }
+    }
+    
+    options = {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      },
+      body: formData,
+    };
+  } else {
+    // Use JSON for update without image
+    options = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      },
+      body: JSON.stringify({
+        program_id: programId,
+        usp_id: feature.usp_id,
+        usp_title: feature.usp_title,
+        usp_description: feature.usp_description,
+      }),
+    };
+  }
+
+  const response = await fetch(url, options);
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    if (isUnauthorizedError(response.status, errorData)) {
+      handleUnauthorized(errorData.error || errorData.message);
+    }
+    throw new Error(errorData.error || `Request failed with status ${response.status}`);
+  }
+
+  const result = await response.json();
   return result.success;
 }
 
 export async function deleteProgramFeature(programId: string, featureId: string): Promise<boolean> {
   const result = await callProgramsProxy<{ success: boolean }>(
-    "features",
-    "DELETE",
-    { program_id: programId },
-    { id: featureId }
+    "features-delete",
+    "POST",
+    {},
+    { program_id: programId, usp_id: featureId }
   );
   return result.success;
 }

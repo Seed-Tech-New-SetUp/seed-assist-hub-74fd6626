@@ -35,70 +35,85 @@ serve(async (req) => {
     }
 
     let backendUrl: string;
+    let isFormData = false;
 
     // Route to appropriate PHP endpoint based on action
     switch (action) {
       case "list":
-        // List all programs for the school (new endpoint)
         backendUrl = PROGRAM_PROFILE_URL;
         break;
       case "info":
-        // Get/update program information - use new endpoint
         backendUrl = `${PROGRAM_PROFILE_URL}/info.php?program_id=${programId}`;
         break;
       case "features":
-        // Get/update program features (USP) - uses new endpoint structure
         backendUrl = `${PROGRAM_PROFILE_URL}/features/read.php?program_id=${programId}`;
         break;
+      case "features-create":
+        backendUrl = `${PROGRAM_PROFILE_URL}/features/create.php`;
+        isFormData = true;
+        break;
+      case "features-update":
+        backendUrl = `${PROGRAM_PROFILE_URL}/features/update.php`;
+        // Check content-type to determine if it's form-data or JSON
+        isFormData = req.headers.get("content-type")?.includes("multipart/form-data") || false;
+        break;
+      case "features-delete":
+        backendUrl = `${PROGRAM_PROFILE_URL}/features/delete.php`;
+        break;
       case "members":
-        // Get/update program members (faculty, students, alumni)
         backendUrl = `${PROGRAMS_BASE_URL}/update_program_member.php?program_id=${programId}&category=${category}`;
         break;
       case "rankings":
-        // Get/update program rankings
         backendUrl = `${PROGRAMS_BASE_URL}/update_program_rankings.php?program_id=${programId}&level=${level || "Program"}`;
         break;
       case "recruiters":
-        // Get/update program recruiters
         backendUrl = `${PROGRAMS_BASE_URL}/update_program_recruiters.php?program_id=${programId}`;
         break;
       case "jobroles":
-        // Get/update program job roles
         backendUrl = `${PROGRAMS_BASE_URL}/update_program_job_roles.php?program_id=${programId}`;
         break;
       case "faqs":
-        // Get/update program FAQs
         backendUrl = `${PROGRAMS_BASE_URL}/update_program_faqs.php?program_id=${programId}`;
         break;
       case "pocs":
-        // Get/update program points of contact
         backendUrl = `${PROGRAMS_BASE_URL}/update_program_poc.php?program_id=${programId}`;
         break;
       case "ranking-orgs":
-        // Get ranking organizations list
         backendUrl = `${PROGRAMS_BASE_URL}/ranking_organizations.php`;
         break;
       default:
         backendUrl = PROGRAM_PROFILE_URL;
     }
 
-    console.log(`[programs-proxy] Action: ${action}, URL: ${backendUrl}, Method: ${req.method}`);
+    console.log(`[programs-proxy] Action: ${action}, URL: ${backendUrl}, Method: ${req.method}, FormData: ${isFormData}`);
 
     // Prepare request options
+    const requestHeaders: Record<string, string> = {
+      Authorization: `Bearer ${token}`,
+      apikey: req.headers.get("apikey") || "",
+    };
+
+    // Only set Content-Type for non-form-data requests
+    if (!isFormData) {
+      requestHeaders["Content-Type"] = "application/json";
+    }
+
     const requestOptions: RequestInit = {
       method: req.method,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-        apikey: req.headers.get("apikey") || "",
-      },
+      headers: requestHeaders,
     };
 
     // For POST/PUT requests, forward the body
-    if (req.method === "POST" || req.method === "PUT") {
-      const body = await req.text();
-      if (body) {
-        requestOptions.body = body;
+    if (req.method === "POST" || req.method === "PUT" || req.method === "DELETE") {
+      if (isFormData) {
+        // Forward form data as-is (the browser handles boundaries)
+        const formData = await req.formData();
+        requestOptions.body = formData;
+      } else {
+        const body = await req.text();
+        if (body) {
+          requestOptions.body = body;
+        }
       }
     }
 
@@ -112,10 +127,16 @@ serve(async (req) => {
       const textBody = await backendResponse.text();
       console.error(`[programs-proxy] Non-JSON response: ${textBody.substring(0, 500)}`);
       
-      // Return empty safe state
+      // Return empty safe state for list actions
       if (action === "list") {
         return new Response(
           JSON.stringify({ success: true, data: { programs: [] } }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (action === "features") {
+        return new Response(
+          JSON.stringify({ success: true, data: { features: [] } }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
