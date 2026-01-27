@@ -186,10 +186,11 @@ export default function Programs() {
 
         {selectedProgram && (
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            {/* Sidebar Navigation */}
-            <Card className="lg:col-span-1 h-fit">
-              <CardContent className="p-4">
-                <nav className="space-y-1">
+            {/* Sidebar Navigation - Sticky */}
+            <div className="lg:col-span-1">
+              <Card className="sticky top-6">
+                <CardContent className="p-4">
+                  <nav className="space-y-1">
                   {programSections.map((section, index) => {
                     const isActive = activeSection === section.id;
                     const isCompleted = completedSections.includes(section.id);
@@ -218,6 +219,7 @@ export default function Programs() {
                 </nav>
               </CardContent>
             </Card>
+          </div>
 
             {/* Form Content */}
             <div className="lg:col-span-3">
