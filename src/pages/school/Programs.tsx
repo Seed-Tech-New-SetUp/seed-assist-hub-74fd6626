@@ -20,6 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { OrganizationCombobox } from "@/components/programs/OrganizationCombobox";
 import {
   Info,
   Sparkles,
@@ -1350,21 +1351,14 @@ function ProgramRankingsSection({ programId, onSave }: SectionProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label>Ranking Organisation</Label>
-              <Select
-                value={newRanking.ranking_organisation || ""}
-                onValueChange={(value) => setNewRanking({ ...newRanking, ranking_organisation: value })}
-              >
-                <SelectTrigger className="mt-1.5">
-                  <SelectValue placeholder="Select organisation..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {organizations.map((org) => (
-                    <SelectItem key={org.id} value={org.id}>
-                      {org.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="mt-1.5">
+                <OrganizationCombobox
+                  organizations={organizations}
+                  value={newRanking.ranking_organisation || ""}
+                  onValueChange={(value) => setNewRanking({ ...newRanking, ranking_organisation: value })}
+                  placeholder="Search and select organisation..."
+                />
+              </div>
             </div>
             <div>
               <Label>Ranking Year</Label>
@@ -1437,21 +1431,14 @@ function ProgramRankingsSection({ programId, onSave }: SectionProps) {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
                             <Label>Ranking Organisation</Label>
-                            <Select
-                              value={editingRanking.ranking_organisation || ""}
-                              onValueChange={(value) => setEditingRanking({ ...editingRanking, ranking_organisation: value })}
-                            >
-                              <SelectTrigger className="mt-1.5">
-                                <SelectValue placeholder="Select organisation..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {organizations.map((org) => (
-                                  <SelectItem key={org.id} value={org.id}>
-                                    {org.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            <div className="mt-1.5">
+                              <OrganizationCombobox
+                                organizations={organizations}
+                                value={editingRanking.ranking_organisation || ""}
+                                onValueChange={(value) => setEditingRanking({ ...editingRanking, ranking_organisation: value })}
+                                placeholder="Search and select organisation..."
+                              />
+                            </div>
                           </div>
                           <div>
                             <Label>Ranking Year</Label>
