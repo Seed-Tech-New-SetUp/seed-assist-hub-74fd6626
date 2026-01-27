@@ -76,7 +76,16 @@ serve(async (req) => {
         backendUrl = `${PROGRAM_PROFILE_URL}/members/delete.php`;
         break;
       case "rankings":
-        backendUrl = `${PROGRAMS_BASE_URL}/update_program_rankings.php?program_id=${programId}&level=${level || "Program"}`;
+        backendUrl = `${PROGRAM_PROFILE_URL}/rankings/read.php?program_id=${programId}`;
+        break;
+      case "rankings-create":
+        backendUrl = `${PROGRAM_PROFILE_URL}/rankings/create.php`;
+        break;
+      case "rankings-update":
+        backendUrl = `${PROGRAM_PROFILE_URL}/rankings/update.php`;
+        break;
+      case "rankings-delete":
+        backendUrl = `${PROGRAM_PROFILE_URL}/rankings/delete.php`;
         break;
       case "recruiters":
         backendUrl = `${PROGRAMS_BASE_URL}/update_program_recruiters.php?program_id=${programId}`;

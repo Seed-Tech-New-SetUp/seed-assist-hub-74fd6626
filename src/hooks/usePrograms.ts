@@ -217,8 +217,12 @@ export function useDeleteProgramRanking() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: ({ programId, rankingId }: { programId: string; rankingId: string }) =>
-      deleteProgramRanking(programId, rankingId),
+    mutationFn: ({ programId, rankingOrgId, rankingAdditionId }: { 
+      programId: string; 
+      rankingOrgId: string; 
+      rankingAdditionId: string;
+    }) =>
+      deleteProgramRanking(programId, rankingOrgId, rankingAdditionId),
     onSuccess: (_, { programId }) => {
       queryClient.invalidateQueries({ queryKey: ["program-rankings", programId] });
       toast({ title: "Success", description: "Ranking removed." });
