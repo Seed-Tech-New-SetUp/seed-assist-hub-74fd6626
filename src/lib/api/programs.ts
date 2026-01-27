@@ -100,10 +100,8 @@ export interface ProgramRanking {
 // Recruiters are now simple strings (company names)
 export type ProgramRecruiter = string;
 
-export interface ProgramJobRole {
-  id?: string;
-  role_name: string;
-}
+// Job roles are now simple strings (role names)
+export type ProgramJobRole = string;
 
 export interface ProgramFAQ {
   id?: string;
@@ -580,8 +578,8 @@ export async function saveProgramRecruiters(programId: string, recruiters: strin
 
 // ============ Program Job Roles ============
 
-export async function fetchProgramJobRoles(programId: string): Promise<ProgramJobRole[]> {
-  const result = await callProgramsProxy<{ success: boolean; data?: { job_roles: ProgramJobRole[] } }>(
+export async function fetchProgramJobRoles(programId: string): Promise<string[]> {
+  const result = await callProgramsProxy<{ success: boolean; data?: { job_roles: string[] } }>(
     "jobroles",
     "GET",
     { program_id: programId }
@@ -589,22 +587,13 @@ export async function fetchProgramJobRoles(programId: string): Promise<ProgramJo
   return result.data?.job_roles || [];
 }
 
-export async function saveProgramJobRole(programId: string, jobRole: ProgramJobRole): Promise<boolean> {
+// Save all job roles at once (replaces existing)
+export async function saveProgramJobRoles(programId: string, jobRoles: string[]): Promise<boolean> {
   const result = await callProgramsProxy<{ success: boolean }>(
     "jobroles",
     "POST",
-    { program_id: programId },
-    jobRole
-  );
-  return result.success;
-}
-
-export async function deleteProgramJobRole(programId: string, jobRoleId: string): Promise<boolean> {
-  const result = await callProgramsProxy<{ success: boolean }>(
-    "jobroles",
-    "DELETE",
-    { program_id: programId },
-    { id: jobRoleId }
+    {},
+    { program_id: programId, job_roles: jobRoles }
   );
   return result.success;
 }

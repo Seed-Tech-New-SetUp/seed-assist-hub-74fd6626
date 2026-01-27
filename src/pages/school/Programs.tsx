@@ -61,8 +61,7 @@ import {
   useProgramRecruiters,
   useSaveProgramRecruiters,
   useProgramJobRoles,
-  useSaveProgramJobRole,
-  useDeleteProgramJobRole,
+  useSaveProgramJobRoles,
   useProgramFAQs,
   useSaveProgramFAQ,
   useDeleteProgramFAQ,
@@ -1626,19 +1625,30 @@ function ProgramRecruitersSection({ programId, onSave }: SectionProps) {
 
 function ProgramJobRolesSection({ programId, onSave }: SectionProps) {
   const { data: jobRoles = [], isLoading } = useProgramJobRoles(programId);
-  const saveMutation = useSaveProgramJobRole();
-  const deleteMutation = useDeleteProgramJobRole();
+  const saveMutation = useSaveProgramJobRoles();
+  const [localJobRoles, setLocalJobRoles] = useState<string[]>([]);
   const [newJobRole, setNewJobRole] = useState("");
 
+  // Sync local state when data loads
+  useEffect(() => {
+    if (jobRoles.length > 0) {
+      setLocalJobRoles(jobRoles);
+    }
+  }, [jobRoles]);
+
   const addJobRole = () => {
-    if (newJobRole.trim()) {
-      saveMutation.mutate({ programId, jobRole: { role_name: newJobRole.trim() } });
+    if (newJobRole.trim() && !localJobRoles.includes(newJobRole.trim())) {
+      const updated = [...localJobRoles, newJobRole.trim()];
+      setLocalJobRoles(updated);
+      saveMutation.mutate({ programId, jobRoles: updated });
       setNewJobRole("");
     }
   };
 
-  const removeJobRole = (jobRoleId: string) => {
-    deleteMutation.mutate({ programId, jobRoleId });
+  const removeJobRole = (role: string) => {
+    const updated = localJobRoles.filter((r) => r !== role);
+    setLocalJobRoles(updated);
+    saveMutation.mutate({ programId, jobRoles: updated });
   };
 
   if (isLoading) {
@@ -1662,19 +1672,19 @@ function ProgramJobRolesSection({ programId, onSave }: SectionProps) {
       </div>
 
       <div>
-        <h4 className="font-medium text-sm text-muted-foreground mb-3">Added Job Roles ({jobRoles.length})</h4>
-        {jobRoles.length === 0 ? (
+        <h4 className="font-medium text-sm text-muted-foreground mb-3">Added Job Roles ({localJobRoles.length})</h4>
+        {localJobRoles.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4 border rounded-lg">No job roles added yet</p>
         ) : (
           <div className="flex flex-wrap gap-2">
-            {jobRoles.map((role) => (
-              <Badge key={role.id} variant="secondary" className="text-sm py-1.5 px-3 gap-2">
+            {localJobRoles.map((role, idx) => (
+              <Badge key={`${role}-${idx}`} variant="secondary" className="text-sm py-1.5 px-3 gap-2">
                 <Briefcase className="h-3.5 w-3.5" />
-                {role.role_name}
+                {role}
                 <button
-                  onClick={() => role.id && removeJobRole(role.id)}
+                  onClick={() => removeJobRole(role)}
                   className="ml-1 hover:text-destructive transition-colors"
-                  disabled={deleteMutation.isPending}
+                  disabled={saveMutation.isPending}
                 >
                   <Trash2 className="h-3 w-3" />
                 </button>
