@@ -178,11 +178,24 @@ export async function fetchProgramInfo(programId: string): Promise<ProgramInfo |
 }
 
 export async function saveProgramInfo(programId: string, info: Partial<ProgramInfo>): Promise<boolean> {
+  // Map frontend field names to backend POST field names
+  const payload: Record<string, unknown> = {
+    program_id: programId,
+    class_size: info.class_size?.toString(),
+    average_age: info.avg_age,
+    average_work_experience: info.avg_work_experience,
+    median_earnings_after_graduation: info.median_earnings_after_graduation,
+    graduation_rate: info.graduation_rate,
+    brochure_link: info.brochure_link,
+    hero_category: info.hero_category,
+    diversity: info.diversity,
+  };
+
   const result = await callProgramsProxy<{ success: boolean }>(
     "info",
     "POST",
     { program_id: programId },
-    { program_id: programId, ...info }
+    payload
   );
   return result.success;
 }
