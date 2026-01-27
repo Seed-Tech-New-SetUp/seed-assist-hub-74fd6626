@@ -1138,12 +1138,12 @@ function OrganizationCombobox({
 }) {
   const [open, setOpen] = useState(false);
 
-  const selectedOrg = organizations.find((org) => org.ranking_org_id === value);
+  const selectedOrg = organizations.find((org) => String(org.org_id) === value);
 
   const displayText = selectedOrg
     ? selectedYear
-      ? `${selectedOrg.ranking_org_name} (${selectedYear})`
-      : selectedOrg.ranking_org_name
+      ? `${selectedOrg.org_name} (${selectedYear})`
+      : selectedOrg.org_name
     : selectedYear
       ? `Select organization (${selectedYear})`
       : "Select organization...";
@@ -1169,15 +1169,15 @@ function OrganizationCombobox({
             <CommandGroup>
               {organizations.map((org) => (
                 <CommandItem
-                  key={org.ranking_org_id}
-                  value={org.ranking_org_name}
+                  key={org.org_id}
+                  value={org.org_name}
                   onSelect={() => {
-                    onValueChange(org.ranking_org_id);
+                    onValueChange(String(org.org_id));
                     setOpen(false);
                   }}
                 >
-                  <Check className={cn("mr-2 h-4 w-4", value === org.ranking_org_id ? "opacity-100" : "opacity-0")} />
-                  {org.ranking_org_name}
+                  <Check className={cn("mr-2 h-4 w-4", value === String(org.org_id) ? "opacity-100" : "opacity-0")} />
+                  {org.org_name}
                 </CommandItem>
               ))}
             </CommandGroup>
@@ -1209,7 +1209,7 @@ function RankingsSection() {
     description_id: string;
     ranking_org_id: string;
     ranking_addition_id: string;
-    ranking_organizations: string;
+    ranking_organisation: string;
     ranking_year: string;
     level: string;
     rank: string;
@@ -1219,7 +1219,7 @@ function RankingsSection() {
   } | null>(null);
 
   const rankings = rankingsData?.rankings || [];
-  const organizations = rankingsData?.ranking_organizations || [];
+  const organizations = rankingsData?.organizations || [];
 
   const resetForm = () => {
     setFormData({
@@ -1241,7 +1241,7 @@ function RankingsSection() {
 
     createRanking.mutate(
       {
-        ranking_organizations: formData.ranking_organizations,
+        ranking_organisation: formData.ranking_organizations,
         ranking_year: formData.year,
         level: formData.level,
         rank: useRange ? "" : formData.rank,
@@ -1263,12 +1263,12 @@ function RankingsSection() {
       description_id: ranking.description_id || "",
       ranking_org_id: ranking.ranking_org_id || "",
       ranking_addition_id: ranking.ranking_addition_id || "",
-      ranking_organizations: ranking.ranking_org_id || "",
-      ranking_year: ranking.ranking_year || "",
+      ranking_organisation: ranking.ranking_org_id || "",
+      ranking_year: ranking.year || "",
       level: ranking.level || "School",
       rank: ranking.rank || "",
-      minimum_range: ranking.minimum_range || "",
-      maximum_range: ranking.maximum_range || "",
+      minimum_range: ranking.minimum_rank_range || "",
+      maximum_range: ranking.maximum_rank_range || "",
       supporting_text: ranking.supporting_text || "",
     });
   };
@@ -1464,9 +1464,9 @@ function RankingsSection() {
                         <Label>Organization</Label>
                         <OrganizationCombobox
                           organizations={organizations}
-                          value={editData.ranking_organizations}
+                          value={editData.ranking_organisation}
                           onValueChange={(value) =>
-                            setEditData((prev) => (prev ? { ...prev, ranking_organizations: value } : null))
+                            setEditData((prev) => (prev ? { ...prev, ranking_organisation: value } : null))
                           }
                           selectedYear={editData.ranking_year}
                         />
@@ -1572,16 +1572,16 @@ function RankingsSection() {
                       <div className="flex items-center gap-2">
                         <span className="font-medium">
                           {ranking.ranking_org_name}
-                          {ranking.ranking_year && (
-                            <span className="text-muted-foreground font-normal"> ({ranking.ranking_year})</span>
+                          {ranking.year && (
+                            <span className="text-muted-foreground font-normal"> ({ranking.year})</span>
                           )}
                         </span>
                       </div>
                       <div className="text-lg font-semibold text-primary">
                         {ranking.rank
                           ? `#${ranking.rank}`
-                          : ranking.minimum_range && ranking.maximum_range
-                            ? `#${ranking.minimum_range} - #${ranking.maximum_range}`
+                          : ranking.minimum_rank_range && ranking.maximum_rank_range
+                            ? `#${ranking.minimum_rank_range} - #${ranking.maximum_rank_range}`
                             : "N/A"}
                       </div>
                       {ranking.supporting_text && (

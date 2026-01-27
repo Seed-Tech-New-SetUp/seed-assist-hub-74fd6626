@@ -124,7 +124,7 @@ export interface LogoMutationResponse {
 }
 
 // Rankings types
-// Update SchoolRanking interface
+// SchoolRanking interface - matches backend response
 export interface SchoolRanking {
   description_id?: string;
   school_id?: string;
@@ -132,8 +132,8 @@ export interface SchoolRanking {
   ranking_org_id?: string;
   ranking_addition_id?: string;
   rank?: string;
-  minimum_rank_range?: string; // ✅ Changed from minimum_range
-  maximum_rank_range?: string; // ✅ Changed from maximum_range
+  minimum_rank_range?: string;
+  maximum_rank_range?: string;
   supporting_text?: string;
   created_on?: string;
   created_by?: string;
@@ -142,13 +142,13 @@ export interface SchoolRanking {
   ranking_org_name?: string;
   addition_id?: number;
   addition_name?: string;
-  year?: string; // ✅ Changed from ranking_year
+  year?: string;
 }
 
-// Update RankingOrganization interface
+// RankingOrganization interface - matches backend response
 export interface RankingOrganization {
-  org_id: string; // ✅ Changed from ranking_org_id
-  org_name: string; // ✅ Changed from ranking_org_name
+  org_id: number;
+  org_name: string;
 }
 
 // Add response wrapper interface
