@@ -11,6 +11,16 @@ import { ImageUpload } from "@/components/ui/image-upload";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Info,
   Sparkles,
   Users,
@@ -28,6 +38,7 @@ import {
   Mail,
   Linkedin,
   User,
+  Pencil,
   Loader2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -572,23 +583,68 @@ function ProgramFeaturesSection({ programId, onSave }: SectionProps) {
   const deleteMutation = useDeleteProgramFeature();
 
   const [newFeature, setNewFeature] = useState<Partial<ProgramFeature>>({ usp_title: "", usp_description: "", usp_image_name: "" });
+  const [editingFeature, setEditingFeature] = useState<ProgramFeature | null>(null);
+  const [deleteConfirmFeature, setDeleteConfirmFeature] = useState<ProgramFeature | null>(null);
 
-  const addFeature = () => {
-    if (newFeature.usp_title?.trim()) {
-      saveMutation.mutate({
-        programId,
-        feature: {
-          usp_title: newFeature.usp_title || "",
-          usp_description: newFeature.usp_description || "",
-          usp_image_name: newFeature.usp_image_name || "",
-        },
-      });
-      setNewFeature({ usp_title: "", usp_description: "", usp_image_name: "" });
+  const handleSaveFeature = () => {
+    if (editingFeature) {
+      // Update existing feature
+      if (editingFeature.usp_title?.trim()) {
+        saveMutation.mutate(
+          {
+            programId,
+            feature: {
+              usp_id: editingFeature.usp_id,
+              usp_title: editingFeature.usp_title || "",
+              usp_description: editingFeature.usp_description || "",
+              usp_image_name: editingFeature.usp_image_name || "",
+            },
+          },
+          {
+            onSuccess: () => setEditingFeature(null),
+          }
+        );
+      }
+    } else {
+      // Add new feature
+      if (newFeature.usp_title?.trim()) {
+        saveMutation.mutate({
+          programId,
+          feature: {
+            usp_title: newFeature.usp_title || "",
+            usp_description: newFeature.usp_description || "",
+            usp_image_name: newFeature.usp_image_name || "",
+          },
+        });
+        setNewFeature({ usp_title: "", usp_description: "", usp_image_name: "" });
+      }
     }
   };
 
-  const removeFeature = (featureId: string) => {
-    deleteMutation.mutate({ programId, featureId });
+  const startEditing = (feature: ProgramFeature) => {
+    setEditingFeature({
+      ...feature,
+      // Convert server image path to full URL for preview
+      usp_image_name: feature.usp_image_name
+        ? `https://assist.seedglobaleducation.com/program_usp_uploads/${feature.usp_image_name}`
+        : "",
+    });
+    setNewFeature({ usp_title: "", usp_description: "", usp_image_name: "" });
+  };
+
+  const cancelEditing = () => {
+    setEditingFeature(null);
+  };
+
+  const confirmDelete = () => {
+    if (deleteConfirmFeature?.usp_id) {
+      deleteMutation.mutate(
+        { programId, featureId: deleteConfirmFeature.usp_id },
+        {
+          onSuccess: () => setDeleteConfirmFeature(null),
+        }
+      );
+    }
   };
 
   if (isLoading) {
@@ -600,16 +656,47 @@ function ProgramFeaturesSection({ programId, onSave }: SectionProps) {
     );
   }
 
+  const formFeature = editingFeature || newFeature;
+  const isEditing = !!editingFeature;
+
   return (
     <div className="space-y-6">
+      {/* Delete Confirmation Modal */}
+      <AlertDialog open={!!deleteConfirmFeature} onOpenChange={(open) => !open && setDeleteConfirmFeature(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Feature</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{deleteConfirmFeature?.usp_title}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <Card className="border-dashed">
         <CardContent className="p-4 space-y-4">
-          <h4 className="font-medium text-sm text-muted-foreground">Add New Feature</h4>
+          <h4 className="font-medium text-sm text-muted-foreground">
+            {isEditing ? "Edit Feature" : "Add New Feature"}
+          </h4>
           <div>
             <Label>Feature Title</Label>
             <Input
-              value={newFeature.usp_title || ""}
-              onChange={(e) => setNewFeature({ ...newFeature, usp_title: e.target.value })}
+              value={formFeature.usp_title || ""}
+              onChange={(e) =>
+                isEditing
+                  ? setEditingFeature({ ...editingFeature!, usp_title: e.target.value })
+                  : setNewFeature({ ...newFeature, usp_title: e.target.value })
+              }
               placeholder="Enter feature title..."
               className="mt-1.5"
             />
@@ -617,8 +704,12 @@ function ProgramFeaturesSection({ programId, onSave }: SectionProps) {
           <div>
             <Label>Feature Description</Label>
             <Textarea
-              value={newFeature.usp_description || ""}
-              onChange={(e) => setNewFeature({ ...newFeature, usp_description: e.target.value })}
+              value={formFeature.usp_description || ""}
+              onChange={(e) =>
+                isEditing
+                  ? setEditingFeature({ ...editingFeature!, usp_description: e.target.value })
+                  : setNewFeature({ ...newFeature, usp_description: e.target.value })
+              }
               placeholder="Enter feature description..."
               className="mt-1.5"
               rows={3}
@@ -627,18 +718,41 @@ function ProgramFeaturesSection({ programId, onSave }: SectionProps) {
           <div>
             <Label>Feature Photo</Label>
             <ImageUpload
-              value={newFeature.usp_image_name || ""}
-              onChange={(url) => setNewFeature({ ...newFeature, usp_image_name: url })}
+              value={formFeature.usp_image_name || ""}
+              onChange={(url) =>
+                isEditing
+                  ? setEditingFeature({ ...editingFeature!, usp_image_name: url })
+                  : setNewFeature({ ...newFeature, usp_image_name: url })
+              }
               placeholder="Click to upload feature photo"
               aspectRatio="video"
               className="mt-1.5 max-w-[200px] max-h-[100px]"
             />
           </div>
-          <Button onClick={addFeature} disabled={!newFeature.usp_title?.trim() || saveMutation.isPending}>
-            {saveMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            <Plus className="h-4 w-4 mr-2" />
-            Add Feature
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={handleSaveFeature}
+              disabled={!formFeature.usp_title?.trim() || saveMutation.isPending}
+            >
+              {saveMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {isEditing ? (
+                <>
+                  <Check className="h-4 w-4 mr-2" />
+                  Update Feature
+                </>
+              ) : (
+                <>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Feature
+                </>
+              )}
+            </Button>
+            {isEditing && (
+              <Button variant="outline" onClick={cancelEditing}>
+                Cancel
+              </Button>
+            )}
+          </div>
         </CardContent>
       </Card>
 
@@ -671,15 +785,25 @@ function ProgramFeaturesSection({ programId, onSave }: SectionProps) {
                       <p className="text-sm text-muted-foreground">{feature.usp_description}</p>
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-destructive shrink-0"
-                    onClick={() => feature.usp_id && removeFeature(feature.usp_id)}
-                    disabled={deleteMutation.isPending}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex gap-1 shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => startEditing(feature)}
+                      disabled={saveMutation.isPending}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive"
+                      onClick={() => setDeleteConfirmFeature(feature)}
+                      disabled={deleteMutation.isPending}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}
