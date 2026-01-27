@@ -19,6 +19,7 @@ import { ImageUpload } from "@/components/ui/image-upload";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { 
   Building2, 
   Globe, 
@@ -1105,7 +1106,9 @@ function OrganizationCombobox({
     ? selectedYear
       ? `${selectedOrg.ranking_org_name} (${selectedYear})`
       : selectedOrg.ranking_org_name
-    : "Select organization...";
+    : selectedYear
+      ? `Select organization (${selectedYear})`
+      : "Select organization...";
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -1153,7 +1156,7 @@ function OrganizationCombobox({
 }
 
 function RankingsSection() {
-  const { data: rankingsData, isLoading } = useSchoolRankings();
+  const { data: rankingsData, isLoading, isError, error, refetch, isFetching } = useSchoolRankings();
   const createRanking = useCreateSchoolRanking();
   const updateRanking = useUpdateSchoolRanking();
   const deleteRanking = useDeleteSchoolRanking();
@@ -1271,6 +1274,30 @@ function RankingsSection() {
 
   return (
     <div className="space-y-4">
+      {(isError || organizations.length === 0) && (
+        <Alert>
+          <AlertTitle>Ranking organizations not loaded</AlertTitle>
+          <AlertDescription>
+            <div className="space-y-2">
+              <p>
+                {isError
+                  ? `The backend request failed: ${(error as Error | undefined)?.message || "Unknown error"}`
+                  : "The backend returned 0 organizations, so the dropdown is empty."}
+              </p>
+              <p>
+                Please make sure you’re logged in and have selected a school, then click refresh.
+              </p>
+              <div>
+                <Button type="button" variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
+                  {isFetching && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  Refresh organizations
+                </Button>
+              </div>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Add New Ranking Form */}
       <Card>
         <CardHeader>
