@@ -1264,6 +1264,7 @@ function ProgramRankingsSection({ programId, onSave }: SectionProps) {
   const saveMutation = useSaveProgramRanking();
   const deleteMutation = useDeleteProgramRanking();
 
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [editingRanking, setEditingRanking] = useState<ProgramRanking | null>(null);
   const [newRanking, setNewRanking] = useState<Partial<ProgramRanking>>({
     ranking_organisation: "",
@@ -1272,25 +1273,20 @@ function ProgramRankingsSection({ programId, onSave }: SectionProps) {
     supporting_text: "",
   });
 
-  const currentRanking = editingRanking || newRanking;
-  const isEditing = !!editingRanking;
-
-  const handleSave = () => {
-    if (currentRanking.ranking_organisation && currentRanking.ranking_year && currentRanking.rank) {
+  const handleAddNew = () => {
+    if (newRanking.ranking_organisation && newRanking.ranking_year && newRanking.rank) {
       saveMutation.mutate(
         {
           programId,
           ranking: {
-            ...currentRanking,
-            ranking_organisation: currentRanking.ranking_organisation || "",
-            ranking_year: currentRanking.ranking_year || "",
-            rank: currentRanking.rank || "",
-            supporting_text: currentRanking.supporting_text || "",
+            ranking_organisation: newRanking.ranking_organisation || "",
+            ranking_year: newRanking.ranking_year || "",
+            rank: newRanking.rank || "",
+            supporting_text: newRanking.supporting_text || "",
           } as ProgramRanking,
         },
         {
           onSuccess: () => {
-            setEditingRanking(null);
             setNewRanking({ ranking_organisation: "", ranking_year: "", rank: "", supporting_text: "" });
           },
         }
@@ -1299,19 +1295,30 @@ function ProgramRankingsSection({ programId, onSave }: SectionProps) {
   };
 
   const handleEdit = (ranking: ProgramRanking) => {
+    setEditingId(ranking.ranking_addition_id || null);
     setEditingRanking({ ...ranking });
   };
 
-  const cancelEdit = () => {
-    setEditingRanking(null);
+  const handleSaveEdit = () => {
+    if (editingRanking && editingRanking.ranking_organisation && editingRanking.ranking_year && editingRanking.rank) {
+      saveMutation.mutate(
+        {
+          programId,
+          ranking: editingRanking,
+        },
+        {
+          onSuccess: () => {
+            setEditingId(null);
+            setEditingRanking(null);
+          },
+        }
+      );
+    }
   };
 
-  const updateCurrentRanking = (updates: Partial<ProgramRanking>) => {
-    if (isEditing) {
-      setEditingRanking({ ...editingRanking!, ...updates });
-    } else {
-      setNewRanking({ ...newRanking, ...updates });
-    }
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditingRanking(null);
   };
 
   const removeRanking = (ranking: ProgramRanking) => {
@@ -1335,25 +1342,17 @@ function ProgramRankingsSection({ programId, onSave }: SectionProps) {
 
   return (
     <div className="space-y-6">
-      <Card className={isEditing ? "border-primary" : "border-dashed"}>
+      {/* Add New Ranking Form */}
+      <Card className="border-dashed">
         <CardContent className="p-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <h4 className="font-medium text-sm text-muted-foreground">
-              {isEditing ? "Edit Ranking" : "Add New Ranking"}
-            </h4>
-            {isEditing && (
-              <Button variant="ghost" size="sm" onClick={cancelEdit}>
-                Cancel
-              </Button>
-            )}
-          </div>
+          <h4 className="font-medium text-sm text-muted-foreground">Add New Ranking</h4>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label>Ranking Organisation</Label>
               <Select
-                value={currentRanking.ranking_organisation || ""}
-                onValueChange={(value) => updateCurrentRanking({ ranking_organisation: value })}
+                value={newRanking.ranking_organisation || ""}
+                onValueChange={(value) => setNewRanking({ ...newRanking, ranking_organisation: value })}
               >
                 <SelectTrigger className="mt-1.5">
                   <SelectValue placeholder="Select organisation..." />
@@ -1370,8 +1369,8 @@ function ProgramRankingsSection({ programId, onSave }: SectionProps) {
             <div>
               <Label>Ranking Year</Label>
               <Input
-                value={currentRanking.ranking_year || ""}
-                onChange={(e) => updateCurrentRanking({ ranking_year: e.target.value })}
+                value={newRanking.ranking_year || ""}
+                onChange={(e) => setNewRanking({ ...newRanking, ranking_year: e.target.value })}
                 placeholder="e.g., 2024"
                 className="mt-1.5"
               />
@@ -1383,8 +1382,8 @@ function ProgramRankingsSection({ programId, onSave }: SectionProps) {
               <Label>Rank</Label>
               <Input
                 type="number"
-                value={currentRanking.rank || ""}
-                onChange={(e) => updateCurrentRanking({ rank: e.target.value })}
+                value={newRanking.rank || ""}
+                onChange={(e) => setNewRanking({ ...newRanking, rank: e.target.value })}
                 placeholder="e.g., 5"
                 className="mt-1.5"
                 min="1"
@@ -1393,8 +1392,8 @@ function ProgramRankingsSection({ programId, onSave }: SectionProps) {
             <div className="md:col-span-2">
               <Label>Supporting Text</Label>
               <Input
-                value={currentRanking.supporting_text || ""}
-                onChange={(e) => updateCurrentRanking({ supporting_text: e.target.value })}
+                value={newRanking.supporting_text || ""}
+                onChange={(e) => setNewRanking({ ...newRanking, supporting_text: e.target.value })}
                 placeholder="Additional context about this ranking..."
                 className="mt-1.5"
               />
@@ -1402,75 +1401,146 @@ function ProgramRankingsSection({ programId, onSave }: SectionProps) {
           </div>
 
           <Button
-            onClick={handleSave}
-            disabled={!currentRanking.ranking_organisation || !currentRanking.ranking_year || !currentRanking.rank || saveMutation.isPending}
+            onClick={handleAddNew}
+            disabled={!newRanking.ranking_organisation || !newRanking.ranking_year || !newRanking.rank || saveMutation.isPending}
           >
-            {saveMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            {isEditing ? (
-              <>
-                <Check className="h-4 w-4 mr-2" />
-                Update Ranking
-              </>
-            ) : (
-              <>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Ranking
-              </>
-            )}
+            {saveMutation.isPending && !editingId && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            <Plus className="h-4 w-4 mr-2" />
+            Add Ranking
           </Button>
         </CardContent>
       </Card>
 
+      {/* Rankings List */}
       <div>
         <h4 className="font-medium text-sm text-muted-foreground mb-3">Added Rankings ({rankings.length})</h4>
         {rankings.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4 border rounded-lg">No rankings added yet</p>
         ) : (
           <div className="space-y-3">
-            {rankings.map((ranking, idx) => (
-              <Card key={ranking.ranking_addition_id || idx} className={editingRanking?.ranking_addition_id === ranking.ranking_addition_id ? "ring-2 ring-primary" : ""}>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-primary-foreground font-bold text-lg">
-                          #{ranking.rank}
+            {rankings.map((ranking, idx) => {
+              const isEditingThis = editingId === ranking.ranking_addition_id;
+              
+              return (
+                <Card key={ranking.ranking_addition_id || idx} className={isEditingThis ? "border-primary" : ""}>
+                  <CardContent className="p-4">
+                    {isEditingThis && editingRanking ? (
+                      // Inline Edit Form
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-medium text-sm">Edit Ranking</h4>
+                          <Button variant="ghost" size="sm" onClick={cancelEdit}>
+                            Cancel
+                          </Button>
                         </div>
-                        <div>
-                          <h5 className="font-medium text-foreground">{ranking.ranking_org_name || ranking.ranking_organisation}</h5>
-                          <p className="text-sm text-muted-foreground">
-                            {ranking.ranking_year}
-                          </p>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <Label>Ranking Organisation</Label>
+                            <Select
+                              value={editingRanking.ranking_organisation || ""}
+                              onValueChange={(value) => setEditingRanking({ ...editingRanking, ranking_organisation: value })}
+                            >
+                              <SelectTrigger className="mt-1.5">
+                                <SelectValue placeholder="Select organisation..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {organizations.map((org) => (
+                                  <SelectItem key={org.id} value={org.id}>
+                                    {org.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label>Ranking Year</Label>
+                            <Input
+                              value={editingRanking.ranking_year || ""}
+                              onChange={(e) => setEditingRanking({ ...editingRanking, ranking_year: e.target.value })}
+                              placeholder="e.g., 2024"
+                              className="mt-1.5"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div>
+                            <Label>Rank</Label>
+                            <Input
+                              type="number"
+                              value={editingRanking.rank || ""}
+                              onChange={(e) => setEditingRanking({ ...editingRanking, rank: e.target.value })}
+                              placeholder="e.g., 5"
+                              className="mt-1.5"
+                              min="1"
+                            />
+                          </div>
+                          <div className="md:col-span-2">
+                            <Label>Supporting Text</Label>
+                            <Input
+                              value={editingRanking.supporting_text || ""}
+                              onChange={(e) => setEditingRanking({ ...editingRanking, supporting_text: e.target.value })}
+                              placeholder="Additional context about this ranking..."
+                              className="mt-1.5"
+                            />
+                          </div>
+                        </div>
+
+                        <Button
+                          onClick={handleSaveEdit}
+                          disabled={!editingRanking.ranking_organisation || !editingRanking.ranking_year || !editingRanking.rank || saveMutation.isPending}
+                        >
+                          {saveMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                          <Check className="h-4 w-4 mr-2" />
+                          Update Ranking
+                        </Button>
+                      </div>
+                    ) : (
+                      // Display Mode
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-primary-foreground font-bold text-lg">
+                              #{ranking.rank}
+                            </div>
+                            <div>
+                              <h5 className="font-medium text-foreground">{ranking.ranking_org_name || ranking.ranking_organisation}</h5>
+                              <p className="text-sm text-muted-foreground">
+                                {ranking.ranking_year}
+                              </p>
+                            </div>
+                          </div>
+                          {ranking.supporting_text && (
+                            <p className="text-sm text-muted-foreground mt-2 ml-[52px]">{ranking.supporting_text}</p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="shrink-0"
+                            onClick={() => handleEdit(ranking)}
+                            disabled={saveMutation.isPending || !!editingId}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive shrink-0"
+                            onClick={() => removeRanking(ranking)}
+                            disabled={deleteMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
-                      {ranking.supporting_text && (
-                        <p className="text-sm text-muted-foreground mt-2 ml-[52px]">{ranking.supporting_text}</p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="shrink-0"
-                        onClick={() => handleEdit(ranking)}
-                        disabled={saveMutation.isPending}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive shrink-0"
-                        onClick={() => removeRanking(ranking)}
-                        disabled={deleteMutation.isPending}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         )}
       </div>
