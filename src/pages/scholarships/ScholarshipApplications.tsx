@@ -48,7 +48,7 @@ const statusConfig: Record<WorkflowStatus, { label: string; icon: React.ElementT
   onhold: { label: "On Hold", icon: Pause, color: "bg-orange-500/10 text-orange-600 border-orange-500/20" },
   rejected: { label: "Rejected", icon: X, color: "bg-red-500/10 text-red-600 border-red-500/20" },
   winner: { label: "Winner", icon: Trophy, color: "bg-purple-500/10 text-purple-600 border-purple-500/20" },
-  recommended: { label: "Recommended", icon: Star, color: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20" },
+  recommended: { label: "SEED Recommended", icon: Star, color: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20" },
 };
 
 export default function ScholarshipApplications() {
@@ -467,16 +467,17 @@ export default function ScholarshipApplications() {
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-wrap gap-1">
-                            {applicant.isSeedRecommended && (
+                            {applicant.isSeedRecommended ? (
                               <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20 whitespace-nowrap">
                                 <Star className="h-3 w-3 mr-1" />
                                 SEED Recommended
                               </Badge>
+                            ) : (
+                              <Badge variant="outline" className={status.color}>
+                                <status.icon className="h-3 w-3 mr-1" />
+                                {status.label}
+                              </Badge>
                             )}
-                            <Badge variant="outline" className={status.color}>
-                              <status.icon className="h-3 w-3 mr-1" />
-                              {status.label}
-                            </Badge>
                           </div>
                         </TableCell>
                         <TableCell>

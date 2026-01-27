@@ -449,15 +449,16 @@ export default function StudentProfile() {
               <div className="flex items-center gap-4">
                 <h1 className="text-2xl font-display font-bold">{profile.name}</h1>
                 <div className="flex gap-2">
-                  {profile.isSeedRecommended && (
+                  {profile.isSeedRecommended ? (
                     <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20 whitespace-nowrap">
                       <Star className="h-3 w-3 mr-1" />
                       SEED Recommended
                     </Badge>
+                  ) : (
+                    <Badge variant="outline" className={statusConfig[uiStatus].color}>
+                      {statusConfig[uiStatus].label}
+                    </Badge>
                   )}
-                  <Badge variant="outline" className={statusConfig[uiStatus].color}>
-                    {statusConfig[uiStatus].label}
-                  </Badge>
                 </div>
               </div>
               <div className="flex items-center gap-2">
