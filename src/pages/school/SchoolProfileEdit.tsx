@@ -31,10 +31,11 @@ import {
   Trash2,
   Check,
   Loader2,
+  Pencil,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { useSchoolFAQs, useSaveSchoolFAQs, useSchoolInfo, useSaveSchoolInfo, useSchoolSocialMedia, useSaveSchoolSocialMedia, useSchoolFeatures, useCreateSchoolFeature, useDeleteSchoolFeature } from "@/hooks/useSchoolProfile";
+import { useSchoolFAQs, useSaveSchoolFAQs, useSchoolInfo, useSaveSchoolInfo, useSchoolSocialMedia, useSaveSchoolSocialMedia, useSchoolFeatures, useCreateSchoolFeature, useUpdateSchoolFeature, useDeleteSchoolFeature } from "@/hooks/useSchoolProfile";
 import { SchoolFAQ, SchoolInfo, SchoolSocialMedia, SchoolFeature } from "@/lib/api/school-profile";
 
 const sections = [
@@ -97,6 +98,7 @@ export default function SchoolProfileEdit() {
   // Features state and mutations - lifted up for global save button  
   const { data: apiFeatures, isLoading: featuresLoading } = useSchoolFeatures();
   const createFeature = useCreateSchoolFeature();
+  const updateFeature = useUpdateSchoolFeature();
   const deleteFeature = useDeleteSchoolFeature();
 
   const handleSave = (sectionId: string) => {
@@ -259,8 +261,10 @@ export default function SchoolProfileEdit() {
                     features={apiFeatures || []}
                     isLoading={featuresLoading}
                     onCreate={createFeature.mutate}
+                    onUpdate={updateFeature.mutate}
                     onDelete={deleteFeature.mutate}
                     isCreating={createFeature.isPending}
+                    isUpdating={updateFeature.isPending}
                     isDeleting={deleteFeature.isPending}
                   />
                 )}
@@ -676,23 +680,52 @@ interface FeaturesSectionProps {
   features: SchoolFeature[];
   isLoading: boolean;
   onCreate: (feature: { usp_title: string; usp_description: string; usp_image?: string }) => void;
+  onUpdate: (feature: { usp_id: string; usp_title: string; usp_description: string; usp_image?: string }) => void;
   onDelete: (uspId: string) => void;
   isCreating: boolean;
+  isUpdating: boolean;
   isDeleting: boolean;
 }
 
-function FeaturesSection({ features, isLoading, onCreate, onDelete, isCreating, isDeleting }: FeaturesSectionProps) {
-  const [newFeature, setNewFeature] = useState({ title: "", description: "", image: "" });
+function FeaturesSection({ features, isLoading, onCreate, onUpdate, onDelete, isCreating, isUpdating, isDeleting }: FeaturesSectionProps) {
+  const [featureForm, setFeatureForm] = useState({ title: "", description: "", image: "" });
+  const [editingFeatureId, setEditingFeatureId] = useState<string | null>(null);
 
-  const handleAddFeature = () => {
-    if (newFeature.title.trim()) {
-      onCreate({
-        usp_title: newFeature.title,
-        usp_description: newFeature.description,
-        usp_image: newFeature.image || undefined,
-      });
-      setNewFeature({ title: "", description: "", image: "" });
+  const handleSaveFeature = () => {
+    if (featureForm.title.trim()) {
+      if (editingFeatureId) {
+        // Update existing feature
+        onUpdate({
+          usp_id: editingFeatureId,
+          usp_title: featureForm.title,
+          usp_description: featureForm.description,
+          usp_image: featureForm.image || undefined,
+        });
+        setEditingFeatureId(null);
+      } else {
+        // Create new feature
+        onCreate({
+          usp_title: featureForm.title,
+          usp_description: featureForm.description,
+          usp_image: featureForm.image || undefined,
+        });
+      }
+      setFeatureForm({ title: "", description: "", image: "" });
     }
+  };
+
+  const handleEditFeature = (feature: SchoolFeature) => {
+    setEditingFeatureId(feature.usp_id || null);
+    setFeatureForm({
+      title: feature.usp_title,
+      description: feature.usp_description,
+      image: "", // Don't pre-fill image, user can upload new one if needed
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingFeatureId(null);
+    setFeatureForm({ title: "", description: "", image: "" });
   };
 
   const handleDeleteFeature = (uspId: string) => {
@@ -718,18 +751,22 @@ function FeaturesSection({ features, isLoading, onCreate, onDelete, isCreating, 
     );
   }
 
+  const isProcessing = isCreating || isUpdating;
+
   return (
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm">Add Feature</CardTitle>
+          <CardTitle className="text-sm">
+            {editingFeatureId ? "Edit Feature" : "Add Feature"}
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
             <Label>Title</Label>
             <Input 
-              value={newFeature.title}
-              onChange={(e) => setNewFeature({ ...newFeature, title: e.target.value })}
+              value={featureForm.title}
+              onChange={(e) => setFeatureForm({ ...featureForm, title: e.target.value })}
               placeholder="Feature title" 
               className="mt-1.5" 
             />
@@ -737,26 +774,33 @@ function FeaturesSection({ features, isLoading, onCreate, onDelete, isCreating, 
           <div>
             <Label>Description</Label>
             <Textarea 
-              value={newFeature.description}
-              onChange={(e) => setNewFeature({ ...newFeature, description: e.target.value })}
+              value={featureForm.description}
+              onChange={(e) => setFeatureForm({ ...featureForm, description: e.target.value })}
               placeholder="Feature description" 
               className="mt-1.5" 
             />
           </div>
           <div>
-            <Label>Image</Label>
+            <Label>Image {editingFeatureId && <span className="text-muted-foreground">(leave empty to keep current)</span>}</Label>
             <ImageUpload
-              value={newFeature.image}
-              onChange={(url) => setNewFeature({ ...newFeature, image: url })}
+              value={featureForm.image}
+              onChange={(url) => setFeatureForm({ ...featureForm, image: url })}
               placeholder="Click to upload feature image"
               aspectRatio="video"
               className="mt-1.5"
             />
           </div>
-          <Button onClick={handleAddFeature} disabled={!newFeature.title.trim() || isCreating}>
-            {isCreating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Add Feature
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={handleSaveFeature} disabled={!featureForm.title.trim() || isProcessing}>
+              {isProcessing && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {editingFeatureId ? "Update Feature" : "Add Feature"}
+            </Button>
+            {editingFeatureId && (
+              <Button variant="outline" onClick={handleCancelEdit}>
+                Cancel
+              </Button>
+            )}
+          </div>
         </CardContent>
       </Card>
       {features.length === 0 ? (
@@ -766,7 +810,7 @@ function FeaturesSection({ features, isLoading, onCreate, onDelete, isCreating, 
       ) : (
         <div className="space-y-3">
           {features.map((feature) => (
-            <Card key={feature.usp_id}>
+            <Card key={feature.usp_id} className={editingFeatureId === feature.usp_id ? "ring-2 ring-primary" : ""}>
               <CardContent className="p-4 flex items-start justify-between gap-4">
                 <div className="flex gap-4 flex-1">
                   {getFeatureImageUrl(feature) ? (
@@ -788,15 +832,25 @@ function FeaturesSection({ features, isLoading, onCreate, onDelete, isCreating, 
                     <p className="text-sm text-muted-foreground">{feature.usp_description}</p>
                   </div>
                 </div>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="text-destructive" 
-                  onClick={() => handleDeleteFeature(feature.usp_id || "")}
-                  disabled={isDeleting}
-                >
-                  {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                </Button>
+                <div className="flex gap-1">
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    onClick={() => handleEditFeature(feature)}
+                    disabled={isUpdating || isDeleting}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="text-destructive" 
+                    onClick={() => handleDeleteFeature(feature.usp_id || "")}
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}
