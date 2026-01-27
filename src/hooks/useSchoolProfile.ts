@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { 
-  fetchSchoolFAQs, 
-  saveSchoolFAQs, 
+import {
+  fetchSchoolFAQs,
+  saveSchoolFAQs,
   fetchSchoolInfo,
   saveSchoolInfo,
   fetchSchoolSocialMedia,
@@ -24,7 +24,7 @@ import {
   SchoolFeature,
   SchoolLogo,
   SchoolRanking,
-  RankingOrganization
+  RankingOrganization,
 } from "@/lib/api/school-profile";
 import { useToast } from "@/hooks/use-toast";
 
@@ -138,7 +138,7 @@ export function useCreateSchoolFeature() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: (feature: { usp_title: string; usp_description: string; usp_image?: string }) => 
+    mutationFn: (feature: { usp_title: string; usp_description: string; usp_image?: string }) =>
       createSchoolFeature(feature),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["school-features"] });
@@ -162,7 +162,7 @@ export function useUpdateSchoolFeature() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: (feature: { usp_id: string; usp_title: string; usp_description: string; usp_image?: string }) => 
+    mutationFn: (feature: { usp_id: string; usp_title: string; usp_description: string; usp_image?: string }) =>
       updateSchoolFeature(feature),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["school-features"] });
@@ -218,8 +218,7 @@ export function useCreateSchoolLogo() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: (logo: { logo: string; logoRatio: string }) => 
-      createSchoolLogo(logo),
+    mutationFn: (logo: { logo: string; logoRatio: string }) => createSchoolLogo(logo),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["school-logos"] });
       toast({
@@ -242,8 +241,7 @@ export function useUpdateSchoolLogo() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: (logo: { logo_id: string; logo?: string; logoRatio?: string }) => 
-      updateSchoolLogo(logo),
+    mutationFn: (logo: { logo_id: string; logo?: string; logoRatio?: string }) => updateSchoolLogo(logo),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["school-logos"] });
       toast({
@@ -287,9 +285,21 @@ export function useDeleteSchoolLogo() {
 // ============ Rankings Hooks ============
 
 export function useSchoolRankings() {
-  return useQuery({
+  return useQuery<SchoolRankingsResponse>({
     queryKey: ["school-rankings"],
-    queryFn: fetchSchoolRankings,
+    queryFn: async () => {
+      const response = await apiClient.get("/school/rankings");
+      return response.data;
+    },
+    select: (data) => ({
+      // ✅ Map backend response to frontend expectations
+      rankings: data.data.rankings || [],
+      organizations: data.data.ranking_organizations.map((org) => ({
+        ranking_org_id: String(org.org_id),
+        ranking_org_name: org.org_name,
+      })),
+      school_id: data.data.school_id,
+    }),
   });
 }
 
@@ -363,11 +373,8 @@ export function useDeleteSchoolRanking() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: (ranking: {
-      description_id: string;
-      ranking_org_id: string;
-      ranking_addition_id: string;
-    }) => deleteSchoolRanking(ranking),
+    mutationFn: (ranking: { description_id: string; ranking_org_id: string; ranking_addition_id: string }) =>
+      deleteSchoolRanking(ranking),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["school-rankings"] });
       toast({
