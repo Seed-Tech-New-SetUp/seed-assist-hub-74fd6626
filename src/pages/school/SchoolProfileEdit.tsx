@@ -1210,7 +1210,7 @@ function RankingsSection() {
     ranking_org_id: string;
     ranking_addition_id: string;
     ranking_organisation: string;
-    year: string;
+    ranking_year: string;
     level: string;
     rank: string;
     minimum_range: string;
@@ -1242,7 +1242,7 @@ function RankingsSection() {
     createRanking.mutate(
       {
         ranking_organisation: formData.ranking_organisation,
-        year: formData.year,
+        ranking_year: formData.year,
         level: formData.level,
         rank: useRange ? "" : formData.rank,
         minimum_range: useRange ? formData.minimum_range : "",
@@ -1264,7 +1264,7 @@ function RankingsSection() {
       ranking_org_id: ranking.ranking_org_id || "",
       ranking_addition_id: ranking.ranking_addition_id || "",
       ranking_organisation: ranking.ranking_org_id || "",
-      year: ranking.year || "",
+      ranking_year: ranking.ranking_year || "",
       level: ranking.level || "School",
       rank: ranking.rank || "",
       minimum_range: ranking.minimum_range || "",
@@ -1468,14 +1468,14 @@ function RankingsSection() {
                           onValueChange={(value) =>
                             setEditData((prev) => (prev ? { ...prev, ranking_organisation: value } : null))
                           }
-                          selectedYear={editData.year}
+                          selectedYear={editData.ranking_year}
                         />
                       </div>
                       <div>
                         <Label>Year</Label>
                         <Select
-                          value={editData.year}
-                          onValueChange={(value) => setEditData((prev) => (prev ? { ...prev, year: value } : null))}
+                          value={editData.ranking_year}
+                          onValueChange={(value) => setEditData((prev) => (prev ? { ...prev, ranking_year: value } : null))}
                         >
                           <SelectTrigger className="mt-1.5">
                             <SelectValue placeholder="Select year" />
@@ -1570,7 +1570,7 @@ function RankingsSection() {
                       <div className="flex items-center gap-2">
                         <span className="font-medium">
                           {ranking.ranking_org_name}
-                          {ranking.year && <span className="text-muted-foreground font-normal"> ({ranking.year})</span>}
+                          {ranking.ranking_year && <span className="text-muted-foreground font-normal"> ({ranking.ranking_year})</span>}
                         </span>
                       </div>
                       <div className="text-lg font-semibold text-primary">
