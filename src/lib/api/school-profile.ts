@@ -96,10 +96,12 @@ export interface FeatureMutationResponse {
 export interface SchoolLogo {
   logo_id?: string;
   school_id?: string;
-  logo_name?: string;
+  logo_file_name?: string;
   logo_file_format?: string;
   logo_ratio?: string;
   created_on?: string;
+  created_by?: string;
+  is_approved_by?: string;
 }
 
 export interface SchoolLogosResponse {

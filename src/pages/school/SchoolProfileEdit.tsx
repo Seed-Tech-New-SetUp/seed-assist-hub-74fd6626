@@ -1024,7 +1024,7 @@ function LogosSection() {
                   ) : (
                     <>
                       <img
-                        src={`${LOGO_BASE_URL}${logo.logo_name}`}
+                        src={`${LOGO_BASE_URL}${logo.logo_file_name}`}
                         alt={`Logo ${logo.logo_ratio}`}
                         className="w-full h-24 object-contain bg-muted rounded"
                         onError={(e) => {
