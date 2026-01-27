@@ -716,10 +716,11 @@ function FeaturesSection({ features, isLoading, onCreate, onUpdate, onDelete, is
 
   const handleEditFeature = (feature: SchoolFeature) => {
     setEditingFeatureId(feature.usp_id || null);
+    const currentImageUrl = getFeatureImageUrl(feature);
     setFeatureForm({
       title: feature.usp_title,
       description: feature.usp_description,
-      image: "", // Don't pre-fill image, user can upload new one if needed
+      image: currentImageUrl, // Show current image for editing
     });
   };
 
@@ -812,19 +813,19 @@ function FeaturesSection({ features, isLoading, onCreate, onUpdate, onDelete, is
           {features.map((feature) => (
             <Card key={feature.usp_id} className={editingFeatureId === feature.usp_id ? "ring-2 ring-primary" : ""}>
               <CardContent className="p-4 flex items-start justify-between gap-4">
-                <div className="flex gap-4 flex-1">
+                <div className="flex gap-3 flex-1">
                   {getFeatureImageUrl(feature) ? (
                     <img 
                       src={getFeatureImageUrl(feature)} 
                       alt={feature.usp_title} 
-                      className="w-16 h-16 rounded-lg object-cover"
+                      className="w-10 h-10 rounded object-cover shrink-0"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = "/placeholder.svg";
                       }}
                     />
                   ) : (
-                    <div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                      <Image className="h-6 w-6 text-muted-foreground" />
+                    <div className="w-10 h-10 rounded bg-muted flex items-center justify-center shrink-0">
+                      <Image className="h-4 w-4 text-muted-foreground" />
                     </div>
                   )}
                   <div>
