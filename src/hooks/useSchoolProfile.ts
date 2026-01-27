@@ -10,10 +10,15 @@ import {
   createSchoolFeature,
   updateSchoolFeature,
   deleteSchoolFeature,
+  fetchSchoolLogos,
+  createSchoolLogo,
+  updateSchoolLogo,
+  deleteSchoolLogo,
   SchoolFAQ,
   SchoolInfo,
   SchoolSocialMedia,
-  SchoolFeature
+  SchoolFeature,
+  SchoolLogo
 } from "@/lib/api/school-profile";
 import { useToast } from "@/hooks/use-toast";
 
@@ -187,6 +192,86 @@ export function useDeleteSchoolFeature() {
       toast({
         title: "Error",
         description: error.message || "Failed to delete feature",
+        variant: "destructive",
+      });
+    },
+  });
+}
+
+// ============ Logos Hooks ============
+
+export function useSchoolLogos() {
+  return useQuery({
+    queryKey: ["school-logos"],
+    queryFn: fetchSchoolLogos,
+  });
+}
+
+export function useCreateSchoolLogo() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: (logo: { logo: string; logoRatio: string }) => 
+      createSchoolLogo(logo),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["school-logos"] });
+      toast({
+        title: "Logo Added",
+        description: "Your logo has been added successfully.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add logo",
+        variant: "destructive",
+      });
+    },
+  });
+}
+
+export function useUpdateSchoolLogo() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: (logo: { logo_id: string; logo?: string; logoRatio?: string }) => 
+      updateSchoolLogo(logo),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["school-logos"] });
+      toast({
+        title: "Logo Updated",
+        description: "Your logo has been updated successfully.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update logo",
+        variant: "destructive",
+      });
+    },
+  });
+}
+
+export function useDeleteSchoolLogo() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: (logoId: string) => deleteSchoolLogo(logoId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["school-logos"] });
+      toast({
+        title: "Logo Deleted",
+        description: "Your logo has been removed successfully.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete logo",
         variant: "destructive",
       });
     },

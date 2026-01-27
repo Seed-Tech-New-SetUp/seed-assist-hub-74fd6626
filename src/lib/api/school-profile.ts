@@ -92,6 +92,35 @@ export interface FeatureMutationResponse {
   error?: string;
 }
 
+// Logos types
+export interface SchoolLogo {
+  logo_id?: string;
+  school_id?: string;
+  logo_name?: string;
+  logo_file_format?: string;
+  logo_ratio?: string;
+  created_on?: string;
+}
+
+export interface SchoolLogosResponse {
+  success: boolean;
+  data?: {
+    logos: SchoolLogo[];
+    count: number;
+  };
+  error?: string;
+}
+
+export interface LogoMutationResponse {
+  success: boolean;
+  data?: {
+    message: string;
+    logo?: SchoolLogo;
+    logo_id?: string;
+  };
+  error?: string;
+}
+
 // ============ API Helper ============
 
 async function callSchoolProfileProxy<T>(
@@ -331,6 +360,107 @@ export async function deleteSchoolFeature(uspId: string): Promise<FeatureMutatio
   return result;
 }
 
+// ============ Logos API ============
+
+export async function fetchSchoolLogos(): Promise<SchoolLogo[]> {
+  const result = await callSchoolProfileProxy<SchoolLogosResponse>("logos-read", "GET");
+  const logos = result.data?.logos || [];
+  return decodeObjectStrings(logos);
+}
+
+export async function createSchoolLogo(logo: {
+  logo: string; // base64 data URL
+  logoRatio: string;
+}): Promise<LogoMutationResponse> {
+  const token = getPortalToken();
+  if (!token) {
+    handleUnauthorized("No authentication token found");
+  }
+
+  const formData = new FormData();
+  formData.append("logoRatio", logo.logoRatio);
+
+  // Handle image upload
+  if (logo.logo && logo.logo.startsWith("data:")) {
+    const blob = dataURLtoBlob(logo.logo);
+    formData.append("logo", blob, "logo-image.png");
+  }
+
+  const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/school-profile-proxy?action=logos-create`;
+  
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    if (isUnauthorizedError(response.status, errorData)) {
+      handleUnauthorized(errorData.error || errorData.message);
+    }
+    throw new Error(errorData.error || `Request failed with status ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function updateSchoolLogo(logo: {
+  logo_id: string;
+  logo?: string; // base64 data URL (optional)
+  logoRatio?: string;
+}): Promise<LogoMutationResponse> {
+  const token = getPortalToken();
+  if (!token) {
+    handleUnauthorized("No authentication token found");
+  }
+
+  const formData = new FormData();
+  formData.append("logo_id", logo.logo_id);
+  if (logo.logoRatio) {
+    formData.append("logoRatio", logo.logoRatio);
+  }
+
+  // Handle image upload if provided
+  if (logo.logo && logo.logo.startsWith("data:")) {
+    const blob = dataURLtoBlob(logo.logo);
+    formData.append("logo", blob, "logo-image.png");
+  }
+
+  const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/school-profile-proxy?action=logos-update`;
+  
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    if (isUnauthorizedError(response.status, errorData)) {
+      handleUnauthorized(errorData.error || errorData.message);
+    }
+    throw new Error(errorData.error || `Request failed with status ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function deleteSchoolLogo(logoId: string): Promise<LogoMutationResponse> {
+  const result = await callSchoolProfileProxy<LogoMutationResponse>(
+    "logos-delete",
+    "POST",
+    { logo_id: logoId }
+  );
+  return result;
+}
+
 // Helper function to convert base64 data URL to Blob
 function dataURLtoBlob(dataURL: string): Blob {
   const arr = dataURL.split(",");
@@ -342,4 +472,15 @@ function dataURLtoBlob(dataURL: string): Blob {
     u8arr[n] = bstr.charCodeAt(n);
   }
   return new Blob([u8arr], { type: mime });
+}
+
+// Helper function to calculate logo ratio from image dimensions
+export function calculateLogoRatio(width: number, height: number): string {
+  if (width > height) {
+    const ratio = Math.round(width / height);
+    return `${ratio}:1`;
+  } else {
+    const ratio = Math.round(height / width);
+    return `1:${ratio}`;
+  }
 }

@@ -21,7 +21,7 @@ import {
   Building2, 
   Globe, 
   HelpCircle, 
-  Image, 
+  Image as ImageIcon, 
   Star, 
   Trophy, 
   Phone,
@@ -35,15 +35,15 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { useSchoolFAQs, useSaveSchoolFAQs, useSchoolInfo, useSaveSchoolInfo, useSchoolSocialMedia, useSaveSchoolSocialMedia, useSchoolFeatures, useCreateSchoolFeature, useUpdateSchoolFeature, useDeleteSchoolFeature } from "@/hooks/useSchoolProfile";
-import { SchoolFAQ, SchoolInfo, SchoolSocialMedia, SchoolFeature } from "@/lib/api/school-profile";
+import { useSchoolFAQs, useSaveSchoolFAQs, useSchoolInfo, useSaveSchoolInfo, useSchoolSocialMedia, useSaveSchoolSocialMedia, useSchoolFeatures, useCreateSchoolFeature, useUpdateSchoolFeature, useDeleteSchoolFeature, useSchoolLogos, useCreateSchoolLogo, useUpdateSchoolLogo, useDeleteSchoolLogo } from "@/hooks/useSchoolProfile";
+import { SchoolFAQ, SchoolInfo, SchoolSocialMedia, SchoolFeature, SchoolLogo, calculateLogoRatio } from "@/lib/api/school-profile";
 
 const sections = [
   { id: "info", label: "Organisation Details", icon: Building2 },
   { id: "social", label: "Digital Presence", icon: Globe },
   { id: "faqs", label: "Knowledge Base", icon: HelpCircle },
   { id: "features", label: "Key Highlights", icon: Star },
-  { id: "logos", label: "Brand Assets", icon: Image },
+  { id: "logos", label: "Brand Assets", icon: ImageIcon },
   { id: "rankings", label: "Accreditations & Rankings", icon: Trophy },
   { id: "contact", label: "Key Contacts", icon: Phone },
   { id: "programs", label: "Program Portfolio", icon: GraduationCap },
@@ -830,7 +830,7 @@ function FeaturesSection({ features, isLoading, onCreate, onUpdate, onDelete, is
                     />
                   ) : (
                     <div className="w-16 h-16 rounded bg-muted flex items-center justify-center shrink-0">
-                      <Image className="h-6 w-6 text-muted-foreground" />
+                      <ImageIcon className="h-6 w-6 text-muted-foreground" />
                     </div>
                   )}
                   <div>
@@ -866,32 +866,210 @@ function FeaturesSection({ features, isLoading, onCreate, onUpdate, onDelete, is
   );
 }
 
+const LOGO_BASE_URL = "https://assist.seedglobaleducation.com/school_logo_uploads/";
+
 function LogosSection() {
-  const [logo1x1, setLogo1x1] = useState("");
-  const [logo3x1, setLogo3x1] = useState("");
+  const { data: logos, isLoading } = useSchoolLogos();
+  const createLogo = useCreateSchoolLogo();
+  const updateLogo = useUpdateSchoolLogo();
+  const deleteLogo = useDeleteSchoolLogo();
+  
+  const [newLogoPreview, setNewLogoPreview] = useState("");
+  const [newLogoRatio, setNewLogoRatio] = useState("");
+  const [editingLogoId, setEditingLogoId] = useState<string | null>(null);
+  const [editLogoPreview, setEditLogoPreview] = useState("");
+
+  const handleNewLogoUpload = async (dataUrl: string) => {
+    if (!dataUrl) {
+      setNewLogoPreview("");
+      setNewLogoRatio("");
+      return;
+    }
+    
+    // Calculate ratio from image
+    const img = new Image();
+    img.onload = () => {
+      const ratio = calculateLogoRatio(img.width, img.height);
+      setNewLogoRatio(ratio);
+      setNewLogoPreview(dataUrl);
+    };
+    img.src = dataUrl;
+  };
+
+  const handleCreateLogo = async () => {
+    if (!newLogoPreview || !newLogoRatio) return;
+    
+    await createLogo.mutateAsync({
+      logo: newLogoPreview,
+      logoRatio: newLogoRatio,
+    });
+    
+    setNewLogoPreview("");
+    setNewLogoRatio("");
+  };
+
+  const handleUpdateLogo = async (logoId: string) => {
+    if (!editLogoPreview) {
+      setEditingLogoId(null);
+      return;
+    }
+    
+    // Calculate new ratio
+    const img = new Image();
+    img.onload = async () => {
+      const ratio = calculateLogoRatio(img.width, img.height);
+      await updateLogo.mutateAsync({
+        logo_id: logoId,
+        logo: editLogoPreview,
+        logoRatio: ratio,
+      });
+      setEditingLogoId(null);
+      setEditLogoPreview("");
+    };
+    img.src = editLogoPreview;
+  };
+
+  const handleDeleteLogo = async (logoId: string) => {
+    await deleteLogo.mutateAsync(logoId);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-32 w-full" />
+      </div>
+    );
+  }
 
   return (
-    <div className="grid grid-cols-2 gap-4">
-      <div>
-        <Label>Logo (1:1 ratio)</Label>
-        <ImageUpload
-          value={logo1x1}
-          onChange={setLogo1x1}
-          placeholder="Upload 1:1 logo"
-          aspectRatio="square"
-          className="mt-1.5"
-        />
-      </div>
-      <div>
-        <Label>Logo (3:1 ratio)</Label>
-        <ImageUpload
-          value={logo3x1}
-          onChange={setLogo3x1}
-          placeholder="Upload 3:1 logo"
-          aspectRatio="wide"
-          className="mt-1.5"
-        />
-      </div>
+    <div className="space-y-6">
+      {/* Add New Logo */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm">Add New Logo</CardTitle>
+          <CardDescription>Upload a logo image. The ratio will be calculated automatically.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Logo Image</Label>
+              <ImageUpload
+                value={newLogoPreview}
+                onChange={handleNewLogoUpload}
+                placeholder="Upload logo"
+                aspectRatio="auto"
+                className="mt-1.5"
+              />
+            </div>
+            <div className="flex flex-col justify-between">
+              <div>
+                <Label>Detected Ratio</Label>
+                <p className="text-sm text-muted-foreground mt-1.5">
+                  {newLogoRatio || "Upload an image to detect ratio"}
+                </p>
+              </div>
+              <Button 
+                onClick={handleCreateLogo} 
+                disabled={!newLogoPreview || createLogo.isPending}
+                className="w-full"
+              >
+                {createLogo.isPending ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Adding...</>
+                ) : (
+                  <><Plus className="h-4 w-4 mr-2" /> Add Logo</>
+                )}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Existing Logos */}
+      {logos && logos.length > 0 ? (
+        <div className="grid grid-cols-2 gap-4">
+          {logos.map((logo) => (
+            <Card key={logo.logo_id} className="overflow-hidden">
+              <CardContent className="p-4">
+                <div className="relative group">
+                  {editingLogoId === logo.logo_id ? (
+                    <div className="space-y-2">
+                      <ImageUpload
+                        value={editLogoPreview}
+                        onChange={setEditLogoPreview}
+                        placeholder="Upload new logo"
+                        aspectRatio="auto"
+                        className="h-24"
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => handleUpdateLogo(logo.logo_id || "")}
+                          disabled={updateLogo.isPending || !editLogoPreview}
+                        >
+                          {updateLogo.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setEditingLogoId(null);
+                            setEditLogoPreview("");
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <img
+                        src={`${LOGO_BASE_URL}${logo.logo_name}`}
+                        alt={`Logo ${logo.logo_ratio}`}
+                        className="w-full h-24 object-contain bg-muted rounded"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = "/placeholder.svg";
+                        }}
+                      />
+                      <div className="mt-2 flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">
+                          Ratio: {logo.logo_ratio || "Unknown"}
+                        </span>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => {
+                              setEditingLogoId(logo.logo_id || null);
+                              setEditLogoPreview("");
+                            }}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive"
+                            onClick={() => handleDeleteLogo(logo.logo_id || "")}
+                            disabled={deleteLogo.isPending}
+                          >
+                            {deleteLogo.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="text-sm text-muted-foreground text-center py-8 border rounded-lg">
+          No logos added yet. Upload your first logo above.
+        </div>
+      )}
     </div>
   );
 }
