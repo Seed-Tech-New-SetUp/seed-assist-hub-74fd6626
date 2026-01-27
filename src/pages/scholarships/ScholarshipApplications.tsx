@@ -328,7 +328,7 @@ export default function ScholarshipApplications() {
                 </div>
                 <div>
                   <p className="text-xl font-bold">{seedRecommendedCount}</p>
-                  <p className="text-[10px] text-muted-foreground leading-tight whitespace-nowrap">SEED Recommended</p>
+                  <p className="text-[10px] text-muted-foreground leading-tight">SEED Recommended</p>
                 </div>
               </div>
             </CardContent>
