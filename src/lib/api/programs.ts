@@ -54,7 +54,7 @@ export interface ProgramFeature {
   is_approved_by?: string;
 }
 
-// Backend uses "organisation" (British spelling), we normalize to "organization" internally
+// Backend uses "organisation" (British spelling) and we keep the same spelling in the UI to avoid confusion
 export interface ProgramMemberBackend {
   member_id?: string;
   program_id?: string;
@@ -80,7 +80,7 @@ export interface ProgramMember {
   email: string;
   linkedin_url: string;
   designation: string;
-  organization: string; // Normalized frontend spelling
+  organisation: string;
   call_to_action: string;
   image_name?: string;
   created_on?: string;
@@ -351,10 +351,9 @@ export async function fetchProgramMembers(
     "GET",
     { program_id: programId, category }
   );
-  // Normalize "organisation" from backend to "organization" for frontend
   return (result.data?.members || []).map((m) => ({
     ...m,
-    organization: m.organisation || "",
+    organisation: m.organisation || "",
   }));
 }
 
@@ -389,7 +388,7 @@ export async function saveProgramMember(
     formData.append("email", member.email);
     formData.append("linkedin_url", member.linkedin_url || "");
     formData.append("designation", member.designation || "");
-    formData.append("organization", member.organization || "");
+    formData.append("organisation", member.organisation || "");
     formData.append("call_to_action", member.call_to_action || "");
     
     if (isUpdate && member.member_id) {
@@ -441,7 +440,7 @@ export async function saveProgramMember(
         email: member.email,
         linkedin_url: member.linkedin_url || "",
         designation: member.designation || "",
-        organization: member.organization || "",
+        organisation: member.organisation || "",
         call_to_action: member.call_to_action || "",
       }),
     };

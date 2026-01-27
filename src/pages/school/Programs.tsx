@@ -886,7 +886,7 @@ function MemberForm({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label>Designation</Label>
           <Input
@@ -897,11 +897,11 @@ function MemberForm({
           />
         </div>
         <div>
-          <Label>Organization</Label>
+            <Label>Organisation</Label>
           <Input
-            value={member?.orgnaization || ""}
-            onChange={(e) => onChange({ ...member, organization: e.target.value })}
-            placeholder="Organization name..."
+              value={member?.organisation || ""}
+              onChange={(e) => onChange({ ...member, organisation: e.target.value })}
+              placeholder="Organisation name..."
             className="mt-1.5"
           />
         </div>
@@ -986,7 +986,7 @@ function ProgramMembersSection({ programId, category, title, onSave }: MembersSe
     email: "",
     linkedin_url: "",
     designation: "",
-    organization: "",
+    organisation: "",
     call_to_action: "",
     category,
     image_name: "",
@@ -1027,7 +1027,7 @@ function ProgramMembersSection({ programId, category, title, onSave }: MembersSe
             email: newMember.email || "",
             linkedin_url: newMember.linkedin_url || "",
             designation: newMember.designation || "",
-            organization: newmember.orgnaisation || "",
+            organisation: newMember.organisation || "",
             call_to_action: newMember.call_to_action || "",
             image_name: newMember.image_name || "",
           },
@@ -1040,7 +1040,7 @@ function ProgramMembersSection({ programId, category, title, onSave }: MembersSe
               email: "",
               linkedin_url: "",
               designation: "",
-              organization: "",
+              organisation: "",
               call_to_action: "",
               category,
               image_name: "",
@@ -1065,7 +1065,7 @@ function ProgramMembersSection({ programId, category, title, onSave }: MembersSe
             email: editingMemberData.email || "",
             linkedin_url: editingMemberData.linkedin_url || "",
             designation: editingMemberData.designation || "",
-            organization: editingMemberData.organization || "",
+            organisation: editingMemberData.organisation || "",
             call_to_action: editingMemberData.call_to_action || "",
             image_name: editingMemberData.image_name || "",
           },
@@ -1195,11 +1195,11 @@ function ProgramMembersSection({ programId, category, title, onSave }: MembersSe
                               {defaultCategory}
                             </Badge>
                           </div>
-                          {(member.designation || member.orgnaisation) && (
+                          {(member.designation || member.organisation) && (
                             <p className="text-sm text-muted-foreground">
                               {member.designation}
-                              {member.designation && member.orgnaisation ? " at " : ""}
-                              {member.orgnaisation}
+                              {member.designation && member.organisation ? " at " : ""}
+                              {member.organisation}
                             </p>
                           )}
                           <div className="flex items-center gap-3 mt-1 flex-wrap">
