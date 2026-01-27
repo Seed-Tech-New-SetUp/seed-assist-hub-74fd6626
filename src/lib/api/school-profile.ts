@@ -124,33 +124,43 @@ export interface LogoMutationResponse {
 }
 
 // Rankings types
-export interface RankingOrganization {
-  ranking_org_id: string;
-  ranking_org_name: string;
-  ranking_org_logo?: string;
-}
-
+// Update SchoolRanking interface
 export interface SchoolRanking {
   description_id?: string;
+  school_id?: string;
+  level?: string;
   ranking_org_id?: string;
   ranking_addition_id?: string;
-  ranking_org_name?: string;
-  ranking_org_logo?: string;
-  ranking_year?: string;
-  level?: string;
   rank?: string;
-  minimum_range?: string;
-  maximum_range?: string;
+  minimum_rank_range?: string; // ✅ Changed from minimum_range
+  maximum_rank_range?: string; // ✅ Changed from maximum_range
   supporting_text?: string;
+  created_on?: string;
+  created_by?: string;
+  is_approved_by?: string;
+  org_id?: number;
+  ranking_org_name?: string;
+  addition_id?: number;
+  addition_name?: string;
+  year?: string; // ✅ Changed from ranking_year
 }
 
+// Update RankingOrganization interface
+export interface RankingOrganization {
+  org_id: string; // ✅ Changed from ranking_org_id
+  org_name: string; // ✅ Changed from ranking_org_name
+}
+
+// Add response wrapper interface
 export interface SchoolRankingsResponse {
   success: boolean;
-  data?: {
+  data: {
     rankings: SchoolRanking[];
+    rankings_count: number;
     ranking_organizations: RankingOrganization[];
+    organizations_count: number;
+    school_id: string;
   };
-  error?: string;
 }
 
 export interface RankingMutationResponse {
@@ -164,11 +174,7 @@ export interface RankingMutationResponse {
 
 // ============ API Helper ============
 
-async function callSchoolProfileProxy<T>(
-  action: string,
-  method: "GET" | "POST" = "GET",
-  body?: unknown
-): Promise<T> {
+async function callSchoolProfileProxy<T>(action: string, method: "GET" | "POST" = "GET", body?: unknown): Promise<T> {
   const token = getPortalToken();
   if (!token) {
     handleUnauthorized("No authentication token found");
@@ -194,12 +200,12 @@ async function callSchoolProfileProxy<T>(
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    
+
     // Check for unauthorized/expired token
     if (isUnauthorizedError(response.status, errorData)) {
       handleUnauthorized(errorData.error || errorData.message);
     }
-    
+
     throw new Error(errorData.error || `Request failed with status ${response.status}`);
   }
 
@@ -221,12 +227,12 @@ export async function saveSchoolInfo(info: Partial<SchoolInfo>): Promise<boolean
   }
 
   const formData = new FormData();
-  
+
   // Sanitize and add text fields
   for (const [key, value] of Object.entries(info)) {
     // Skip school_banner as it will be handled as imageUpload
     if (key === "school_banner") continue;
-    
+
     const val = value as unknown;
     if (val === false || val === undefined || val === null) {
       formData.append(key, "");
@@ -242,7 +248,7 @@ export async function saveSchoolInfo(info: Partial<SchoolInfo>): Promise<boolean
   }
 
   const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/school-profile-proxy?action=info`;
-  
+
   const response = await fetch(url, {
     method: "POST",
     headers: {
@@ -273,11 +279,7 @@ export async function fetchSchoolFAQs(): Promise<SchoolFAQ[]> {
 }
 
 export async function saveSchoolFAQs(faqs: SchoolFAQ[]): Promise<boolean> {
-  const result = await callSchoolProfileProxy<{ success: boolean }>(
-    "faqs",
-    "POST",
-    { faqs }
-  );
+  const result = await callSchoolProfileProxy<{ success: boolean }>("faqs", "POST", { faqs });
   return result.success;
 }
 
@@ -290,11 +292,7 @@ export async function fetchSchoolSocialMedia(): Promise<SchoolSocialMedia> {
 }
 
 export async function saveSchoolSocialMedia(socialMedia: SchoolSocialMedia): Promise<boolean> {
-  const result = await callSchoolProfileProxy<{ success: boolean }>(
-    "social",
-    "POST",
-    socialMedia
-  );
+  const result = await callSchoolProfileProxy<{ success: boolean }>("social", "POST", socialMedia);
   return result.success;
 }
 
@@ -327,7 +325,7 @@ export async function createSchoolFeature(feature: {
   }
 
   const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/school-profile-proxy?action=features-create`;
-  
+
   const response = await fetch(url, {
     method: "POST",
     headers: {
@@ -371,7 +369,7 @@ export async function updateSchoolFeature(feature: {
   }
 
   const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/school-profile-proxy?action=features-update`;
-  
+
   const response = await fetch(url, {
     method: "POST",
     headers: {
@@ -393,11 +391,7 @@ export async function updateSchoolFeature(feature: {
 }
 
 export async function deleteSchoolFeature(uspId: string): Promise<FeatureMutationResponse> {
-  const result = await callSchoolProfileProxy<FeatureMutationResponse>(
-    "features-delete",
-    "POST",
-    { usp_id: uspId }
-  );
+  const result = await callSchoolProfileProxy<FeatureMutationResponse>("features-delete", "POST", { usp_id: uspId });
   return result;
 }
 
@@ -428,7 +422,7 @@ export async function createSchoolLogo(logo: {
   }
 
   const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/school-profile-proxy?action=logos-create`;
-  
+
   const response = await fetch(url, {
     method: "POST",
     headers: {
@@ -472,7 +466,7 @@ export async function updateSchoolLogo(logo: {
   }
 
   const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/school-profile-proxy?action=logos-update`;
-  
+
   const response = await fetch(url, {
     method: "POST",
     headers: {
@@ -494,11 +488,7 @@ export async function updateSchoolLogo(logo: {
 }
 
 export async function deleteSchoolLogo(logoId: string): Promise<LogoMutationResponse> {
-  const result = await callSchoolProfileProxy<LogoMutationResponse>(
-    "logos-delete",
-    "POST",
-    { logo_id: logoId }
-  );
+  const result = await callSchoolProfileProxy<LogoMutationResponse>("logos-delete", "POST", { logo_id: logoId });
   return result;
 }
 
@@ -528,7 +518,10 @@ export function calculateLogoRatio(width: number, height: number): string {
 
 // ============ Rankings API ============
 
-export async function fetchSchoolRankings(): Promise<{ rankings: SchoolRanking[]; organizations: RankingOrganization[] }> {
+export async function fetchSchoolRankings(): Promise<{
+  rankings: SchoolRanking[];
+  organizations: RankingOrganization[];
+}> {
   const result = await callSchoolProfileProxy<SchoolRankingsResponse>("rankings-read", "GET");
   const rankings = decodeObjectStrings(result.data?.rankings || []);
   const organizations = decodeObjectStrings(result.data?.ranking_organizations || []);
@@ -544,11 +537,7 @@ export async function createSchoolRanking(ranking: {
   maximum_range?: string;
   supporting_text?: string;
 }): Promise<RankingMutationResponse> {
-  const result = await callSchoolProfileProxy<RankingMutationResponse>(
-    "rankings-create",
-    "POST",
-    ranking
-  );
+  const result = await callSchoolProfileProxy<RankingMutationResponse>("rankings-create", "POST", ranking);
   return result;
 }
 
@@ -564,11 +553,7 @@ export async function updateSchoolRanking(ranking: {
   maximum_range?: string;
   supporting_text?: string;
 }): Promise<RankingMutationResponse> {
-  const result = await callSchoolProfileProxy<RankingMutationResponse>(
-    "rankings-update",
-    "POST",
-    ranking
-  );
+  const result = await callSchoolProfileProxy<RankingMutationResponse>("rankings-update", "POST", ranking);
   return result;
 }
 
@@ -577,10 +562,6 @@ export async function deleteSchoolRanking(ranking: {
   ranking_org_id: string;
   ranking_addition_id: string;
 }): Promise<RankingMutationResponse> {
-  const result = await callSchoolProfileProxy<RankingMutationResponse>(
-    "rankings-delete",
-    "POST",
-    ranking
-  );
+  const result = await callSchoolProfileProxy<RankingMutationResponse>("rankings-delete", "POST", ranking);
   return result;
 }
