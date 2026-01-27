@@ -430,7 +430,7 @@ function SchoolInfoSection({ info, setInfo, isLoading, setHasChanges }: SchoolIn
 
       {/* School Banner Preview with Upload Option */}
       <div>
-        <Label>School Banner</Label>
+        <Label htmlFor="imageUpload">School Banner</Label>
         <div className="mt-2 space-y-3">
           {info.school_banner && (
             <div className="rounded-lg overflow-hidden border relative group">
