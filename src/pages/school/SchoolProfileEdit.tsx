@@ -1219,7 +1219,7 @@ function RankingsSection() {
   } | null>(null);
 
   const rankings = rankingsData?.rankings || [];
-  const organizations = rankingsData?.organizations || [];
+  const organizations = rankingsData?.ranking_organizations || [];
 
   const resetForm = () => {
     setFormData({
@@ -1475,7 +1475,9 @@ function RankingsSection() {
                         <Label>Year</Label>
                         <Select
                           value={editData.ranking_year}
-                          onValueChange={(value) => setEditData((prev) => (prev ? { ...prev, ranking_year: value } : null))}
+                          onValueChange={(value) =>
+                            setEditData((prev) => (prev ? { ...prev, ranking_year: value } : null))
+                          }
                         >
                           <SelectTrigger className="mt-1.5">
                             <SelectValue placeholder="Select year" />
@@ -1570,7 +1572,9 @@ function RankingsSection() {
                       <div className="flex items-center gap-2">
                         <span className="font-medium">
                           {ranking.ranking_org_name}
-                          {ranking.ranking_year && <span className="text-muted-foreground font-normal"> ({ranking.ranking_year})</span>}
+                          {ranking.ranking_year && (
+                            <span className="text-muted-foreground font-normal"> ({ranking.ranking_year})</span>
+                          )}
                         </span>
                       </div>
                       <div className="text-lg font-semibold text-primary">
