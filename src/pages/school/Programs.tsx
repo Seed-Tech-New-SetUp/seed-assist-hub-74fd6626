@@ -850,7 +850,7 @@ function ProgramMembersSection({ programId, category, title, onSave }: MembersSe
   const startEditing = (member: ProgramMember) => {
     // Convert stored image_name to full URL for display
     const imageUrl = member.image_name
-      ? `https://assist.seedglobaleducation.com/program_member_uploads/${member.image_name}`
+      ? `https://assist.seedglobaleducation.com/school_member_uploads/${member.image_name}`
       : "";
     setEditingMember({
       ...member,
@@ -1084,7 +1084,7 @@ function ProgramMembersSection({ programId, category, title, onSave }: MembersSe
                     <div className="flex gap-4 flex-1">
                       {member.image_name ? (
                         <img
-                          src={`https://assist.seedglobaleducation.com/program_member_uploads/${member.image_name}`}
+                          src={`https://assist.seedglobaleducation.com/school_member_uploads/${member.image_name}`}
                           alt={member.name}
                           className="w-12 h-12 rounded-full object-cover"
                           onError={(e) => {
