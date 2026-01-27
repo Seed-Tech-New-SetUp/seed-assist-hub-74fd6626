@@ -498,7 +498,13 @@ export async function fetchProgramRankingsWithOrganizations(programId: string): 
     { program_id: programId }
   );
   
-  const rankings = result.data?.rankings || [];
+  // Ensure ranking_organisation is always a string for combobox compatibility
+  const rankings = (result.data?.rankings || []).map(ranking => ({
+    ...ranking,
+    ranking_organisation: String(ranking.ranking_organisation),
+    ranking_year: String(ranking.ranking_year || ""),
+  }));
+  
   const organizations = (result.data?.ranking_organizations || []).map(org => ({
     id: String(org.org_id),
     name: org.org_name,
