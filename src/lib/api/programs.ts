@@ -623,13 +623,13 @@ export async function saveProgramFAQs(programId: string, faqs: ProgramFAQ[]): Pr
 
 // ============ Program POCs ============
 
-export async function fetchProgramPOCs(programId: string): Promise<ProgramPOC[]> {
-  const result = await callProgramsProxy<{ success: boolean; data?: { pocs: ProgramPOC[] } }>(
+export async function fetchProgramPOC(programId: string): Promise<ProgramPOC | null> {
+  const result = await callProgramsProxy<{ success: boolean; data?: { poc: ProgramPOC | null } }>(
     "pocs",
     "GET",
     { program_id: programId }
   );
-  return result.data?.pocs || [];
+  return result.data?.poc || null;
 }
 
 export async function saveProgramPOC(programId: string, poc: ProgramPOC): Promise<boolean> {
