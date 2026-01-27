@@ -55,16 +55,17 @@ export interface ProgramFeature {
 }
 
 export interface ProgramMember {
-  id?: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  linkedin_url: string;
-  designation: string;
-  organisation: string;
+  member_id?: string;
+  program_id?: string;
   category: "faculty" | "current_student" | "alumni";
-  call_to_action: "email" | "linkedin";
-  profile_image: string;
+  name: string;
+  designation: string;
+  email: string;
+  bio: string;
+  linkedin_url: string;
+  image_name?: string;
+  created_on?: string;
+  created_by?: string;
 }
 
 export interface ProgramRanking {
@@ -339,12 +340,97 @@ export async function saveProgramMember(
   category: "faculty" | "current_student" | "alumni",
   member: ProgramMember
 ): Promise<boolean> {
-  const result = await callProgramsProxy<{ success: boolean }>(
-    "members",
-    "POST",
-    { program_id: programId, category },
-    member
-  );
+  const token = getPortalToken();
+  if (!token) {
+    handleUnauthorized("No authentication token found");
+  }
+
+  const isUpdate = !!member.member_id;
+  const action = isUpdate ? "members-update" : "members-create";
+  
+  // Check if there's a new image (base64 data)
+  const hasImage = member.image_name?.startsWith("data:");
+  
+  const queryParams = new URLSearchParams({ action });
+  const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/programs-proxy?${queryParams}`;
+  
+  let options: RequestInit;
+  
+  if (hasImage || !isUpdate) {
+    // Use FormData for create (always) or update with new image
+    const formData = new FormData();
+    formData.append("program_id", programId);
+    formData.append("category", category);
+    formData.append("name", member.name);
+    formData.append("designation", member.designation);
+    formData.append("email", member.email);
+    formData.append("bio", member.bio || "");
+    formData.append("linkedin_url", member.linkedin_url || "");
+    
+    if (isUpdate && member.member_id) {
+      formData.append("member_id", member.member_id);
+    }
+    
+    if (hasImage && member.image_name) {
+      // Convert base64 to Blob
+      const base64Data = member.image_name;
+      const matches = base64Data.match(/^data:(.+);base64,(.+)$/);
+      if (matches) {
+        const mimeType = matches[1];
+        const base64 = matches[2];
+        const byteCharacters = atob(base64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: mimeType });
+        const extension = mimeType.split("/")[1] || "jpg";
+        formData.append("member_image", blob, `member.${extension}`);
+      }
+    }
+    
+    options = {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      },
+      body: formData,
+    };
+  } else {
+    // Use JSON for update without image
+    options = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      },
+      body: JSON.stringify({
+        program_id: programId,
+        member_id: member.member_id,
+        category,
+        name: member.name,
+        designation: member.designation,
+        email: member.email,
+        bio: member.bio || "",
+        linkedin_url: member.linkedin_url || "",
+      }),
+    };
+  }
+
+  const response = await fetch(url, options);
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    if (isUnauthorizedError(response.status, errorData)) {
+      handleUnauthorized(errorData.error || errorData.message);
+    }
+    throw new Error(errorData.error || `Request failed with status ${response.status}`);
+  }
+
+  const result = await response.json();
   return result.success;
 }
 
@@ -354,10 +440,10 @@ export async function deleteProgramMember(
   memberId: string
 ): Promise<boolean> {
   const result = await callProgramsProxy<{ success: boolean }>(
-    "members",
-    "DELETE",
-    { program_id: programId, category },
-    { id: memberId }
+    "members-delete",
+    "POST",
+    {},
+    { program_id: programId, member_id: memberId }
   );
   return result.success;
 }

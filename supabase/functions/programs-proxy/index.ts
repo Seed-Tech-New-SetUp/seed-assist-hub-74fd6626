@@ -60,8 +60,20 @@ serve(async (req) => {
       case "features-delete":
         backendUrl = `${PROGRAM_PROFILE_URL}/features/delete.php`;
         break;
+      // Members CRUD
       case "members":
-        backendUrl = `${PROGRAMS_BASE_URL}/update_program_member.php?program_id=${programId}&category=${category}`;
+        backendUrl = `${PROGRAM_PROFILE_URL}/members/read.php?program_id=${programId}&category=${category}`;
+        break;
+      case "members-create":
+        backendUrl = `${PROGRAM_PROFILE_URL}/members/create.php`;
+        isFormData = true;
+        break;
+      case "members-update":
+        backendUrl = `${PROGRAM_PROFILE_URL}/members/update.php`;
+        isFormData = req.headers.get("content-type")?.includes("multipart/form-data") || false;
+        break;
+      case "members-delete":
+        backendUrl = `${PROGRAM_PROFILE_URL}/members/delete.php`;
         break;
       case "rankings":
         backendUrl = `${PROGRAMS_BASE_URL}/update_program_rankings.php?program_id=${programId}&level=${level || "Program"}`;
