@@ -21,7 +21,6 @@ import {
   saveProgramFAQs,
   fetchProgramPOCs,
   saveProgramPOC,
-  deleteProgramPOC,
   Program,
   ProgramInfo,
   ProgramFeature,
@@ -320,24 +319,7 @@ export function useSaveProgramPOC() {
       saveProgramPOC(programId, poc),
     onSuccess: (_, { programId }) => {
       queryClient.invalidateQueries({ queryKey: ["program-pocs", programId] });
-      toast({ title: "Success", description: "Contact added successfully." });
-    },
-    onError: (error: Error) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    },
-  });
-}
-
-export function useDeleteProgramPOC() {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-
-  return useMutation({
-    mutationFn: ({ programId, pocId }: { programId: string; pocId: string }) =>
-      deleteProgramPOC(programId, pocId),
-    onSuccess: (_, { programId }) => {
-      queryClient.invalidateQueries({ queryKey: ["program-pocs", programId] });
-      toast({ title: "Success", description: "Contact removed." });
+      toast({ title: "Success", description: "Contact saved successfully." });
     },
     onError: (error: Error) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });

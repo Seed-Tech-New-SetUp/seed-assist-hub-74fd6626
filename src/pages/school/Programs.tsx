@@ -66,7 +66,6 @@ import {
   useSaveProgramFAQs,
   useProgramPOCs,
   useSaveProgramPOC,
-  useDeleteProgramPOC,
 } from "@/hooks/usePrograms";
 import type {
   ProgramInfo,
@@ -1882,34 +1881,29 @@ function ProgramFAQsSection({ programId, onSave }: SectionProps) {
 function ProgramPOCsSection({ programId, onSave }: SectionProps) {
   const { data: pocs = [], isLoading } = useProgramPOCs(programId);
   const saveMutation = useSaveProgramPOC();
-  const deleteMutation = useDeleteProgramPOC();
 
   const [newPoc, setNewPoc] = useState<Partial<ProgramPOC>>({
-    full_name: "",
+    name: "",
     designation: "",
-    orgnaisation: "",
-    contact_no: "",
+    organisation: "",
+    contact: "",
     email: "",
   });
 
   const addPoc = () => {
-    if (newPoc.full_name?.trim() && newPoc.email?.trim()) {
+    if (newPoc.name?.trim() && newPoc.email?.trim()) {
       saveMutation.mutate({
         programId,
         poc: {
-          full_name: newPoc.full_name || "",
+          name: newPoc.name || "",
           designation: newPoc.designation || "",
-          orgnaisation: newPoc.orgnaisation || "",
-          contact_no: newPoc.contact_no || "",
+          organisation: newPoc.organisation || "",
+          contact: newPoc.contact || "",
           email: newPoc.email || "",
         },
       });
-      setNewPoc({ full_name: "", designation: "", orgnaisation: "", contact_no: "", email: "" });
+      setNewPoc({ name: "", designation: "", organisation: "", contact: "", email: "" });
     }
-  };
-
-  const removePoc = (pocId: string) => {
-    deleteMutation.mutate({ programId, pocId });
   };
 
   if (isLoading) {
@@ -1925,8 +1919,8 @@ function ProgramPOCsSection({ programId, onSave }: SectionProps) {
             <div>
               <Label>Full Name</Label>
               <Input
-                value={newPoc.full_name || ""}
-                onChange={(e) => setNewPoc({ ...newPoc, full_name: e.target.value })}
+                value={newPoc.name || ""}
+                onChange={(e) => setNewPoc({ ...newPoc, name: e.target.value })}
                 placeholder="Enter full name..."
                 className="mt-1.5"
               />
@@ -1943,8 +1937,8 @@ function ProgramPOCsSection({ programId, onSave }: SectionProps) {
             <div>
               <Label>Organisation (School)</Label>
               <Input
-                value={newPoc.orgnaisation || ""}
-                onChange={(e) => setNewPoc({ ...newPoc, orgnaisation: e.target.value })}
+                value={newPoc.organisation || ""}
+                onChange={(e) => setNewPoc({ ...newPoc, organisation: e.target.value })}
                 placeholder="Enter organisation..."
                 className="mt-1.5"
               />
@@ -1953,8 +1947,8 @@ function ProgramPOCsSection({ programId, onSave }: SectionProps) {
               <Label>Contact No (without country code)</Label>
               <Input
                 type="tel"
-                value={newPoc.contact_no || ""}
-                onChange={(e) => setNewPoc({ ...newPoc, contact_no: e.target.value })}
+                value={newPoc.contact || ""}
+                onChange={(e) => setNewPoc({ ...newPoc, contact: e.target.value })}
                 placeholder="5551234567"
                 className="mt-1.5"
               />
@@ -1972,7 +1966,7 @@ function ProgramPOCsSection({ programId, onSave }: SectionProps) {
           </div>
           <Button
             onClick={addPoc}
-            disabled={!newPoc.full_name?.trim() || !newPoc.email?.trim() || saveMutation.isPending}
+            disabled={!newPoc.name?.trim() || !newPoc.email?.trim() || saveMutation.isPending}
           >
             {saveMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             <Plus className="h-4 w-4 mr-2" />
@@ -1989,42 +1983,31 @@ function ProgramPOCsSection({ programId, onSave }: SectionProps) {
           </p>
         ) : (
           <div className="space-y-3">
-            {pocs.map((poc) => (
-              <Card key={poc.id}>
+            {pocs.map((poc, index) => (
+              <Card key={poc.poc_id || index}>
                 <CardContent className="p-4">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-4 flex-1">
-                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                        <User className="h-5 w-5 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h5 className="font-medium text-foreground">{poc.full_name}</h5>
-                        <p className="text-sm text-muted-foreground">
-                          {poc.designation} • {poc.orgnaisation}
-                        </p>
-                        <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-4">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <User className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h5 className="font-medium text-foreground">{poc.name}</h5>
+                      <p className="text-sm text-muted-foreground">
+                        {poc.designation} • {poc.organisation}
+                      </p>
+                      <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Mail className="h-3.5 w-3.5" />
+                          {poc.email}
+                        </span>
+                        {poc.contact && (
                           <span className="flex items-center gap-1">
-                            <Mail className="h-3.5 w-3.5" />
-                            {poc.email}
+                            <Phone className="h-3.5 w-3.5" />
+                            {poc.contact}
                           </span>
-                          {poc.contact_no && (
-                            <span className="flex items-center gap-1">
-                              <Phone className="h-3.5 w-3.5" />
-                              {poc.contact_no}
-                            </span>
-                          )}
-                        </div>
+                        )}
                       </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive shrink-0"
-                      onClick={() => poc.id && removePoc(poc.id)}
-                      disabled={deleteMutation.isPending}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
                   </div>
                 </CardContent>
               </Card>

@@ -110,11 +110,11 @@ export interface ProgramFAQ {
 }
 
 export interface ProgramPOC {
-  id?: string;
-  full_name: string;
+  poc_id?: string;
+  name: string;
   designation: string;
-  orgnaisation: string;
-  contact_no: string;
+  organisation: string;
+  contact: string;
   email: string;
 }
 
@@ -636,18 +636,15 @@ export async function saveProgramPOC(programId: string, poc: ProgramPOC): Promis
   const result = await callProgramsProxy<{ success: boolean }>(
     "pocs",
     "POST",
-    { program_id: programId },
-    poc
-  );
-  return result.success;
-}
-
-export async function deleteProgramPOC(programId: string, pocId: string): Promise<boolean> {
-  const result = await callProgramsProxy<{ success: boolean }>(
-    "pocs",
-    "DELETE",
-    { program_id: programId },
-    { id: pocId }
+    {},
+    { 
+      program_id: programId,
+      name: poc.name,
+      designation: poc.designation,
+      organisation: poc.organisation,
+      contact: poc.contact,
+      email: poc.email,
+    }
   );
   return result.success;
 }

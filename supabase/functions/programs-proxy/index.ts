@@ -107,7 +107,10 @@ serve(async (req) => {
           : `${PROGRAM_PROFILE_URL}/faqs.php`;
         break;
       case "pocs":
-        backendUrl = `${PROGRAMS_BASE_URL}/update_program_poc.php?program_id=${programId}`;
+        // Single-file endpoint for GET & POST
+        backendUrl = req.method === "GET" 
+          ? `${PROGRAM_PROFILE_URL}/pocs.php?program_id=${programId}`
+          : `${PROGRAM_PROFILE_URL}/pocs.php`;
         break;
       case "ranking-orgs":
         backendUrl = `${PROGRAMS_BASE_URL}/ranking_organizations.php`;
