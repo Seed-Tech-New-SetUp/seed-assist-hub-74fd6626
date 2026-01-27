@@ -782,13 +782,13 @@ function FeaturesSection({ features, isLoading, onCreate, onUpdate, onDelete, is
             />
           </div>
           <div>
-            <Label>Image {editingFeatureId && <span className="text-muted-foreground">(leave empty to keep current)</span>}</Label>
+            <Label>Image {editingFeatureId && <span className="text-muted-foreground">(optional - upload to replace)</span>}</Label>
             <ImageUpload
               value={featureForm.image}
               onChange={(url) => setFeatureForm({ ...featureForm, image: url })}
               placeholder="Click to upload feature image"
               aspectRatio="video"
-              className="mt-1.5"
+              className="mt-1.5 max-w-[200px] max-h-[100px]"
             />
           </div>
           <div className="flex gap-2">
