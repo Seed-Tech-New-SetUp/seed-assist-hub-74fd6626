@@ -1296,8 +1296,16 @@ function ProgramRankingsSection({ programId, onSave }: SectionProps) {
   };
 
   const handleEdit = (ranking: ProgramRanking) => {
-    setEditingId(ranking.ranking_addition_id || null);
-    setEditingRanking({ ...ranking });
+    // Normalize to strings because backend sometimes returns numeric IDs/years
+    const normalizedId = ranking.ranking_addition_id ? String(ranking.ranking_addition_id) : null;
+    setEditingId(normalizedId);
+    setEditingRanking({
+      ...ranking,
+      ranking_addition_id: normalizedId ?? undefined,
+      ranking_organisation: String(ranking.ranking_organisation ?? ""),
+      ranking_year: String((ranking as any).ranking_year ?? (ranking as any).year ?? ""),
+      rank: String((ranking as any).rank ?? ""),
+    });
   };
 
   const handleSaveEdit = () => {
@@ -1413,7 +1421,9 @@ function ProgramRankingsSection({ programId, onSave }: SectionProps) {
         ) : (
           <div className="space-y-3">
             {rankings.map((ranking, idx) => {
-              const isEditingThis = editingId === ranking.ranking_addition_id;
+              const isEditingThis =
+                editingId !== null &&
+                String(editingId) === String((ranking as any).ranking_addition_id ?? "");
               
               return (
                 <Card key={ranking.ranking_addition_id || idx} className={isEditingThis ? "border-primary" : ""}>

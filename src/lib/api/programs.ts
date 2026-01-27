@@ -501,8 +501,9 @@ export async function fetchProgramRankingsWithOrganizations(programId: string): 
   // Ensure ranking_organisation is always a string for combobox compatibility
   const rankings = (result.data?.rankings || []).map(ranking => ({
     ...ranking,
-    ranking_organisation: String(ranking.ranking_organisation),
-    ranking_year: String(ranking.ranking_year || ""),
+    // Some backend variants may return numbers or alternate keys (e.g. year)
+    ranking_organisation: String((ranking as any).ranking_organisation ?? (ranking as any).org_id ?? ""),
+    ranking_year: String((ranking as any).ranking_year ?? (ranking as any).year ?? ""),
   }));
   
   const organizations = (result.data?.ranking_organizations || []).map(org => ({
