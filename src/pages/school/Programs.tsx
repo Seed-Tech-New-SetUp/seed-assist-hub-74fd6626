@@ -1048,16 +1048,22 @@ function ProgramMembersSection({ programId, category, title, onSave }: MembersSe
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label>Call to Action</Label>
-              <Input
+              <Select
                 value={formMember?.call_to_action || ""}
-                onChange={(e) =>
+                onValueChange={(value) =>
                   isEditing
-                    ? setEditingMember({ ...editingMember!, call_to_action: e.target.value })
-                    : setNewMember({ ...newMember, call_to_action: e.target.value })
+                    ? setEditingMember({ ...editingMember!, call_to_action: value })
+                    : setNewMember({ ...newMember, call_to_action: value })
                 }
-                placeholder="e.g., Contact Me, View Profile..."
-                className="mt-1.5"
-              />
+              >
+                <SelectTrigger className="mt-1.5">
+                  <SelectValue placeholder="Select action..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="email">Email</SelectItem>
+                  <SelectItem value="linkedin">LinkedIn</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label>Category</Label>
