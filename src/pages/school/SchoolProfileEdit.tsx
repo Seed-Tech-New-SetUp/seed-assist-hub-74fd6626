@@ -437,10 +437,10 @@ function SchoolInfoSection({ info, setInfo, isLoading, setHasChanges, bannerPrev
       <div>
         <Label htmlFor="imageUpload">School Banner</Label>
         <div className="mt-2 space-y-3">
-          {info.school_banner && (
+          {(bannerPreview || info.school_banner) && (
             <div className="rounded-lg overflow-hidden border relative group">
               <img 
-                src={`http://admin.seedglobaleducation.com/assets/img/school_banners/${info.school_banner}`}
+                src={bannerPreview || `http://admin.seedglobaleducation.com/assets/img/school_banners/${info.school_banner}`}
                 alt="School Banner"
                 className="w-full h-48 object-cover"
                 onError={(e) => {
@@ -448,7 +448,7 @@ function SchoolInfoSection({ info, setInfo, isLoading, setHasChanges, bannerPrev
                 }}
               />
               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <span className="text-white text-sm font-medium">Current Banner</span>
+                <span className="text-white text-sm font-medium">{bannerPreview ? "New Banner" : "Current Banner"}</span>
               </div>
             </div>
           )}
@@ -458,7 +458,7 @@ function SchoolInfoSection({ info, setInfo, isLoading, setHasChanges, bannerPrev
               setBannerPreview(url);
               updateField("school_banner", url);
             }}
-            placeholder={info.school_banner ? "Click to replace banner" : "Click to upload banner"}
+            placeholder={info.school_banner || bannerPreview ? "Click to replace banner" : "Click to upload banner"}
             aspectRatio="wide"
             className="h-32"
           />
