@@ -1195,7 +1195,7 @@ function RankingsSection() {
   const deleteRanking = useDeleteSchoolRanking();
 
   const [formData, setFormData] = useState({
-    ranking_organisation: "",
+    ranking_organizations: "",
     year: "",
     level: "School",
     rank: "",
@@ -1209,7 +1209,7 @@ function RankingsSection() {
     description_id: string;
     ranking_org_id: string;
     ranking_addition_id: string;
-    ranking_organisation: string;
+    ranking_organizations: string;
     ranking_year: string;
     level: string;
     rank: string;
@@ -1223,7 +1223,7 @@ function RankingsSection() {
 
   const resetForm = () => {
     setFormData({
-      ranking_organisation: "",
+      ranking_organizations: "",
       year: "",
       level: "School",
       rank: "",
@@ -1235,13 +1235,13 @@ function RankingsSection() {
   };
 
   const handleCreate = () => {
-    if (!formData.ranking_organisation || !formData.year) {
+    if (!formData.ranking_organizations || !formData.year) {
       return;
     }
 
     createRanking.mutate(
       {
-        ranking_organisation: formData.ranking_organisation,
+        ranking_organizations: formData.ranking_organizations,
         ranking_year: formData.year,
         level: formData.level,
         rank: useRange ? "" : formData.rank,
@@ -1263,7 +1263,7 @@ function RankingsSection() {
       description_id: ranking.description_id || "",
       ranking_org_id: ranking.ranking_org_id || "",
       ranking_addition_id: ranking.ranking_addition_id || "",
-      ranking_organisation: ranking.ranking_org_id || "",
+      ranking_organizations: ranking.ranking_org_id || "",
       ranking_year: ranking.ranking_year || "",
       level: ranking.level || "School",
       rank: ranking.rank || "",
@@ -1340,8 +1340,8 @@ function RankingsSection() {
               <Label>Organization</Label>
               <OrganizationCombobox
                 organizations={organizations}
-                value={formData.ranking_organisation}
-                onValueChange={(value) => setFormData((prev) => ({ ...prev, ranking_organisation: value }))}
+                value={formData.ranking_organizations}
+                onValueChange={(value) => setFormData((prev) => ({ ...prev, ranking_organizations: value }))}
                 selectedYear={formData.year}
               />
             </div>
@@ -1443,7 +1443,7 @@ function RankingsSection() {
           </div>
           <Button
             onClick={handleCreate}
-            disabled={createRanking.isPending || !formData.ranking_organisation || !formData.year}
+            disabled={createRanking.isPending || !formData.ranking_organizations || !formData.year}
           >
             {createRanking.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             Add Ranking
@@ -1464,9 +1464,9 @@ function RankingsSection() {
                         <Label>Organization</Label>
                         <OrganizationCombobox
                           organizations={organizations}
-                          value={editData.ranking_organisation}
+                          value={editData.ranking_organizations}
                           onValueChange={(value) =>
-                            setEditData((prev) => (prev ? { ...prev, ranking_organisation: value } : null))
+                            setEditData((prev) => (prev ? { ...prev, ranking_organizations: value } : null))
                           }
                           selectedYear={editData.ranking_year}
                         />
