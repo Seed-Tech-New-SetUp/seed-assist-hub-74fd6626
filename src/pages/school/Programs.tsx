@@ -1265,31 +1265,35 @@ function ProgramRankingsSection({ programId, onSave }: SectionProps) {
   const deleteMutation = useDeleteProgramRanking();
 
   const [newRanking, setNewRanking] = useState<Partial<ProgramRanking>>({
-    orgnaisation: "",
-    year: "",
-    level: "Program",
+    ranking_organisation: "",
+    ranking_year: "",
     rank: "",
     supporting_text: "",
   });
 
   const addRanking = () => {
-    if (newRanking.orgnaisation && newRanking.year && newRanking.rank) {
+    if (newRanking.ranking_organisation && newRanking.ranking_year && newRanking.rank) {
       saveMutation.mutate({
         programId,
         ranking: {
-          orgnaisation: newRanking.orgnaisation || "",
-          year: newRanking.year || "",
-          level: "Program",
+          ranking_organisation: newRanking.ranking_organisation || "",
+          ranking_year: newRanking.ranking_year || "",
           rank: newRanking.rank || "",
           supporting_text: newRanking.supporting_text || "",
         },
       });
-      setNewRanking({ orgnaisation: "", year: "", level: "Program", rank: "", supporting_text: "" });
+      setNewRanking({ ranking_organisation: "", ranking_year: "", rank: "", supporting_text: "" });
     }
   };
 
-  const removeRanking = (rankingId: string) => {
-    deleteMutation.mutate({ programId, rankingId });
+  const removeRanking = (ranking: ProgramRanking) => {
+    if (ranking.ranking_organisation && ranking.ranking_addition_id) {
+      deleteMutation.mutate({ 
+        programId, 
+        rankingOrgId: ranking.ranking_organisation, 
+        rankingAdditionId: ranking.ranking_addition_id 
+      });
+    }
   };
 
   if (isLoading) {
@@ -1307,19 +1311,19 @@ function ProgramRankingsSection({ programId, onSave }: SectionProps) {
         <CardContent className="p-4 space-y-4">
           <h4 className="font-medium text-sm text-muted-foreground">Add New Ranking</h4>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label>Ranking Organisation</Label>
               <Select
-                value={newRanking.orgnaisation || ""}
-                onValueChange={(value) => setNewRanking({ ...newRanking, orgnaisation: value })}
+                value={newRanking.ranking_organisation || ""}
+                onValueChange={(value) => setNewRanking({ ...newRanking, ranking_organisation: value })}
               >
                 <SelectTrigger className="mt-1.5">
                   <SelectValue placeholder="Select organisation..." />
                 </SelectTrigger>
                 <SelectContent>
                   {organizations.map((org) => (
-                    <SelectItem key={org.id} value={org.name}>
+                    <SelectItem key={org.id} value={org.id}>
                       {org.name}
                     </SelectItem>
                   ))}
@@ -1329,15 +1333,11 @@ function ProgramRankingsSection({ programId, onSave }: SectionProps) {
             <div>
               <Label>Ranking Year</Label>
               <Input
-                value={newRanking.year || ""}
-                onChange={(e) => setNewRanking({ ...newRanking, year: e.target.value })}
+                value={newRanking.ranking_year || ""}
+                onChange={(e) => setNewRanking({ ...newRanking, ranking_year: e.target.value })}
                 placeholder="e.g., 2024"
                 className="mt-1.5"
               />
-            </div>
-            <div>
-              <Label>Ranking Level</Label>
-              <Input value="Program" disabled className="mt-1.5 bg-muted" />
             </div>
           </div>
 
@@ -1366,7 +1366,7 @@ function ProgramRankingsSection({ programId, onSave }: SectionProps) {
 
           <Button
             onClick={addRanking}
-            disabled={!newRanking.orgnaisation || !newRanking.year || !newRanking.rank || saveMutation.isPending}
+            disabled={!newRanking.ranking_organisation || !newRanking.ranking_year || !newRanking.rank || saveMutation.isPending}
           >
             {saveMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             <Plus className="h-4 w-4 mr-2" />
@@ -1381,8 +1381,8 @@ function ProgramRankingsSection({ programId, onSave }: SectionProps) {
           <p className="text-sm text-muted-foreground text-center py-4 border rounded-lg">No rankings added yet</p>
         ) : (
           <div className="space-y-3">
-            {rankings.map((ranking) => (
-              <Card key={ranking.id}>
+            {rankings.map((ranking, idx) => (
+              <Card key={ranking.ranking_addition_id || idx}>
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex-1">
@@ -1391,9 +1391,9 @@ function ProgramRankingsSection({ programId, onSave }: SectionProps) {
                           #{ranking.rank}
                         </div>
                         <div>
-                          <h5 className="font-medium text-foreground">{ranking.orgnaisation}</h5>
+                          <h5 className="font-medium text-foreground">{ranking.ranking_org_name || ranking.ranking_organisation}</h5>
                           <p className="text-sm text-muted-foreground">
-                            {ranking.year} • {ranking.level} Level
+                            {ranking.ranking_year}
                           </p>
                         </div>
                       </div>
@@ -1405,7 +1405,7 @@ function ProgramRankingsSection({ programId, onSave }: SectionProps) {
                       variant="ghost"
                       size="icon"
                       className="text-destructive shrink-0"
-                      onClick={() => ranking.id && removeRanking(ranking.id)}
+                      onClick={() => removeRanking(ranking)}
                       disabled={deleteMutation.isPending}
                     >
                       <Trash2 className="h-4 w-4" />

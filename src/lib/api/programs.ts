@@ -88,10 +88,11 @@ export interface ProgramMember {
 }
 
 export interface ProgramRanking {
-  id?: string;
-  orgnaisation: string;
-  year: string;
-  level: string;
+  description_id?: string;
+  ranking_addition_id?: string;
+  ranking_organisation: string;  // org_id from backend
+  ranking_org_name?: string;     // org_name from backend for display
+  ranking_year: string;
   rank: string;
   supporting_text: string;
 }
@@ -487,27 +488,51 @@ export async function fetchProgramRankings(programId: string): Promise<ProgramRa
   const result = await callProgramsProxy<{ success: boolean; data?: { rankings: ProgramRanking[] } }>(
     "rankings",
     "GET",
-    { program_id: programId, level: "Program" }
+    { program_id: programId }
   );
   return result.data?.rankings || [];
 }
 
 export async function saveProgramRanking(programId: string, ranking: ProgramRanking): Promise<boolean> {
+  const isUpdate = !!ranking.ranking_addition_id;
+  const action = isUpdate ? "rankings-update" : "rankings-create";
+  
+  const payload: Record<string, unknown> = {
+    program_id: programId,
+    ranking_organisation: ranking.ranking_organisation,
+    ranking_year: ranking.ranking_year,
+    rank: ranking.rank,
+    supporting_text: ranking.supporting_text || "",
+  };
+  
+  if (isUpdate) {
+    payload.description_id = ranking.description_id;
+    payload.ranking_addition_id = ranking.ranking_addition_id;
+  }
+  
   const result = await callProgramsProxy<{ success: boolean }>(
-    "rankings",
+    action,
     "POST",
-    { program_id: programId, level: "Program" },
-    ranking
+    {},
+    payload
   );
   return result.success;
 }
 
-export async function deleteProgramRanking(programId: string, rankingId: string): Promise<boolean> {
+export async function deleteProgramRanking(
+  programId: string, 
+  rankingOrgId: string, 
+  rankingAdditionId: string
+): Promise<boolean> {
   const result = await callProgramsProxy<{ success: boolean }>(
-    "rankings",
-    "DELETE",
-    { program_id: programId, level: "Program" },
-    { id: rankingId }
+    "rankings-delete",
+    "POST",
+    {},
+    { 
+      program_id: programId, 
+      ranking_org_id: rankingOrgId,
+      ranking_addition_id: rankingAdditionId 
+    }
   );
   return result.success;
 }
