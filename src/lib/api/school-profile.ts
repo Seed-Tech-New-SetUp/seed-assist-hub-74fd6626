@@ -132,8 +132,8 @@ export interface SchoolRanking {
   ranking_org_id?: string;
   ranking_addition_id?: string;
   rank?: string;
-  minimum_rank_range?: string; // ✅ Changed from minimum_range
-  maximum_rank_range?: string; // ✅ Changed from maximum_range
+  minimum_rank_range?: string; // ✅ Backend field name (not minimum_range)
+  maximum_rank_range?: string; // ✅ Backend field name (not maximum_range)
   supporting_text?: string;
   created_on?: string;
   created_by?: string;
@@ -142,7 +142,7 @@ export interface SchoolRanking {
   ranking_org_name?: string;
   addition_id?: number;
   addition_name?: string;
-  year?: string; // ✅ Changed from ranking_year
+  year?: string; // ✅ Backend field name (not ranking_year)
 }
 
 // Update RankingOrganization interface
