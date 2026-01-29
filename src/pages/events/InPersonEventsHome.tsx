@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { decodeObjectStrings } from "@/lib/utils/decode-utf8";
+import { toast } from "@/hooks/use-toast";
 
 import { 
   Users, 
@@ -15,7 +16,8 @@ import {
   Calendar, 
   MapPin, 
   Clock, 
-  ArrowRight,
+  Download,
+  Loader2,
   FileText,
   CalendarClock,
   Globe,
@@ -65,6 +67,10 @@ interface OverviewData {
     registrant_count: number;
     attendees_count: number;
     female_candidates_percentage?: number;
+    report_downloaded?: boolean;
+    last_downloaded_at?: string;
+    last_downloaded_by?: string;
+    download_count?: number;
   } | null;
 }
 
@@ -131,6 +137,7 @@ export default function InPersonEventsHome() {
   const [overviewData, setOverviewData] = useState<OverviewData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     const fetchOverviewData = async () => {
@@ -173,6 +180,67 @@ export default function InPersonEventsHome() {
   const summary = overviewData?.summary;
   const nextEvent = overviewData?.next_event;
   const latestReport = overviewData?.latest_report;
+
+  const formatDateTime = (dateTimeStr: string) => {
+    const safe = dateTimeStr.replace(" ", "T");
+    const date = new Date(safe);
+    if (Number.isNaN(date.getTime())) return dateTimeStr;
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  const handleDownloadReport = async () => {
+    if (!portalToken || !latestReport) {
+      toast({ title: "Error", description: "Please login to download reports.", variant: "destructive" });
+      return;
+    }
+
+    setDownloading(true);
+    
+    try {
+      // Determine which endpoint to use based on event_type
+      const isBSF = latestReport.event_type?.toLowerCase().includes("bsf") || 
+                    latestReport.event_type?.toLowerCase().includes("business school festival");
+      
+      const downloadUrl = isBSF
+        ? `https://seedglobaleducation.com/api/assist/in-person-event/bsf/reports.php?id=${latestReport.event_id}`
+        : `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/campus-tour-proxy?id=${latestReport.event_id}`;
+      
+      const response = await fetch(downloadUrl, {
+        headers: {
+          Authorization: `Bearer ${portalToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to download report");
+      }
+
+      // Get the blob from response
+      const blob = await response.blob();
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const eventName = `${latestReport.event_type}_${latestReport.city}`.replace(/\s+/g, "_");
+      link.download = `${eventName}_Report.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast({ title: "Report Downloaded", description: `${latestReport.event_type} - ${latestReport.city} report has been downloaded.` });
+    } catch (error) {
+      console.error("Error downloading report:", error);
+      toast({ title: "Download Failed", description: "Failed to download the report. Please try again.", variant: "destructive" });
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -328,10 +396,7 @@ export default function InPersonEventsHome() {
               </div>
             </CardHeader>
             <CardContent>
-              <div
-                className="flex items-center justify-between p-4 rounded-lg border transition-colors hover:bg-muted/50 cursor-pointer"
-                onClick={() => navigate(`/events/in-person/campus-tours/${latestReport.event_slug}`)}
-              >
+              <div className="flex items-center justify-between p-4 rounded-lg border transition-colors hover:bg-muted/50">
                 <div className="flex items-center gap-4">
                   <div className="p-2.5 rounded-lg bg-muted">
                     <FileText className="h-5 w-5 text-muted-foreground" />
@@ -351,6 +416,16 @@ export default function InPersonEventsHome() {
                         {latestReport.city}, {latestReport.country}
                       </span>
                     </div>
+                    {/* Download audit info */}
+                    {latestReport.report_downloaded ? (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Report downloaded
+                        {latestReport.last_downloaded_by ? ` • Last by ${latestReport.last_downloaded_by}` : ""}
+                        {latestReport.last_downloaded_at ? ` • ${formatDateTime(latestReport.last_downloaded_at)}` : ""}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground mt-1">Report not downloaded yet</p>
+                    )}
                   </div>
                 </div>
 
@@ -371,8 +446,26 @@ export default function InPersonEventsHome() {
                       </div>
                     )}
                   </div>
-                  <Button variant="ghost" size="sm">
-                    View Report <ArrowRight className="h-4 w-4 ml-1" />
+                  <Button 
+                    variant="success" 
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDownloadReport();
+                    }}
+                    disabled={downloading}
+                  >
+                    {downloading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Downloading...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="h-4 w-4" />
+                        Download
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>
