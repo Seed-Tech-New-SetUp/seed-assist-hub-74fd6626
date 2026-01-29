@@ -19,13 +19,44 @@ export function handleUnauthorized(errorMessage?: string): never {
 
 /**
  * Check if an error response indicates an unauthorized/expired token.
+ * Supports both flat error structures and nested { error: { code, message } } format.
  */
-export function isUnauthorizedError(status: number, errorData?: { error?: string; message?: string }): boolean {
+export function isUnauthorizedError(
+  status: number, 
+  errorData?: { 
+    error?: string | { code?: string; message?: string }; 
+    message?: string;
+    success?: boolean;
+  }
+): boolean {
   if (status === 401 || status === 403) {
     return true;
   }
   
-  const errorMessage = (errorData?.error || errorData?.message || "").toLowerCase();
+  // Check for nested error structure: { success: false, error: { code: "UNAUTHORIZED" } }
+  if (errorData?.error && typeof errorData.error === 'object') {
+    const errorCode = errorData.error.code?.toUpperCase();
+    if (errorCode === 'UNAUTHORIZED' || errorCode === 'TOKEN_EXPIRED' || errorCode === 'INVALID_TOKEN') {
+      return true;
+    }
+    const nestedMessage = (errorData.error.message || '').toLowerCase();
+    if (
+      nestedMessage.includes('unauthorized') ||
+      nestedMessage.includes('token expired') ||
+      nestedMessage.includes('invalid token') ||
+      nestedMessage.includes('expired token')
+    ) {
+      return true;
+    }
+  }
+  
+  // Check flat error structure
+  const errorMessage = (
+    (typeof errorData?.error === 'string' ? errorData.error : '') || 
+    errorData?.message || 
+    ''
+  ).toLowerCase();
+  
   return (
     errorMessage.includes("unauthorized") ||
     errorMessage.includes("token expired") ||
@@ -34,7 +65,8 @@ export function isUnauthorizedError(status: number, errorData?: { error?: string
     errorMessage.includes("no authentication token") ||
     errorMessage.includes("authentication required") ||
     errorMessage.includes("not authenticated") ||
-    errorMessage.includes("session expired")
+    errorMessage.includes("session expired") ||
+    errorMessage.includes("expired token")
   );
 }
 
@@ -60,9 +92,14 @@ export async function checkResponseForAuthError(
 
 /**
  * Check Supabase function invoke response for auth errors.
+ * Supports nested error structure: { success: false, error: { code, message } }
  */
 export function checkSupabaseResponseForAuthError(
-  data: { success?: boolean; error?: string; message?: string } | null,
+  data: { 
+    success?: boolean; 
+    error?: string | { code?: string; message?: string }; 
+    message?: string 
+  } | null,
   error: { message?: string; status?: number } | null
 ): void {
   // Check error object
@@ -74,9 +111,13 @@ export function checkSupabaseResponseForAuthError(
   }
 
   // Check response data
-  if (data && !data.success) {
-    if (isUnauthorizedError(0, { error: data.error, message: data.message })) {
-      handleUnauthorized(data.error || data.message);
+  if (data && data.success === false) {
+    if (isUnauthorizedError(0, data)) {
+      // Extract message from nested or flat structure
+      const errorMessage = typeof data.error === 'object' 
+        ? data.error.message 
+        : (data.error || data.message);
+      handleUnauthorized(errorMessage);
     }
   }
 }
@@ -96,7 +137,10 @@ export async function fetchWithAuthHandler(
     const errorData = await clonedResponse.json().catch(() => ({}));
 
     if (isUnauthorizedError(response.status, errorData)) {
-      handleUnauthorized(errorData.error || errorData.message);
+      const errorMessage = typeof errorData.error === 'object' 
+        ? errorData.error.message 
+        : (errorData.error || errorData.message);
+      handleUnauthorized(errorMessage);
     }
   }
 
