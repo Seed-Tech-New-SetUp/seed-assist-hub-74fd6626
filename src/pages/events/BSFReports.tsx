@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { extractFilenameFromHeader } from "@/lib/utils/download-filename";
+import { extractFilenameFromHeader, buildBSFFallbackFilename } from "@/lib/utils/download-filename";
 import { decodeObjectStrings } from "@/lib/utils/decode-utf8";
 import { EventsDataTable } from "@/components/events/EventsDataTable";
 import { 
@@ -217,17 +217,17 @@ const BSFReports = () => {
     return filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [completedEvents, yearFilter, seasonFilter]);
 
-  const handleDownload = async (reportId: string, eventName: string) => {
+  const handleDownload = async (event: BSFEvent) => {
     if (!portalToken) {
       toast({ title: "Error", description: "Please login to download reports.", variant: "destructive" });
       return;
     }
 
-    setDownloadingId(reportId);
+    setDownloadingId(event.id);
     
     try {
       const response = await fetch(
-        `https://seedglobaleducation.com/api/assist/in-person-event/bsf/reports.php?id=${reportId}`,
+        `https://seedglobaleducation.com/api/assist/in-person-event/bsf/reports.php?id=${event.id}`,
         {
           headers: {
             Authorization: `Bearer ${portalToken}`,
@@ -239,10 +239,8 @@ const BSFReports = () => {
         throw new Error("Failed to download report");
       }
 
-      const filename = extractFilenameFromHeader(
-        response,
-        `${eventName.replace(/\s+/g, "_")}_Report.xlsx`
-      );
+      const fallbackName = buildBSFFallbackFilename("BSF", event.city, event.date);
+      const filename = extractFilenameFromHeader(response, fallbackName);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -253,7 +251,7 @@ const BSFReports = () => {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
       
-      toast({ title: "Report Downloaded", description: `${eventName} report has been downloaded.` });
+      toast({ title: "Report Downloaded", description: `${event.eventName} report has been downloaded.` });
     } catch (error) {
       console.error("Error downloading report:", error);
       toast({ title: "Download Failed", description: "Failed to download the report. Please try again.", variant: "destructive" });
@@ -336,7 +334,7 @@ const BSFReports = () => {
           disabled={downloadingId === event.id}
           onClick={(e) => {
             e.stopPropagation();
-            handleDownload(event.id, event.eventName);
+            handleDownload(event);
           }}
         >
           {downloadingId === event.id ? (

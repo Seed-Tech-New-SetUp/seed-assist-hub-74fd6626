@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { extractFilenameFromHeader } from "@/lib/utils/download-filename";
+import { extractFilenameFromHeader, buildCampusTourFallbackFilename } from "@/lib/utils/download-filename";
 import { decodeObjectStrings } from "@/lib/utils/decode-utf8";
 import { EventsDataTable } from "@/components/events/EventsDataTable";
 import { 
@@ -207,16 +207,16 @@ const CampusTourReports = () => {
     fetchCampusTourEvents();
   }, [portalToken]);
 
-  const handleDownload = async (eventId: string, eventName: string) => {
+  const handleDownload = async (event: CampusTourEvent) => {
     if (!portalToken) {
       toast({ title: "Error", description: "Please log in to download reports", variant: "destructive" });
       return;
     }
 
-    setDownloadingId(eventId);
+    setDownloadingId(event.id);
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/campus-tour-proxy?id=${eventId}`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/campus-tour-proxy?id=${event.id}`,
         {
           headers: {
             Authorization: `Bearer ${portalToken}`,
@@ -228,10 +228,12 @@ const CampusTourReports = () => {
         throw new Error("Failed to download report");
       }
 
-      const filename = extractFilenameFromHeader(
-        response,
-        `${eventName.replace(/\s+/g, "_")}_Report.xlsx`
+      const fallbackName = buildCampusTourFallbackFilename(
+        "Campus_Tour",
+        event.campusName || event.city,
+        event.date
       );
+      const filename = extractFilenameFromHeader(response, fallbackName);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -242,7 +244,7 @@ const CampusTourReports = () => {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
-      toast({ title: "Report Downloaded", description: `${eventName} report has been downloaded.` });
+      toast({ title: "Report Downloaded", description: `${event.eventName} report has been downloaded.` });
     } catch (error) {
       console.error("Download error:", error);
       toast({ title: "Download Failed", description: "Could not download the report", variant: "destructive" });
@@ -344,7 +346,7 @@ const CampusTourReports = () => {
           disabled={downloadingId === event.id}
           onClick={(e) => {
             e.stopPropagation();
-            handleDownload(event.id, event.eventName);
+            handleDownload(event);
           }}
         >
           {downloadingId === event.id ? (

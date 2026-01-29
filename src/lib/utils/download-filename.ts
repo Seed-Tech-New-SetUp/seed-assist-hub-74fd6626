@@ -28,3 +28,59 @@ export function extractFilenameFromHeader(
   
   return fallbackName;
 }
+
+/**
+ * Determines season based on month (Spring: Jan-Jun, Fall: Jul-Dec)
+ */
+function getSeason(date: Date): string {
+  const month = date.getMonth();
+  return month < 6 ? "Spring" : "Fall";
+}
+
+/**
+ * Formats date as dd-mm-yyyy
+ */
+function formatDateForFilename(date: Date): string {
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  return `${day}-${month}-${year}`;
+}
+
+/**
+ * Builds fallback filename for BSF reports.
+ * Pattern: {eventTypeName}_{city}_{season_year}_{formattedDate}.xlsx
+ */
+export function buildBSFFallbackFilename(
+  eventTypeName: string,
+  city: string,
+  eventDate: string
+): string {
+  const date = new Date(eventDate);
+  const season = getSeason(date);
+  const year = date.getFullYear();
+  const formattedDate = formatDateForFilename(date);
+  
+  const sanitize = (str: string) => str.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_-]/g, "");
+  
+  return `${sanitize(eventTypeName)}_${sanitize(city)}_${season}_${year}_${formattedDate}.xlsx`;
+}
+
+/**
+ * Builds fallback filename for Campus Tour reports.
+ * Pattern: {eventTypeName}_{campusName}_{season_year}_{formattedDate}.xlsx
+ */
+export function buildCampusTourFallbackFilename(
+  eventTypeName: string,
+  campusName: string,
+  eventDate: string
+): string {
+  const date = new Date(eventDate);
+  const season = getSeason(date);
+  const year = date.getFullYear();
+  const formattedDate = formatDateForFilename(date);
+  
+  const sanitize = (str: string) => str.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_-]/g, "");
+  
+  return `${sanitize(eventTypeName)}_${sanitize(campusName || "Event")}_${season}_${year}_${formattedDate}.xlsx`;
+}
