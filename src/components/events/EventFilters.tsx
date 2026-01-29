@@ -5,6 +5,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 interface YearFilterProps {
   value: string;
@@ -14,18 +15,21 @@ interface YearFilterProps {
 
 export function YearFilter({ value, onChange, years = ["All", "2024", "2025", "2026"] }: YearFilterProps) {
   return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="w-[100px]">
-        <SelectValue placeholder="Year" />
-      </SelectTrigger>
-      <SelectContent>
-        {years.map((year) => (
-          <SelectItem key={year} value={year}>
-            {year}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <div className="flex items-center gap-2">
+      <Label className="text-sm text-muted-foreground whitespace-nowrap">Year:</Label>
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger className="w-[100px]">
+          <SelectValue placeholder="Year" />
+        </SelectTrigger>
+        <SelectContent>
+          {years.map((year) => (
+            <SelectItem key={year} value={year}>
+              {year}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
   );
 }
 
@@ -38,18 +42,21 @@ const SEASONS = ["All", "Spring", "Summer", "Fall"];
 
 export function SeasonFilter({ value, onChange }: SeasonFilterProps) {
   return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="w-[110px]">
-        <SelectValue placeholder="Season" />
-      </SelectTrigger>
-      <SelectContent>
-        {SEASONS.map((season) => (
-          <SelectItem key={season} value={season}>
-            {season}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <div className="flex items-center gap-2">
+      <Label className="text-sm text-muted-foreground whitespace-nowrap">Season:</Label>
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger className="w-[110px]">
+          <SelectValue placeholder="Season" />
+        </SelectTrigger>
+        <SelectContent>
+          {SEASONS.map((season) => (
+            <SelectItem key={season} value={season}>
+              {season}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
   );
 }
 
@@ -76,18 +83,21 @@ const MONTHS = [
 
 export function MonthFilter({ value, onChange }: MonthFilterProps) {
   return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="w-[120px]">
-        <SelectValue placeholder="Month" />
-      </SelectTrigger>
-      <SelectContent>
-        {MONTHS.map((month) => (
-          <SelectItem key={month} value={month}>
-            {month}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <div className="flex items-center gap-2">
+      <Label className="text-sm text-muted-foreground whitespace-nowrap">Month:</Label>
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger className="w-[120px]">
+          <SelectValue placeholder="Month" />
+        </SelectTrigger>
+        <SelectContent>
+          {MONTHS.map((month) => (
+            <SelectItem key={month} value={month}>
+              {month}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
   );
 }
 

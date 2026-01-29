@@ -58,7 +58,7 @@ export function EventsDataTable<T extends { id?: string; event_id?: string }>({
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(defaultPageSize);
 
-  // Filter data based on search
+  // Filter data based on search (applied to ALL data, not just current page)
   const filteredData = useMemo(() => {
     if (!searchQuery.trim() || !searchKey) return data;
     
@@ -74,9 +74,10 @@ export function EventsDataTable<T extends { id?: string; event_id?: string }>({
   // Pagination calculations
   const totalPages = Math.ceil(filteredData.length / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
-  const paginatedData = filteredData.slice(startIndex, startIndex + pageSize);
+  const endIndex = Math.min(startIndex + pageSize, filteredData.length);
+  const paginatedData = filteredData.slice(startIndex, endIndex);
 
-  // Reset to page 1 when search or filters change
+  // Reset to page 1 when search or data changes
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
     setCurrentPage(1);
@@ -114,23 +115,49 @@ export function EventsDataTable<T extends { id?: string; event_id?: string }>({
 
   return (
     <div className="space-y-4">
-      {/* Search and Filters Row */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div className="relative w-full sm:w-80">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder={searchPlaceholder}
-            value={searchQuery}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        
-        {filterSlot && (
-          <div className="flex flex-wrap gap-2 items-center">
-            {filterSlot}
+      {/* Top Row: Page Size, Count, Search, and Filters */}
+      <div className="flex flex-col gap-4">
+        {/* Row 1: Page size selector and event count */}
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>Show</span>
+            <Select value={String(pageSize)} onValueChange={handlePageSizeChange}>
+              <SelectTrigger className="w-[70px] h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {pageSizeOptions.map((size) => (
+                  <SelectItem key={size} value={String(size)}>
+                    {size}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <span>entries</span>
+            <span className="text-foreground font-medium ml-2">
+              (Showing {startIndex + 1}-{endIndex} of {filteredData.length} events)
+            </span>
           </div>
-        )}
+        </div>
+
+        {/* Row 2: Search and Filters */}
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+          <div className="relative w-full sm:w-80">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder={searchPlaceholder}
+              value={searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          
+          {filterSlot && (
+            <div className="flex flex-wrap gap-4 items-center">
+              {filterSlot}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Table */}
@@ -167,65 +194,44 @@ export function EventsDataTable<T extends { id?: string; event_id?: string }>({
         </Table>
       </div>
 
-      {/* Pagination Controls */}
-      {filteredData.length > 0 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span>Show</span>
-            <Select value={String(pageSize)} onValueChange={handlePageSizeChange}>
-              <SelectTrigger className="w-[70px] h-8">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {pageSizeOptions.map((size) => (
-                  <SelectItem key={size} value={String(size)}>
-                    {size}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <span>
-              of {filteredData.length} events
-            </span>
-          </div>
+      {/* Bottom Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
 
-          {totalPages > 1 && (
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                  />
-                </PaginationItem>
+              {getPageNumbers().map((page, idx) =>
+                page === "ellipsis" ? (
+                  <PaginationItem key={`ellipsis-${idx}`}>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                ) : (
+                  <PaginationItem key={page}>
+                    <PaginationLink
+                      onClick={() => setCurrentPage(page)}
+                      isActive={currentPage === page}
+                      className="cursor-pointer"
+                    >
+                      {page}
+                    </PaginationLink>
+                  </PaginationItem>
+                )
+              )}
 
-                {getPageNumbers().map((page, idx) =>
-                  page === "ellipsis" ? (
-                    <PaginationItem key={`ellipsis-${idx}`}>
-                      <PaginationEllipsis />
-                    </PaginationItem>
-                  ) : (
-                    <PaginationItem key={page}>
-                      <PaginationLink
-                        onClick={() => setCurrentPage(page)}
-                        isActive={currentPage === page}
-                        className="cursor-pointer"
-                      >
-                        {page}
-                      </PaginationLink>
-                    </PaginationItem>
-                  )
-                )}
-
-                <PaginationItem>
-                  <PaginationNext
-                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          )}
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </div>
       )}
     </div>
