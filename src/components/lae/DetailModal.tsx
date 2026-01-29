@@ -183,34 +183,33 @@ export function DetailModal({
                   </div>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <ScrollArea className="h-[400px]">
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            {detailData.columns.map((column, index) => (
-                              <TableHead key={column} className="whitespace-nowrap">
-                                {formatHeader(column, index)}
-                              </TableHead>
+                  {/* Allow both vertical + horizontal scroll for wide tables */}
+                  <div className="h-[400px] overflow-auto">
+                    <Table className="w-max">
+                      <TableHeader>
+                        <TableRow>
+                          {detailData.columns.map((column, index) => (
+                            <TableHead key={column} className="whitespace-nowrap">
+                              {formatHeader(column, index)}
+                            </TableHead>
+                          ))}
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {detailData.data.map((row, rowIndex) => (
+                          <TableRow key={rowIndex}>
+                            {detailData.columns.map((column) => (
+                              <TableCell key={column} className="whitespace-nowrap">
+                                {row[column] !== null && row[column] !== undefined
+                                  ? String(row[column])
+                                  : "-"}
+                              </TableCell>
                             ))}
                           </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {detailData.data.map((row, rowIndex) => (
-                            <TableRow key={rowIndex}>
-                              {detailData.columns.map((column) => (
-                                <TableCell key={column} className="whitespace-nowrap">
-                                  {row[column] !== null && row[column] !== undefined
-                                    ? String(row[column])
-                                    : "-"}
-                                </TableCell>
-                              ))}
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </ScrollArea>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </CardContent>
               </Card>
             </div>
