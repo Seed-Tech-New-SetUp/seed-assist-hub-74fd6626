@@ -105,6 +105,7 @@ const baseNavigation: NavItem[] = [
         items: [
           { title: "General Information", href: "/school-profile/edit" },
           { title: "Academic Programs", href: "/school-profile/programs" },
+          { title: "Access Leads", href: "/lead-analytics", permissionKey: "leadAndApplicationEngagement", alwaysShow: true },
         ],
       },
     ],
@@ -129,7 +130,7 @@ const baseNavigation: NavItem[] = [
     permissionKey: "icr",
   },
   {
-    title: "Lead Analytics",
+    title: "Lead And Application Engagement",
     href: "/lead-analytics",
     icon: BarChart3,
     permissionKey: "leadAndApplicationEngagement",
@@ -421,6 +422,31 @@ export function AppSidebar() {
                         <div key={groupIndex} className="ml-4 pl-2 border-l border-sidebar-border/50 space-y-0.5 mt-1">
                           {group.items.map((subItem) => {
                             const subActive = isPathActive(subItem.href);
+                            
+                            // Check if this item is locked (has alwaysShow but no permission)
+                            // For Organisation Profile (no permissionKey), check top-level permissions directly
+                            let isLocked = false;
+                            if (subItem.alwaysShow && subItem.permissionKey) {
+                              const directPermission = permissions?.[subItem.permissionKey as keyof Permissions];
+                              if (directPermission && typeof directPermission === 'object' && 'enabled' in directPermission) {
+                                isLocked = !directPermission.enabled;
+                              } else if (directPermission === undefined) {
+                                isLocked = true;
+                              }
+                            }
+                            
+                            if (isLocked) {
+                              return (
+                                <div
+                                  key={subItem.href}
+                                  className="flex items-center gap-2 px-2 py-1.5 rounded-md text-[12px] transition-colors text-sidebar-foreground/40 cursor-not-allowed"
+                                >
+                                  <span className="truncate">{subItem.title}</span>
+                                  <Lock className="h-3 w-3 flex-shrink-0" />
+                                </div>
+                              );
+                            }
+                            
                             return (
                               <NavLink
                                 key={subItem.href}
