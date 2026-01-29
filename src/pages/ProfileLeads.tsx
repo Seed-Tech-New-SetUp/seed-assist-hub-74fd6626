@@ -319,12 +319,12 @@ export default function ProfileLeads() {
                   <TableRow>
                     <TableHead className="w-[50px]"></TableHead>
                     <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
+                    <TableHead className="w-[180px]">Email</TableHead>
                     <TableHead>Country</TableHead>
                     <TableHead>Programs Viewed</TableHead>
                     <TableHead className="text-center">Start Year</TableHead>
                     <TableHead className="text-center">Registered On</TableHead>
-                    <TableHead className="text-center">Page Views</TableHead>
+                    <TableHead className="text-center w-[150px]">Page Views</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -355,7 +355,7 @@ export default function ProfileLeads() {
                             )}
                           </div>
                         </TableCell>
-                        <TableCell className="text-sm">{lead.email}</TableCell>
+                        <TableCell className="text-sm max-w-[180px] truncate">{lead.email}</TableCell>
                         <TableCell>
                           <span className="flex items-center gap-1.5">
                             {lead.flag_code && (
