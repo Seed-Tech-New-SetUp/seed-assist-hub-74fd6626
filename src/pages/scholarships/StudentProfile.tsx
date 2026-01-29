@@ -840,34 +840,6 @@ export default function StudentProfile() {
           </CardContent>
         </Card>
 
-        {/* Available Awards */}
-        {profile.awards.available.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Available Awards</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {profile.awards.available.map((award) => (
-                  <div key={award.id} className="p-4 rounded-lg border bg-muted/30">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="font-medium text-sm">{award.name}</p>
-                        <p className="text-2xl font-bold text-primary mt-1">
-                          ${award.value.toLocaleString()}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {award.percentage}% coverage
-                        </p>
-                      </div>
-                      <Badge variant="secondary">{award.currency}</Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         {/* Essays */}
         <Card>
