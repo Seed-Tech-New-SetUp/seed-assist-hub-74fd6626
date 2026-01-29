@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar, Clock, Radio, FileText, Download, Loader2, Users, Sparkles, Video } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { getCookie } from "@/lib/utils/cookies";
+import { extractFilenameFromHeader } from "@/lib/utils/download-filename";
 import { decodeObjectStrings } from "@/lib/utils/decode-utf8";
 import { EventsDataTable } from "@/components/events/EventsDataTable";
 import { 
@@ -212,11 +213,15 @@ export default function VirtualMasterclass() {
         throw new Error("Failed to download report");
       }
 
+      const filename = extractFilenameFromHeader(
+        response,
+        `${event.event_name.replace(/\s+/g, "_")}_Report.xlsx`
+      );
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `${event.event_name.replace(/\s+/g, "_")}_Report.xlsx`;
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

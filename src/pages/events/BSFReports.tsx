@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { extractFilenameFromHeader } from "@/lib/utils/download-filename";
 import { decodeObjectStrings } from "@/lib/utils/decode-utf8";
 import { EventsDataTable } from "@/components/events/EventsDataTable";
 import { 
@@ -238,11 +239,15 @@ const BSFReports = () => {
         throw new Error("Failed to download report");
       }
 
+      const filename = extractFilenameFromHeader(
+        response,
+        `${eventName.replace(/\s+/g, "_")}_Report.xlsx`
+      );
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${eventName.replace(/\s+/g, "_")}_Report.xlsx`;
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
