@@ -24,6 +24,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useAuth, Permissions } from "@/contexts/AuthContext";
 import { useSidebarState } from "@/contexts/SidebarContext";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface NavSubItem {
   title: string;
@@ -482,39 +483,45 @@ export function AppSidebar() {
             }
 
             return (
-              <NavLink
-                key={item.href}
-                to={item.href!}
-                className={cn(
-                  "flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[13px] font-medium transition-colors group relative",
-                  isActive
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                    : "text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent",
-                  collapsed && "justify-center px-0"
-                )}
-              >
-                <item.icon className="h-4 w-4 flex-shrink-0" />
-                {!collapsed && (
-                  <>
-                    <span className="flex-1 truncate">{item.title}</span>
-                    {item.badge && (
-                      <span className={cn(
-                        "px-1.5 py-0.5 text-[10px] font-semibold rounded-full min-w-[18px] text-center",
-                        isActive
-                          ? "bg-sidebar-primary-foreground/20 text-sidebar-primary-foreground"
-                          : "bg-primary/10 text-primary"
-                      )}>
-                        {item.badge}
+              <Tooltip key={item.href}>
+                <TooltipTrigger asChild>
+                  <NavLink
+                    to={item.href!}
+                    className={cn(
+                      "flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[13px] font-medium transition-colors group relative",
+                      isActive
+                        ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                        : "text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent",
+                      collapsed && "justify-center px-0"
+                    )}
+                  >
+                    <item.icon className="h-4 w-4 flex-shrink-0" />
+                    {!collapsed && (
+                      <>
+                        <span className="flex-1 truncate">{item.title}</span>
+                        {item.badge && (
+                          <span className={cn(
+                            "px-1.5 py-0.5 text-[10px] font-semibold rounded-full min-w-[18px] text-center",
+                            isActive
+                              ? "bg-sidebar-primary-foreground/20 text-sidebar-primary-foreground"
+                              : "bg-primary/10 text-primary"
+                          )}>
+                            {item.badge}
+                          </span>
+                        )}
+                      </>
+                    )}
+                    {collapsed && item.badge && (
+                      <span className="absolute -top-0.5 -right-0.5 h-3.5 w-3.5 flex items-center justify-center text-[9px] font-bold rounded-full bg-primary text-primary-foreground">
+                        {item.badge > 9 ? '9+' : item.badge}
                       </span>
                     )}
-                  </>
-                )}
-                {collapsed && item.badge && (
-                  <span className="absolute -top-0.5 -right-0.5 h-3.5 w-3.5 flex items-center justify-center text-[9px] font-bold rounded-full bg-primary text-primary-foreground">
-                    {item.badge > 9 ? '9+' : item.badge}
-                  </span>
-                )}
-              </NavLink>
+                  </NavLink>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="text-xs">
+                  {item.title}
+                </TooltipContent>
+              </Tooltip>
             );
           })}
         </nav>
