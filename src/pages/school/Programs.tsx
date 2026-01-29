@@ -186,12 +186,10 @@ export default function Programs() {
             <h1 className="text-2xl font-display font-bold text-foreground">Academic Programs</h1>
             <p className="text-muted-foreground mt-1">Manage your program portfolio and settings</p>
           </div>
-          {isAdmin && (
-            <Button onClick={() => setRequestModalOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Request New Program
-            </Button>
-          )}
+          <Button onClick={() => setRequestModalOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Request New Program
+          </Button>
         </div>
 
         {/* Request New Program Modal */}
