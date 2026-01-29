@@ -867,7 +867,7 @@ export default function StudentProfile() {
 
         {/* Awards Modal for Winner */}
         <Dialog open={showAwardsModal} onOpenChange={setShowAwardsModal}>
-          <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
+          <DialogContent className="max-w-lg max-h-[85vh] flex flex-col min-h-0">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Trophy className="h-5 w-5 text-purple-500" />
@@ -878,7 +878,7 @@ export default function StudentProfile() {
               </DialogDescription>
             </DialogHeader>
 
-            <ScrollArea className="flex-1 max-h-[60vh] pr-4">
+            <ScrollArea className="h-[60vh] min-h-0 pr-4">
               <div className="space-y-6 py-4">
                 {/* Available Awards */}
                 {profile.awards.available.length > 0 && (
