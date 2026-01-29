@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ProgramBadges } from "@/components/leads/ProgramBadges";
 import {
   Select,
   SelectContent,
@@ -361,17 +362,7 @@ export default function ProfileLeads() {
                           </span>
                         </TableCell>
                         <TableCell>
-                          <div className="flex flex-wrap gap-1">
-                            {parsePrograms(lead.programs_viewed).map((program, pIdx) => (
-                              <Badge
-                                key={pIdx}
-                                variant="secondary"
-                                className="bg-purple-500 text-white text-xs"
-                              >
-                                {program}
-                              </Badge>
-                            ))}
-                          </div>
+                          <ProgramBadges programs={parsePrograms(lead.programs_viewed)} />
                         </TableCell>
                         <TableCell className="text-center">{lead.intended_pg_program_start_year}</TableCell>
                         <TableCell className="text-center">
