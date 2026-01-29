@@ -239,7 +239,7 @@ const BSFReports = () => {
         throw new Error("Failed to download report");
       }
 
-      const fallbackName = buildBSFFallbackFilename("BSF", event.city, event.date);
+      const fallbackName = buildBSFFallbackFilename("business_school_festival", event.city, event.date);
       const filename = extractFilenameFromHeader(response, fallbackName);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
