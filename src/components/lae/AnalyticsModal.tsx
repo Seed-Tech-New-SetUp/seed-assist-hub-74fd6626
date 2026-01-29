@@ -40,6 +40,9 @@ import { AnalyticsTable } from "./AnalyticsTable";
 import { DetailModal } from "./DetailModal";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 interface AnalyticsModalProps {
   open: boolean;
@@ -215,34 +218,9 @@ export function AnalyticsModal({
     }
   };
 
-  // Export handlers
+  // Export handlers - Frontend-based Excel export
   const handleExportExcel = () => {
-    if (!assignmentId) {
-      toast({
-        title: "Error",
-        description: "No assignment selected",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Build the export URL through the edge function
-    const params = new URLSearchParams({ assignment_id: assignmentId });
-    if (statusFilter !== "all") params.append("status", statusFilter);
-    if (programFilter !== "all") params.append("program", programFilter);
-
-    // Trigger download through edge function
-    toast({
-      title: "Export Started",
-      description: "Your Excel file is being generated...",
-    });
-
-    // For now, show a message - the actual download would be handled by the edge function
-    console.log("Export URL params:", params.toString());
-  };
-
-  const handleExportPDF = () => {
-    if (!assignmentId || !analyticsData) {
+    if (!analyticsData) {
       toast({
         title: "Error",
         description: "No data to export",
@@ -251,10 +229,167 @@ export function AnalyticsModal({
       return;
     }
 
-    toast({
-      title: "PDF Export",
-      description: "PDF export feature coming soon. Please use Excel export for now.",
-    });
+    try {
+      const wb = XLSX.utils.book_new();
+
+      // Program Distribution Sheet
+      const programData = analyticsData.program_distribution.map((d) => ({
+        [programLabel]: d.program || "N/A",
+        Count: d.count,
+        Percentage: analyticsData.program_total > 0 
+          ? `${((d.count / analyticsData.program_total) * 100).toFixed(1)}%` 
+          : "0%",
+      }));
+      const programWs = XLSX.utils.json_to_sheet(programData);
+      XLSX.utils.book_append_sheet(wb, programWs, `${programLabel} Distribution`);
+
+      // Status Distribution Sheet
+      const statusData = analyticsData.status_distribution.map((d) => ({
+        [statusLabel]: d.lead_status || "N/A",
+        Count: d.count,
+        Percentage: analyticsData.status_total > 0 
+          ? `${((d.count / analyticsData.status_total) * 100).toFixed(1)}%` 
+          : "0%",
+      }));
+      const statusWs = XLSX.utils.json_to_sheet(statusData);
+      XLSX.utils.book_append_sheet(wb, statusWs, `${statusLabel} Distribution`);
+
+      // Summary Sheet
+      const summaryData = [
+        { Metric: "Total Records", Value: analyticsData.total_records },
+        { Metric: `Unique ${programLabel}s`, Value: analyticsData.program_distribution.length },
+        { Metric: `Unique ${statusLabel}es`, Value: analyticsData.status_distribution.length },
+        { Metric: "Status Filter", Value: statusFilter === "all" ? "All" : statusFilter },
+        { Metric: "Program Filter", Value: programFilter === "all" ? "All" : programFilter },
+        { Metric: "Generated At", Value: format(new Date(), "MMM d, yyyy h:mm a") },
+      ];
+      const summaryWs = XLSX.utils.json_to_sheet(summaryData);
+      XLSX.utils.book_append_sheet(wb, summaryWs, "Summary");
+
+      // Generate filename
+      const today = format(new Date(), "yyyy-MM-dd_HHmmss");
+      const sanitizedName = assignmentName.replace(/[^a-zA-Z0-9]/g, "_");
+      const filename = `Analytics_${sanitizedName}_${today}.xlsx`;
+
+      XLSX.writeFile(wb, filename);
+
+      toast({
+        title: "Export Complete",
+        description: "Your Excel file has been downloaded.",
+      });
+    } catch (error) {
+      console.error("Excel export error:", error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to generate Excel file",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Frontend-based PDF export
+  const handleExportPDF = () => {
+    if (!analyticsData) {
+      toast({
+        title: "Error",
+        description: "No data to export",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+
+      // Title
+      doc.setFontSize(18);
+      doc.text(`${assignmentName} - Analytics Report`, pageWidth / 2, 20, { align: "center" });
+
+      // Generated date
+      doc.setFontSize(10);
+      doc.text(`Generated: ${format(new Date(), "MMM d, yyyy h:mm a")}`, pageWidth / 2, 28, { align: "center" });
+
+      // Summary section
+      doc.setFontSize(14);
+      doc.text("Summary", 14, 40);
+
+      doc.setFontSize(11);
+      doc.text(`Total Records: ${analyticsData.total_records.toLocaleString()}`, 14, 50);
+      doc.text(`Unique ${programLabel}s: ${analyticsData.program_distribution.length}`, 14, 58);
+      doc.text(`Unique ${statusLabel}es: ${analyticsData.status_distribution.length}`, 14, 66);
+      if (statusFilter !== "all") doc.text(`Status Filter: ${statusFilter}`, 14, 74);
+      if (programFilter !== "all") doc.text(`Program Filter: ${programFilter}`, 14, 82);
+
+      let yPos = statusFilter !== "all" || programFilter !== "all" ? 95 : 80;
+
+      // Program Distribution Table
+      doc.setFontSize(14);
+      doc.text(`${programLabel} Distribution`, 14, yPos);
+      
+      const programTableData = analyticsData.program_distribution.map((d) => [
+        d.program || "N/A",
+        d.count.toLocaleString(),
+        analyticsData.program_total > 0 
+          ? `${((d.count / analyticsData.program_total) * 100).toFixed(1)}%` 
+          : "0%",
+      ]);
+
+      autoTable(doc, {
+        startY: yPos + 5,
+        head: [[programLabel, "Count", "Percentage"]],
+        body: programTableData,
+        theme: "striped",
+        headStyles: { fillColor: [41, 128, 185] },
+      });
+
+      // Status Distribution Table (new page if needed)
+      const finalY = (doc as any).lastAutoTable?.finalY || yPos + 50;
+      if (finalY > 200) {
+        doc.addPage();
+        yPos = 20;
+      } else {
+        yPos = finalY + 15;
+      }
+
+      doc.setFontSize(14);
+      doc.text(`${statusLabel} Distribution`, 14, yPos);
+
+      const statusTableData = analyticsData.status_distribution.map((d) => [
+        d.lead_status || "N/A",
+        d.count.toLocaleString(),
+        analyticsData.status_total > 0 
+          ? `${((d.count / analyticsData.status_total) * 100).toFixed(1)}%` 
+          : "0%",
+      ]);
+
+      autoTable(doc, {
+        startY: yPos + 5,
+        head: [[statusLabel, "Count", "Percentage"]],
+        body: statusTableData,
+        theme: "striped",
+        headStyles: { fillColor: [41, 128, 185] },
+      });
+
+      // Generate filename and save
+      const today = format(new Date(), "yyyy-MM-dd_HHmmss");
+      const sanitizedName = assignmentName.replace(/[^a-zA-Z0-9]/g, "_");
+      const filename = `Analytics_${sanitizedName}_${today}.pdf`;
+
+      doc.save(filename);
+
+      toast({
+        title: "Export Complete",
+        description: "Your PDF file has been downloaded.",
+      });
+    } catch (error) {
+      console.error("PDF export error:", error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to generate PDF file",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
