@@ -429,7 +429,7 @@ export default function ScholarshipApplications() {
                     />
                   </TableHead>
                   <TableHead>Name (Country)</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead className="w-[200px]">Status</TableHead>
                   <TableHead>Standardized Test</TableHead>
                   <TableHead>UG Completion</TableHead>
                   <TableHead>UG GPA</TableHead>
@@ -506,7 +506,7 @@ export default function ScholarshipApplications() {
                           <Badge variant="secondary">R{applicant.round}</Badge>
                         </TableCell>
                         <TableCell>
-                          <Button variant="ghost" size="sm" asChild>
+                          <Button variant="default" size="sm" className="bg-foreground hover:bg-foreground/90" asChild>
                             <Link to={`/scholarships/applications/${applicant.id}`}>
                               <Eye className="h-4 w-4 mr-1" />
                               View
