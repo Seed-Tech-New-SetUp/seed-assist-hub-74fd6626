@@ -192,7 +192,7 @@ export default function InPersonEventsHome() {
                   <Users className="h-6 w-6 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Registrations</p>
+                  <p className="text-sm text-muted-foreground">Registrations <span className="text-xs opacity-70">(till date)</span></p>
                   {loading ? (
                     <Skeleton className="h-8 w-16" />
                   ) : (
@@ -210,7 +210,7 @@ export default function InPersonEventsHome() {
                   <UserCheck className="h-6 w-6 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Attended</p>
+                  <p className="text-sm text-muted-foreground">Attended <span className="text-xs opacity-70">(till date)</span></p>
                   {loading ? (
                     <Skeleton className="h-8 w-16" />
                   ) : (
@@ -228,7 +228,7 @@ export default function InPersonEventsHome() {
                   <Calendar className="h-6 w-6 text-purple-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Events</p>
+                  <p className="text-sm text-muted-foreground">Total Events <span className="text-xs opacity-70">(so far)</span></p>
                   {loading ? (
                     <Skeleton className="h-8 w-16" />
                   ) : (
@@ -246,7 +246,7 @@ export default function InPersonEventsHome() {
                   <Building2 className="h-6 w-6 text-orange-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Cities Covered</p>
+                  <p className="text-sm text-muted-foreground">Cities Covered <span className="text-xs opacity-70">(so far)</span></p>
                   {loading ? (
                     <Skeleton className="h-8 w-16" />
                   ) : (
@@ -264,7 +264,7 @@ export default function InPersonEventsHome() {
                   <Globe className="h-6 w-6 text-teal-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Countries</p>
+                  <p className="text-sm text-muted-foreground">Countries <span className="text-xs opacity-70">(so far)</span></p>
                   {loading ? (
                     <Skeleton className="h-8 w-16" />
                   ) : (
