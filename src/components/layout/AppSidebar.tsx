@@ -439,10 +439,9 @@ export function AppSidebar() {
                                 ? permModule.subModules
                                 : null;
 
-                              // If we can't resolve subModules, keep it locked (safe default)
-                              if (!subModules) {
-                                isLocked = true;
-                              } else {
+                              // Only lock when the permission is explicitly false.
+                              // If permissions aren't loaded yet (or missing), don't lock in the UI.
+                              if (subModules) {
                                 isLocked = subModules[subItem.permissionKey as keyof typeof subModules] === false;
                               }
                             }
