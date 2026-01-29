@@ -54,9 +54,9 @@ import {
   useLeadPrograms,
   useLeadCountries,
   useLeads,
-  useExportLeads,
+  exportLeadsToExcel,
 } from "@/hooks/useLeads";
-import { LeadsFilter } from "@/lib/api/leads";
+import { LeadsFilter, Lead } from "@/lib/api/leads";
 import { format } from "date-fns";
 
 // Country code to flag emoji mapping
@@ -102,7 +102,7 @@ export default function ProfileLeads() {
   const { data: programs = [] } = useLeadPrograms();
   const { data: countries = [] } = useLeadCountries();
   const { data: leads = [], isLoading: leadsLoading } = useLeads(apiFilters);
-  const exportMutation = useExportLeads();
+  const [isExporting, setIsExporting] = useState(false);
 
   // Client-side search filtering
   const filteredLeads = useMemo(() => {
@@ -286,12 +286,12 @@ export default function ProfileLeads() {
                   if (hasFiltersApplied) {
                     setExportDialogOpen(true);
                   } else {
-                    exportMutation.mutate({});
+                    exportLeadsToExcel(leads);
                   }
                 }}
-                disabled={exportMutation.isPending}
+                disabled={isExporting || leadsLoading}
               >
-                {exportMutation.isPending ? (
+                {isExporting ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
                   <Download className="h-4 w-4 mr-2" />
@@ -490,9 +490,9 @@ export default function ProfileLeads() {
                 variant="outline"
                 onClick={() => {
                   setExportDialogOpen(false);
-                  exportMutation.mutate({});
+                  exportLeadsToExcel(leads);
                 }}
-                disabled={exportMutation.isPending}
+                disabled={isExporting}
               >
                 Download All Leads
               </Button>
@@ -500,9 +500,9 @@ export default function ProfileLeads() {
                 className="bg-orange-500 hover:bg-orange-600 text-white"
                 onClick={() => {
                   setExportDialogOpen(false);
-                  exportMutation.mutate(apiFilters);
+                  exportLeadsToExcel(filteredLeads);
                 }}
-                disabled={exportMutation.isPending}
+                disabled={isExporting}
               >
                 Download Filtered Leads
               </Button>
