@@ -17,8 +17,8 @@ export interface LeadProgram {
 }
 
 export interface LeadCountry {
-  country_code: string;
-  country_name: string;
+  key: string;
+  value: string;
 }
 
 export interface Lead {

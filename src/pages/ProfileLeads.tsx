@@ -259,8 +259,8 @@ export default function ProfileLeads() {
                   <SelectContent>
                     <SelectItem value="all">All Countries</SelectItem>
                     {countries.map((c) => (
-                      <SelectItem key={c.country_code} value={c.country_name}>
-                        {getFlagEmoji(c.country_code)} {c.country_name}
+                      <SelectItem key={c.key} value={c.value}>
+                        {getFlagEmoji(c.key)} {c.value}
                       </SelectItem>
                     ))}
                   </SelectContent>
