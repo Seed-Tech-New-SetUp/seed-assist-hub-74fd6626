@@ -23,13 +23,58 @@ serve(async (req) => {
       );
     }
 
+    const contentType = req.headers.get('Content-Type') || '';
+    
+    // Handle multipart/form-data for file uploads
+    if (contentType.includes('multipart/form-data')) {
+      const formData = await req.formData();
+      const action = formData.get('action');
+      
+      if (action === 'upload') {
+        const url = `${BASE_URL}/upload.php`;
+        
+        // Forward the FormData directly to the backend
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Authorization': authHeader,
+          },
+          body: formData,
+        });
+        
+        const respContentType = response.headers.get('Content-Type') || '';
+        const responseText = await response.text();
+        
+        if (!respContentType.includes('application/json')) {
+          console.error('LAE Proxy Upload: Non-JSON response:', responseText.substring(0, 500));
+          return new Response(
+            JSON.stringify({ success: false, error: 'Backend returned non-JSON response' }),
+            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        
+        try {
+          const data = JSON.parse(responseText);
+          return new Response(
+            JSON.stringify(data),
+            { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        } catch (parseError) {
+          console.error('LAE Proxy Upload: JSON parse error:', parseError);
+          return new Response(
+            JSON.stringify({ success: false, error: 'Invalid JSON response from backend' }),
+            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+    }
+
     const body = await req.json();
     const { action, ...params } = body;
 
     let url: string;
     let method: string = 'GET';
-    let fetchBody: string | FormData | undefined;
-    let contentType: string = 'application/json';
+    let fetchBody: string | undefined;
     let isDownload = false;
 
     switch (action) {
@@ -44,18 +89,6 @@ serve(async (req) => {
         if (params.page) listParams.append('page', params.page);
         if (params.limit) listParams.append('limit', params.limit);
         url = `${BASE_URL}/list.php${listParams.toString() ? '?' + listParams.toString() : ''}`;
-        break;
-
-      case 'upload':
-        // POST /api/assist/lae/upload.php - Upload file
-        url = `${BASE_URL}/upload.php`;
-        method = 'POST';
-        fetchBody = JSON.stringify({
-          file_name: params.file_name,
-          file_type: params.file_type,
-          file_content: params.file_content,
-          assignment_id: params.assignment_id,
-        });
         break;
 
       case 'delete':
@@ -146,8 +179,8 @@ serve(async (req) => {
       'Authorization': authHeader,
     };
 
-    if (method === 'POST' && !fetchBody?.toString().includes('FormData')) {
-      fetchHeaders['Content-Type'] = contentType;
+    if (method === 'POST') {
+      fetchHeaders['Content-Type'] = 'application/json';
     }
 
     const response = await fetch(url, {

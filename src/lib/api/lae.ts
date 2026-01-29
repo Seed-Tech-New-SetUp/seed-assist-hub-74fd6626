@@ -92,34 +92,29 @@ export async function uploadLAEFile(file: File): Promise<{ success: boolean; fil
   const token = getAuthToken();
   if (!token) handleUnauthorized("No authentication token");
 
-  // Convert file to base64
-  const reader = new FileReader();
-  const base64Promise = new Promise<string>((resolve, reject) => {
-    reader.onload = () => {
-      const result = reader.result as string;
-      // Remove the data URL prefix
-      const base64 = result.split(",")[1];
-      resolve(base64);
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
+  // Create FormData for multipart/form-data upload
+  const formData = new FormData();
+  formData.append('action', 'upload');
+  formData.append('file', file, file.name);
+  formData.append('assignment_id', `LAE_${Date.now()}`);
 
-  const base64Content = await base64Promise;
-
-  const { data, error } = await supabase.functions.invoke("lae-proxy", {
-    body: {
-      action: "upload",
-      file_name: file.name,
-      file_type: file.type,
-      file_content: base64Content,
-      assignment_id: `LAE_${Date.now()}`,
+  // Use fetch directly for FormData (supabase.functions.invoke doesn't handle FormData well)
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  
+  const response = await fetch(`${supabaseUrl}/functions/v1/lae-proxy`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'apikey': supabaseKey,
     },
-    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
   });
 
-  checkAuthError(data, error as { message?: string; status?: number });
-  if (error) throw new Error(error.message);
+  const data = await response.json();
+  
+  checkAuthError(data, { status: response.status });
+  if (!response.ok) throw new Error(data?.error || 'Upload failed');
   return data;
 }
 
