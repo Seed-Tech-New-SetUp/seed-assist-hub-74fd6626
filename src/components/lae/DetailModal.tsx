@@ -8,7 +8,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Table,
   TableBody,
@@ -27,6 +26,8 @@ import {
 } from "lucide-react";
 import { fetchDetailData, DetailDataResponse } from "@/lib/api/lae";
 import { toast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+import * as XLSX from "xlsx";
 
 interface DetailModalProps {
   open: boolean;
@@ -90,12 +91,66 @@ export function DetailModal({
     }
   };
 
+  // Frontend-based Excel export
   const handleExport = () => {
-    // In the real implementation, this would trigger a file download
-    toast({
-      title: "Export Started",
-      description: "Your Excel file is being prepared for download.",
-    });
+    if (!detailData || detailData.data.length === 0) {
+      toast({
+        title: "Error",
+        description: "No data to export",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Transform data with formatted headers
+      const exportData = detailData.data.map((row) => {
+        const formattedRow: Record<string, unknown> = {};
+        detailData.columns.forEach((column, index) => {
+          const header = formatHeader(column, index);
+          formattedRow[header] = row[column] !== null && row[column] !== undefined
+            ? String(row[column])
+            : "";
+        });
+        return formattedRow;
+      });
+
+      // Create workbook
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      
+      // Auto-size columns
+      const colWidths = Object.keys(exportData[0] || {}).map(key => ({
+        wch: Math.max(
+          key.length,
+          ...exportData.map(row => String(row[key] ?? '').length)
+        ) + 2
+      }));
+      ws['!cols'] = colWidths;
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Data");
+
+      // Generate filename
+      const today = format(new Date(), "yyyyMMdd_HHmmss");
+      const filterValue = filterValues.length > 1 
+        ? `${filterValues.length}_items` 
+        : filterValues[0]?.replace(/[^a-zA-Z0-9]/g, "_") || "data";
+      const filename = `${filterLabel}_${filterValue}_${today}.xlsx`;
+
+      XLSX.writeFile(wb, filename);
+
+      toast({
+        title: "Export Complete",
+        description: "Your Excel file has been downloaded.",
+      });
+    } catch (error) {
+      console.error("Excel export error:", error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to generate Excel file",
+        variant: "destructive",
+      });
+    }
   };
 
   const formatHeader = (column: string, index: number): string => {
