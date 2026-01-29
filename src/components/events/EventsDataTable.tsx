@@ -135,7 +135,10 @@ export function EventsDataTable<T extends { id?: string; event_id?: string }>({
             </Select>
             <span>entries</span>
             <span className="text-foreground font-medium ml-2">
-              (Showing {startIndex + 1}-{endIndex} of {filteredData.length} events)
+              {filteredData.length > 0 
+                ? `(Showing ${startIndex + 1}-${endIndex} of ${filteredData.length} events)`
+                : "(No events found)"
+              }
             </span>
           </div>
         </div>
