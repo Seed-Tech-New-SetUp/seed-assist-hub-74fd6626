@@ -115,12 +115,9 @@ export interface ApiProfileResponse {
       industry: string | null;
       current_role: string | null;
       current_company: string | null;
+      resume_url: string | null;
     };
-    essays: {
-      essay_1: string | null;
-      essay_2: string | null;
-      essay_3: string | null;
-    };
+    essays: string | null; // Direct URL to essays PDF
     supporting_documents: string | null;
     programs_of_interest: string[];
     awards: {
@@ -196,12 +193,9 @@ export interface ApplicantProfile {
     industry: string | null;
     currentRole: string | null;
     currentCompany: string | null;
+    resumeUrl: string | null;
   };
-  essays: {
-    essay1: string | null;
-    essay2: string | null;
-    essay3: string | null;
-  };
+  essaysUrl: string | null;
   supportingDocuments: string | null;
   programsOfInterest: string[];
   awards: {
@@ -369,7 +363,7 @@ function transformApplicant(api: ApiApplicant): Applicant {
 }
 
 function transformProfile(api: ApiProfileResponse["data"]): ApplicantProfile {
-  const { profile, education, test_scores, work_experience, essays, awards, navigation, meta } = api;
+  const { profile, education, test_scores, work_experience, awards, navigation, meta } = api;
   const cleanedNationality = cleanCountryName(profile.nationality);
   const cleanedCountryOfResidence = cleanCountryName(profile.country_of_residence);
   
@@ -420,12 +414,9 @@ function transformProfile(api: ApiProfileResponse["data"]): ApplicantProfile {
       industry: work_experience.industry,
       currentRole: work_experience.current_role,
       currentCompany: work_experience.current_company,
+      resumeUrl: work_experience.resume_url,
     },
-    essays: {
-      essay1: essays.essay_1,
-      essay2: essays.essay_2,
-      essay3: essays.essay_3,
-    },
+    essaysUrl: api.essays,
     supportingDocuments: api.supporting_documents,
     programsOfInterest: api.programs_of_interest || [],
     awards: {

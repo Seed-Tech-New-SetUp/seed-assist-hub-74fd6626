@@ -382,7 +382,6 @@ export default function StudentProfile() {
   const uiStatus = mapApiStatusToUI(profile.status);
 
   const supportingDocs = parseSupportingDocuments(profile.supportingDocuments);
-  const resumeDocs: ProfileDocument[] = []; // placeholder if API later provides a dedicated resume field
 
   return (
     <DashboardLayout>
@@ -778,34 +777,32 @@ export default function StudentProfile() {
                 </div>
               )}
 
-              {/* Resume / CV (requires API field) */}
-              {resumeDocs.length > 0 ? (
-                resumeDocs.map((doc) => (
-                  <div key={doc.url} className="p-4 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors">
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 bg-primary/10 rounded-lg">
-                        <FileText className="h-5 w-5 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm">{doc.label}</p>
-                        {doc.description && (
-                          <p className="text-xs text-muted-foreground mt-0.5 truncate">{doc.description}</p>
-                        )}
-                        <Button variant="outline" size="sm" className="mt-2" asChild>
-                          <a href={doc.url} target="_blank" rel="noopener noreferrer">
-                            <Download className="h-3.5 w-3.5 mr-1" />
-                            View
-                            <ExternalLink className="h-3 w-3 ml-1" />
-                          </a>
-                        </Button>
-                      </div>
+              {/* Resume / CV */}
+              {profile.workExperience.resumeUrl ? (
+                <div className="p-4 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                      <FileText className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm">Resume / CV</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {profile.name}'s resume
+                      </p>
+                      <Button variant="outline" size="sm" className="mt-2" asChild>
+                        <a href={normalizeExternalUrl(profile.workExperience.resumeUrl)} target="_blank" rel="noopener noreferrer">
+                          <Download className="h-3.5 w-3.5 mr-1" />
+                          View PDF
+                          <ExternalLink className="h-3 w-3 ml-1" />
+                        </a>
+                      </Button>
                     </div>
                   </div>
-                ))
+                </div>
               ) : (
                 <div className="p-4 rounded-lg border bg-muted/10">
                   <p className="font-medium text-sm">Resume / CV</p>
-                  <p className="text-xs text-muted-foreground mt-1">Not provided by API</p>
+                  <p className="text-xs text-muted-foreground mt-1">Not provided</p>
                 </div>
               )}
 
@@ -878,39 +875,29 @@ export default function StudentProfile() {
             <CardTitle className="text-base">Essays</CardTitle>
           </CardHeader>
           <CardContent>
-            {(profile.essays.essay1 || profile.essays.essay2 || profile.essays.essay3) ? (
-              <Tabs defaultValue={profile.essays.essay1 ? "essay1" : profile.essays.essay2 ? "essay2" : "essay3"}>
-                <TabsList>
-                  {profile.essays.essay1 && <TabsTrigger value="essay1">Essay 1</TabsTrigger>}
-                  {profile.essays.essay2 && <TabsTrigger value="essay2">Essay 2</TabsTrigger>}
-                  {profile.essays.essay3 && <TabsTrigger value="essay3">Essay 3</TabsTrigger>}
-                </TabsList>
-                {profile.essays.essay1 && (
-                  <TabsContent value="essay1" className="mt-4">
-                    <div className="p-4 bg-muted/30 rounded-lg">
-                      <p className="text-sm whitespace-pre-wrap">{profile.essays.essay1}</p>
-                    </div>
-                  </TabsContent>
-                )}
-                {profile.essays.essay2 && (
-                  <TabsContent value="essay2" className="mt-4">
-                    <div className="p-4 bg-muted/30 rounded-lg">
-                      <p className="text-sm whitespace-pre-wrap">{profile.essays.essay2}</p>
-                    </div>
-                  </TabsContent>
-                )}
-                {profile.essays.essay3 && (
-                  <TabsContent value="essay3" className="mt-4">
-                    <div className="p-4 bg-muted/30 rounded-lg">
-                      <p className="text-sm whitespace-pre-wrap">{profile.essays.essay3}</p>
-                    </div>
-                  </TabsContent>
-                )}
-              </Tabs>
-            ) : (
-              <div className="p-4 rounded-lg border bg-muted/10">
-                <p className="text-sm text-muted-foreground">No essays submitted in the API response for this applicant.</p>
+            {profile.essaysUrl ? (
+              <div className="p-4 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors inline-block">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <FileText className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm">Application Essay</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Motivational letter / Essay submission
+                    </p>
+                    <Button variant="outline" size="sm" className="mt-2" asChild>
+                      <a href={normalizeExternalUrl(profile.essaysUrl)} target="_blank" rel="noopener noreferrer">
+                        <Download className="h-3.5 w-3.5 mr-1" />
+                        View PDF
+                        <ExternalLink className="h-3 w-3 ml-1" />
+                      </a>
+                    </Button>
+                  </div>
+                </div>
               </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No essay submitted</p>
             )}
           </CardContent>
         </Card>
