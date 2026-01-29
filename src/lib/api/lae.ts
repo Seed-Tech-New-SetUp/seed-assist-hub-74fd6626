@@ -85,7 +85,9 @@ export async function fetchLAEFiles(): Promise<LAEFile[]> {
   if (error) throw new Error(error.message);
   if (!data?.success) throw new Error(data?.error || "Failed to fetch files");
 
-  return data.files || [];
+  // Handle nested response structure: { success, data: { success, files } }
+  const files = data.data?.files || data.files || [];
+  return files;
 }
 
 export async function uploadLAEFile(file: File): Promise<{ success: boolean; file_id?: string }> {
