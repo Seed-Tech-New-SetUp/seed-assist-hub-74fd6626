@@ -154,19 +154,28 @@ async function callProgramsProxy<T>(
   }
 
   const response = await fetch(url, options);
+  const data = await response.json().catch(() => ({}));
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    
-    // Check for unauthorized/expired token
-    if (isUnauthorizedError(response.status, errorData)) {
-      handleUnauthorized(errorData.error || errorData.message);
-    }
-    
-    throw new Error(errorData.error || `Request failed with status ${response.status}`);
+  // Check for auth errors in response body (even on 200 OK)
+  if (isUnauthorizedError(response.status, data)) {
+    const errorMessage = typeof data.error === 'object' 
+      ? data.error?.message 
+      : (data.error || data.message);
+    handleUnauthorized(errorMessage);
   }
 
-  return response.json();
+  if (!response.ok) {
+    throw new Error(data.error || `Request failed with status ${response.status}`);
+  }
+
+  if (data.success === false) {
+    const errorMessage = typeof data.error === 'object' 
+      ? data.error?.message 
+      : (data.error || data.message || "Request failed");
+    throw new Error(errorMessage);
+  }
+
+  return data as T;
 }
 
 // ============ Program List ============

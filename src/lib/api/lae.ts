@@ -58,13 +58,16 @@ const getAuthToken = (): string | null => {
   return getCookie(AUTH_COOKIES.TOKEN) || getCookie("auth_token");
 };
 
-// Helper to check response for auth errors
-function checkAuthError(data: { success?: boolean; error?: string; message?: string }, error?: { message?: string; status?: number }) {
+// Helper to check response for auth errors - supports nested { error: { code, message } }
+function checkAuthError(data: { success?: boolean; error?: string | { code?: string; message?: string }; message?: string }, error?: { message?: string; status?: number }) {
   if (error?.status === 401 || error?.status === 403) {
     handleUnauthorized(error.message);
   }
-  if (data && !data.success && isUnauthorizedError(401, data)) {
-    handleUnauthorized(data.error || data.message);
+  if (data && isUnauthorizedError(error?.status || 0, data)) {
+    const errorMessage = typeof data.error === 'object' 
+      ? data.error?.message 
+      : (data.error || data.message);
+    handleUnauthorized(errorMessage);
   }
 }
 
