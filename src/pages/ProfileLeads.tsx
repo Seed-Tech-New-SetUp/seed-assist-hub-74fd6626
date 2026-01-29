@@ -6,6 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ProgramBadges } from "@/components/leads/ProgramBadges";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -71,6 +79,10 @@ export default function ProfileLeads() {
   const [pageSize, setPageSize] = useState(15);
   const [selectedLead, setSelectedLead] = useState<any>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+
+  // Check if any filter is applied
+  const hasFiltersApplied = filterPage !== "all" || dateFilter !== "all" || countryFilter !== "all";
 
   // Build filter object for API
   const apiFilters: LeadsFilter = useMemo(() => {
@@ -270,7 +282,13 @@ export default function ProfileLeads() {
               <Button
                 variant="default"
                 className="bg-orange-500 hover:bg-orange-600 text-white ml-auto"
-                onClick={() => exportMutation.mutate(apiFilters)}
+                onClick={() => {
+                  if (hasFiltersApplied) {
+                    setExportDialogOpen(true);
+                  } else {
+                    exportMutation.mutate({});
+                  }
+                }}
                 disabled={exportMutation.isPending}
               >
                 {exportMutation.isPending ? (
@@ -457,6 +475,40 @@ export default function ProfileLeads() {
           open={detailModalOpen}
           onOpenChange={setDetailModalOpen}
         />
+
+        {/* Export Choice Dialog */}
+        <Dialog open={exportDialogOpen} onOpenChange={setExportDialogOpen}>
+          <DialogContent className="sm:max-w-[400px]">
+            <DialogHeader>
+              <DialogTitle>Export Leads</DialogTitle>
+              <DialogDescription>
+                You have filters applied. Would you like to export all leads or only the filtered results?
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setExportDialogOpen(false);
+                  exportMutation.mutate({});
+                }}
+                disabled={exportMutation.isPending}
+              >
+                Download All Leads
+              </Button>
+              <Button
+                className="bg-orange-500 hover:bg-orange-600 text-white"
+                onClick={() => {
+                  setExportDialogOpen(false);
+                  exportMutation.mutate(apiFilters);
+                }}
+                disabled={exportMutation.isPending}
+              >
+                Download Filtered Leads
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );
