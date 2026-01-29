@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +7,13 @@ import { Calendar, Clock, Radio, FileText, Download, Loader2, Users, Sparkles, V
 import { toast } from "@/hooks/use-toast";
 import { getCookie } from "@/lib/utils/cookies";
 import { decodeObjectStrings } from "@/lib/utils/decode-utf8";
+import { EventsDataTable } from "@/components/events/EventsDataTable";
+import { 
+  YearFilter, 
+  MonthFilter, 
+  filterByYear, 
+  filterByMonth 
+} from "@/components/events/EventFilters";
 
 interface MasterclassEvent {
   event_id: string;
@@ -124,6 +131,10 @@ export default function VirtualMasterclass() {
   const [events, setEvents] = useState<MasterclassEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  
+  // Filter states
+  const [yearFilter, setYearFilter] = useState("All");
+  const [monthFilter, setMonthFilter] = useState("All");
 
   useEffect(() => {
     const fetchMasterclassData = async () => {
@@ -155,7 +166,6 @@ export default function VirtualMasterclass() {
 
         const result: MasterclassResponse = await response.json();
         const decodedResult = decodeObjectStrings(result) as MasterclassResponse;
-        console.log("Masterclass API response:", decodedResult);
 
         if (decodedResult.success && decodedResult.data?.events) {
           setEvents(decodedResult.data.events);
@@ -232,6 +242,99 @@ export default function VirtualMasterclass() {
   const liveEvents = events.filter((e) => getEventStatus(e.status) === "live");
   const upcomingEvents = events.filter((e) => getEventStatus(e.status) === "upcoming");
   const completedEvents = events.filter((e) => getEventStatus(e.status) === "completed");
+
+  // Apply filters to completed events
+  const filteredCompletedEvents = useMemo(() => {
+    let filtered = completedEvents;
+    filtered = filterByYear(filtered, yearFilter);
+    filtered = filterByMonth(filtered, monthFilter);
+    return filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [completedEvents, yearFilter, monthFilter]);
+
+  const columns = [
+    {
+      key: "event",
+      header: "Event",
+      render: (event: MasterclassEvent) => (
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-muted">
+            <Video className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <div>
+            <p className="font-medium">{event.event_name}</p>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+              <Clock className="h-3 w-3" />
+              {formatTime(event.time, event.timezone)}
+            </div>
+            {event.report_downloaded && (
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Downloaded by {event.last_downloaded_by}
+                {event.last_downloaded_at && ` • ${formatDateTime(event.last_downloaded_at)}`}
+              </p>
+            )}
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: "date",
+      header: "Date",
+      render: (event: MasterclassEvent) => (
+        <span className="text-sm">{formatDate(event.date)}</span>
+      ),
+    },
+    {
+      key: "registrants",
+      header: "Registrants",
+      className: "text-center",
+      render: (event: MasterclassEvent) => (
+        <span className="font-medium">{event.registrants.toLocaleString()}</span>
+      ),
+    },
+    {
+      key: "attendees",
+      header: "Attendees",
+      className: "text-center",
+      render: (event: MasterclassEvent) => (
+        <span className="font-medium">{event.attendees.toLocaleString()}</span>
+      ),
+    },
+    {
+      key: "female",
+      header: "Female %",
+      className: "text-center",
+      render: (event: MasterclassEvent) => (
+        <span className="font-medium text-pink-600">{event.female_percentage}%</span>
+      ),
+    },
+    {
+      key: "download",
+      header: "Report",
+      className: "text-right",
+      render: (event: MasterclassEvent) => (
+        event.reports_published ? (
+          <Button
+            variant="success"
+            size="sm"
+            disabled={downloadingId === event.event_id}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDownloadReport(event);
+            }}
+          >
+            {downloadingId === event.event_id ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+            {downloadingId === event.event_id ? "Downloading..." : "Download"}
+          </Button>
+        ) : (
+          <Badge variant="outline" className="text-muted-foreground">Pending</Badge>
+        )
+      ),
+    },
+  ];
 
   if (loading) {
     return (
@@ -360,7 +463,7 @@ export default function VirtualMasterclass() {
           </Card>
         )}
 
-        {/* Completed Events with Reports */}
+        {/* Completed Events with Reports - DataTable */}
         {completedEvents.length > 0 && (
           <Card>
             <CardHeader>
@@ -369,74 +472,20 @@ export default function VirtualMasterclass() {
                 Past Events & Reports
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {completedEvents
-                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                .map((event) => (
-                  <div
-                    key={event.event_id}
-                    className="flex items-center justify-between p-4 rounded-lg border transition-colors hover:bg-muted/50"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="p-2.5 rounded-lg bg-muted">
-                        <FileText className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-medium">{event.event_name}</h4>
-                          <Badge variant="secondary">Completed</Badge>
-                        </div>
-                        <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-3.5 w-3.5" />
-                            {formatDate(event.date)}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3.5 w-3.5" />
-                            {formatTime(event.time, event.timezone)}
-                          </span>
-                        </div>
-
-                        {event.report_downloaded ? (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Report downloaded
-                            {event.last_downloaded_by ? ` • Last by ${event.last_downloaded_by}` : ""}
-                            {event.last_downloaded_at ? ` • ${formatDateTime(event.last_downloaded_at)}` : ""}
-                          </p>
-                        ) : (
-                          <p className="text-xs text-muted-foreground mt-1">Report not downloaded yet</p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-6">
-                      <div className="hidden md:flex items-center gap-6 text-sm">
-                        <div className="text-center">
-                          <p className="font-semibold">{event.registrants}</p>
-                          <p className="text-muted-foreground text-xs">Registered</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="font-semibold">{event.attendees}</p>
-                          <p className="text-muted-foreground text-xs">Attended</p>
-                        </div>
-                      </div>
-                      {event.reports_published && (
-                        <Button
-                          variant="success"
-                          size="sm"
-                          disabled={downloadingId === event.event_id}
-                          onClick={() => handleDownloadReport(event)}
-                        >
-                          {downloadingId === event.event_id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Download className="h-4 w-4" />
-                          )}
-                          {downloadingId === event.event_id ? "Downloading..." : "Download"}
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                ))}
+            <CardContent>
+              <EventsDataTable
+                data={filteredCompletedEvents}
+                columns={columns}
+                searchPlaceholder="Search events..."
+                searchKey={(event) => event.event_name}
+                filterSlot={
+                  <>
+                    <YearFilter value={yearFilter} onChange={setYearFilter} />
+                    <MonthFilter value={monthFilter} onChange={setMonthFilter} />
+                  </>
+                }
+                emptyMessage="No completed events found"
+              />
             </CardContent>
           </Card>
         )}

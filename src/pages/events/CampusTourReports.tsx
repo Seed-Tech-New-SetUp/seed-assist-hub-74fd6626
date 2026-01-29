@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { 
   Calendar, 
   MapPin, 
-  Clock, 
   Users, 
   Sparkles, 
   Radio,
@@ -19,6 +18,13 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { decodeObjectStrings } from "@/lib/utils/decode-utf8";
+import { EventsDataTable } from "@/components/events/EventsDataTable";
+import { 
+  YearFilter, 
+  SeasonFilter, 
+  filterByYear, 
+  filterBySeason 
+} from "@/components/events/EventFilters";
 
 const formatDate = (dateStr: string) => {
   return new Date(dateStr).toLocaleDateString("en-US", {
@@ -131,6 +137,10 @@ const CampusTourReports = () => {
   const [meta, setMeta] = useState<ApiMeta | null>(null);
   const [loading, setLoading] = useState(true);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  
+  // Filter states
+  const [yearFilter, setYearFilter] = useState("All");
+  const [seasonFilter, setSeasonFilter] = useState("All");
 
   useEffect(() => {
     const fetchCampusTourEvents = async () => {
@@ -237,11 +247,100 @@ const CampusTourReports = () => {
   const upcomingEvents = events.filter((e) => getEventStatus(e.date, e.status) === "upcoming");
   const pastEvents = events.filter((e) => getEventStatus(e.date, e.status) === "completed");
 
+  // Apply filters to past events
+  const filteredPastEvents = useMemo(() => {
+    let filtered = pastEvents;
+    filtered = filterByYear(filtered, yearFilter);
+    filtered = filterBySeason(filtered, seasonFilter);
+    return filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [pastEvents, yearFilter, seasonFilter]);
+
   // Stats from API meta
   const totalEvents = meta?.totalEvents ?? events.length;
   const totalCampuses = meta?.campusReached ?? 0;
   const totalAttendees = meta?.attendeesReached ?? 0;
   const totalStudents = meta?.studentsConnected ?? 0;
+
+  const columns = [
+    {
+      key: "event",
+      header: "Event",
+      render: (event: CampusTourEvent) => (
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-muted">
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <div>
+            <p className="font-medium">{event.eventName}</p>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+              <MapPin className="h-3 w-3" />
+              {event.location || event.city}
+            </div>
+            {event.report_downloaded && (
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Downloaded by {event.lastDownloadedBy}
+                {event.lastDownloadedAt && ` • ${formatDateTime(event.lastDownloadedAt)}`}
+              </p>
+            )}
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: "date",
+      header: "Date",
+      render: (event: CampusTourEvent) => (
+        <span className="text-sm">{formatDate(event.date)}</span>
+      ),
+    },
+    {
+      key: "registrants",
+      header: "Registrants",
+      className: "text-center",
+      render: (event: CampusTourEvent) => (
+        <span className="font-medium">{event.registrants.toLocaleString()}</span>
+      ),
+    },
+    {
+      key: "attended",
+      header: "Attended",
+      className: "text-center",
+      render: (event: CampusTourEvent) => (
+        <span className="font-medium">{event.attended.toLocaleString()}</span>
+      ),
+    },
+    {
+      key: "female",
+      header: "Female %",
+      className: "text-center",
+      render: (event: CampusTourEvent) => (
+        <span className="font-medium text-pink-600">{event.femalePercentage}%</span>
+      ),
+    },
+    {
+      key: "download",
+      header: "Report",
+      className: "text-right",
+      render: (event: CampusTourEvent) => (
+        <Button
+          variant="success"
+          size="sm"
+          disabled={downloadingId === event.id}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDownload(event.id, event.eventName);
+          }}
+        >
+          {downloadingId === event.id ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Download className="h-4 w-4" />
+          )}
+          {downloadingId === event.id ? "Downloading..." : "Download"}
+        </Button>
+      ),
+    },
+  ];
 
   if (loading) {
     return (
@@ -378,7 +477,7 @@ const CampusTourReports = () => {
           </Card>
         )}
 
-        {/* Past Events & Reports */}
+        {/* Past Events & Reports - DataTable */}
         {pastEvents.length > 0 && (
           <Card>
             <CardHeader>
@@ -387,87 +486,20 @@ const CampusTourReports = () => {
                 Past Events & Reports
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {pastEvents
-                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                .map((event) => (
-                <div
-                  key={event.id}
-                  className="flex items-center justify-between p-4 rounded-lg border transition-colors hover:bg-muted/50"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="p-2.5 rounded-lg bg-muted">
-                      <FileText className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-medium">{event.eventName}</h4>
-                        <Badge variant="secondary">Completed</Badge>
-                      </div>
-                      <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-3.5 w-3.5" />
-                          {formatDate(event.date)}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-3.5 w-3.5" />
-                          {event.location || event.city}
-                        </span>
-                      </div>
-
-                      {event.report_downloaded ? (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Report downloaded
-                          {event.lastDownloadedBy ? ` • Last by ${event.lastDownloadedBy}` : ""}
-                          {event.lastDownloadedAt ? ` • ${formatDateTime(event.lastDownloadedAt)}` : ""}
-                        </p>
-                      ) : (
-                        <p className="text-xs text-muted-foreground mt-1">Report not downloaded yet</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-6">
-                    <div className="hidden md:flex items-center gap-6 text-sm">
-                      <div className="text-center">
-                        <p className="font-semibold">{event.registrants}</p>
-                        <p className="text-muted-foreground text-xs">Registered</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="font-semibold">{event.attended}</p>
-                        <p className="text-muted-foreground text-xs">Attended</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="font-semibold text-pink-600">{event.femalePercentage}%</p>
-                        <p className="text-muted-foreground text-xs">Female</p>
-                      </div>
-                    </div>
-                    <Button 
-                      variant="success" 
-                      size="sm" 
-                      disabled={downloadingId === event.id}
-                      onClick={() => handleDownload(event.id, event.eventName)}
-                    >
-                      {downloadingId === event.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Download className="h-4 w-4" />
-                      )}
-                      {downloadingId === event.id ? "Downloading..." : "Download"}
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Empty state */}
-        {events.length === 0 && (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium">No events yet</h3>
-              <p className="text-muted-foreground mt-1">Campus Tour events will appear here</p>
+            <CardContent>
+              <EventsDataTable
+                data={filteredPastEvents}
+                columns={columns}
+                searchPlaceholder="Search events..."
+                searchKey={(event) => `${event.eventName} ${event.city} ${event.location}`}
+                filterSlot={
+                  <>
+                    <YearFilter value={yearFilter} onChange={setYearFilter} />
+                    <SeasonFilter value={seasonFilter} onChange={setSeasonFilter} />
+                  </>
+                }
+                emptyMessage="No past events found"
+              />
             </CardContent>
           </Card>
         )}

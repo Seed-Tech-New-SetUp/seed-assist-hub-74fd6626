@@ -1,5 +1,4 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useMemo } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,8 +6,6 @@ import { Button } from "@/components/ui/button";
 import { 
   Calendar, 
   MapPin, 
-  Clock, 
-  ArrowRight,
   Users,
   Sparkles,
   Radio,
@@ -21,8 +18,13 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { decodeObjectStrings } from "@/lib/utils/decode-utf8";
-
-// Mock data removed - using real API data now
+import { EventsDataTable } from "@/components/events/EventsDataTable";
+import { 
+  YearFilter, 
+  SeasonFilter, 
+  filterByYear, 
+  filterBySeason 
+} from "@/components/events/EventFilters";
 
 const formatDate = (dateStr: string) => {
   return new Date(dateStr).toLocaleDateString("en-US", {
@@ -34,7 +36,6 @@ const formatDate = (dateStr: string) => {
 };
 
 const formatDateTime = (dateTimeStr: string) => {
-  // API returns "YYYY-MM-DD HH:mm:ss" (no timezone). Convert to ISO-ish for Date.
   const safe = dateTimeStr.replace(" ", "T");
   const date = new Date(safe);
   if (Number.isNaN(date.getTime())) return dateTimeStr;
@@ -104,6 +105,21 @@ const CountdownTimer = ({ targetDate }: { targetDate: string }) => {
   );
 };
 
+interface BSFEvent {
+  id: string;
+  eventName: string;
+  city: string;
+  date: string;
+  venue: string;
+  registrants: number;
+  attendees: number;
+  femalePercentage: number;
+  report_downloaded?: boolean;
+  last_downloaded_at?: string | null;
+  last_downloaded_by?: string | null;
+  download_count?: number;
+}
+
 interface ApiMeta {
   totalEvents: number;
   totalRegistrants: number;
@@ -112,25 +128,15 @@ interface ApiMeta {
 }
 
 const BSFReports = () => {
-  const navigate = useNavigate();
-  const { portalToken, selectedSchool } = useAuth();
-  const [apiEvents, setApiEvents] = useState<Array<{
-    id: string;
-    eventName: string;
-    city: string;
-    date: string;
-    venue: string;
-    registrants: number;
-    attendees: number;
-    femalePercentage: number;
-    report_downloaded?: boolean;
-    last_downloaded_at?: string | null;
-    last_downloaded_by?: string | null;
-    download_count?: number;
-    event_type?: string;
-  }>>([]);
+  const { portalToken } = useAuth();
+  const [apiEvents, setApiEvents] = useState<BSFEvent[]>([]);
   const [meta, setMeta] = useState<ApiMeta | null>(null);
   const [loading, setLoading] = useState(true);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  
+  // Filter states
+  const [yearFilter, setYearFilter] = useState("All");
+  const [seasonFilter, setSeasonFilter] = useState("All");
 
   useEffect(() => {
     const fetchBSFEvents = async () => {
@@ -155,9 +161,7 @@ const BSFReports = () => {
         }
 
         const result = await response.json();
-        // Decode UTF-8 encoded strings to fix special characters
         const decodedResult = decodeObjectStrings(result);
-        console.log("BSF API response:", decodedResult);
 
         if (decodedResult.success && decodedResult.data?.events) {
           const transformedEvents = decodedResult.data.events.map((event: any) => ({
@@ -173,15 +177,12 @@ const BSFReports = () => {
             last_downloaded_at: event.last_downloaded_at ?? null,
             last_downloaded_by: event.last_downloaded_by ?? null,
             download_count: typeof event.download_count === "number" ? event.download_count : 0,
-            event_type: event.event_type,
           }));
           setApiEvents(transformedEvents);
           
-          // Extract meta if available, otherwise calculate from events
           if (decodedResult.data.meta) {
             setMeta(decodedResult.data.meta);
           } else {
-            // Calculate meta from events if not provided by API
             const uniqueCities = new Set(transformedEvents.map((e: any) => e.city));
             setMeta({
               totalEvents: transformedEvents.length,
@@ -201,16 +202,19 @@ const BSFReports = () => {
     fetchBSFEvents();
   }, [portalToken]);
 
-  // Use API events (no more mock data)
   const allEvents = apiEvents;
   
   const upcomingEvents = allEvents.filter(e => getEventStatus(e.date) === "upcoming");
   const liveEvents = allEvents.filter(e => getEventStatus(e.date) === "live");
   const completedEvents = allEvents.filter(e => getEventStatus(e.date) === "completed");
   
-  const nextUpcoming = upcomingEvents.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
-
-  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  // Apply filters to completed events
+  const filteredCompletedEvents = useMemo(() => {
+    let filtered = completedEvents;
+    filtered = filterByYear(filtered, yearFilter);
+    filtered = filterBySeason(filtered, seasonFilter);
+    return filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [completedEvents, yearFilter, seasonFilter]);
 
   const handleDownload = async (reportId: string, eventName: string) => {
     if (!portalToken) {
@@ -234,10 +238,7 @@ const BSFReports = () => {
         throw new Error("Failed to download report");
       }
 
-      // Get the blob from response
       const blob = await response.blob();
-      
-      // Create download link
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -255,6 +256,87 @@ const BSFReports = () => {
       setDownloadingId(null);
     }
   };
+
+  const columns = [
+    {
+      key: "event",
+      header: "Event",
+      render: (event: BSFEvent) => (
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-muted">
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <div>
+            <p className="font-medium">{event.eventName}</p>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+              <MapPin className="h-3 w-3" />
+              {event.venue || event.city}
+            </div>
+            {event.report_downloaded && (
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Downloaded by {event.last_downloaded_by}
+                {event.last_downloaded_at && ` • ${formatDateTime(event.last_downloaded_at)}`}
+              </p>
+            )}
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: "date",
+      header: "Date",
+      render: (event: BSFEvent) => (
+        <span className="text-sm">{formatDate(event.date)}</span>
+      ),
+    },
+    {
+      key: "registrants",
+      header: "Registrants",
+      className: "text-center",
+      render: (event: BSFEvent) => (
+        <span className="font-medium">{event.registrants.toLocaleString()}</span>
+      ),
+    },
+    {
+      key: "attendees",
+      header: "Attendees",
+      className: "text-center",
+      render: (event: BSFEvent) => (
+        <span className="font-medium">{event.attendees.toLocaleString()}</span>
+      ),
+    },
+    {
+      key: "female",
+      header: "Female %",
+      className: "text-center",
+      render: (event: BSFEvent) => (
+        <span className="font-medium text-pink-600">{event.femalePercentage}%</span>
+      ),
+    },
+    {
+      key: "download",
+      header: "Report",
+      className: "text-right",
+      render: (event: BSFEvent) => (
+        <Button
+          variant="success"
+          size="sm"
+          disabled={downloadingId === event.id}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDownload(event.id, event.eventName);
+          }}
+        >
+          {downloadingId === event.id ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Download className="h-4 w-4" />
+          )}
+          {downloadingId === event.id ? "Downloading..." : "Download"}
+        </Button>
+      ),
+    },
+  ];
 
   if (loading) {
     return (
@@ -335,9 +417,7 @@ const BSFReports = () => {
                     <div>
                       <div className="flex items-center gap-2">
                         <h4 className="font-medium">{event.eventName}</h4>
-                        <Badge className="bg-red-500 text-white border-0">
-                          Live Now
-                        </Badge>
+                        <Badge className="bg-red-500 text-white border-0">Live Now</Badge>
                       </div>
                       <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
                         <span className="flex items-center gap-1">
@@ -420,7 +500,7 @@ const BSFReports = () => {
           </Card>
         )}
 
-        {/* Completed Events with Reports */}
+        {/* Completed Events with Reports - DataTable */}
         {completedEvents.length > 0 && (
           <Card>
             <CardHeader>
@@ -429,91 +509,20 @@ const BSFReports = () => {
                 Past Events & Reports
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {completedEvents
-                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                .map((event) => (
-                <div
-                  key={event.id}
-                  className="flex items-center justify-between p-4 rounded-lg border transition-colors hover:bg-muted/50 cursor-pointer"
-                  onClick={() => navigate(`/reports/${event.id}`)}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="p-2.5 rounded-lg bg-muted">
-                      <FileText className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-medium">{event.eventName}</h4>
-                        <Badge variant="secondary">Completed</Badge>
-                      </div>
-                      <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-3.5 w-3.5" />
-                          {formatDate(event.date)}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-3.5 w-3.5" />
-                          {event.venue || event.city}
-                        </span>
-                      </div>
-
-                      {event.report_downloaded ? (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Report downloaded
-                          {event.last_downloaded_by ? ` • Last by ${event.last_downloaded_by}` : ""}
-                          {event.last_downloaded_at ? ` • ${formatDateTime(event.last_downloaded_at)}` : ""}
-                        </p>
-                      ) : (
-                        <p className="text-xs text-muted-foreground mt-1">Report not downloaded yet</p>
-                      )}
-                    </div>
-                  </div>
-                    <div className="flex items-center gap-6">
-                    <div className="hidden md:flex items-center gap-6 text-sm">
-                      <div className="text-center">
-                        <p className="font-semibold">{event.registrants}</p>
-                        <p className="text-muted-foreground text-xs">Registered</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="font-semibold">{event.attendees}</p>
-                        <p className="text-muted-foreground text-xs">Attended</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="font-semibold text-pink-600">{event.femalePercentage}%</p>
-                        <p className="text-muted-foreground text-xs">Female</p>
-                      </div>
-                    </div>
-                    <Button 
-                      variant="success" 
-                      size="sm" 
-                      disabled={downloadingId === event.id}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDownload(event.id, event.eventName);
-                      }}
-                    >
-                      {downloadingId === event.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Download className="h-4 w-4" />
-                      )}
-                      {downloadingId === event.id ? "Downloading..." : "Download"}
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Empty state */}
-        {allEvents.length === 0 && (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium">No events yet</h3>
-              <p className="text-muted-foreground mt-1">Business School Festival events will appear here</p>
+            <CardContent>
+              <EventsDataTable
+                data={filteredCompletedEvents}
+                columns={columns}
+                searchPlaceholder="Search events..."
+                searchKey={(event) => `${event.eventName} ${event.city} ${event.venue}`}
+                filterSlot={
+                  <>
+                    <YearFilter value={yearFilter} onChange={setYearFilter} />
+                    <SeasonFilter value={seasonFilter} onChange={setSeasonFilter} />
+                  </>
+                }
+                emptyMessage="No completed events found"
+              />
             </CardContent>
           </Card>
         )}
