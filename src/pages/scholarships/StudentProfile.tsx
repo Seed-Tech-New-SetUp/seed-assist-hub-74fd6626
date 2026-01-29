@@ -799,8 +799,8 @@ export default function StudentProfile() {
                 </div>
               )}
 
-              {/* Postgraduate Transcripts */}
-              {profile.education.hasPostgraduate && profile.education.postgraduate?.transcriptsUrl ? (
+              {/* Postgraduate Transcripts - only show if available */}
+              {profile.education.hasPostgraduate && profile.education.postgraduate?.transcriptsUrl && (
                 <div className="p-4 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors">
                   <div className="flex items-start gap-3">
                     <div className="p-2 bg-primary/10 rounded-lg">
@@ -821,44 +821,31 @@ export default function StudentProfile() {
                     </div>
                   </div>
                 </div>
-              ) : (
-                <div className="p-4 rounded-lg border bg-muted/10">
-                  <p className="font-medium text-sm">Postgraduate Transcripts</p>
-                  <p className="text-xs text-muted-foreground mt-1">Not provided</p>
-                </div>
               )}
 
-
-              {/* Supporting Documents */}
-              {supportingDocs.length > 0 ? (
-                supportingDocs.map((doc) => (
-                  <div key={doc.url} className="p-4 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors">
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 bg-primary/10 rounded-lg">
-                        <FileText className="h-5 w-5 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm">{doc.label}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {doc.description || "Additional application materials"}
-                        </p>
-                        <Button variant="outline" size="sm" className="mt-2" asChild>
-                          <a href={doc.url} target="_blank" rel="noopener noreferrer">
-                            <Download className="h-3.5 w-3.5 mr-1" />
-                            View Document
-                            <ExternalLink className="h-3 w-3 ml-1" />
-                          </a>
-                        </Button>
-                      </div>
+              {/* Supporting Documents - only show if available */}
+              {supportingDocs.length > 0 && supportingDocs.map((doc) => (
+                <div key={doc.url} className="p-4 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                      <FileText className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm">{doc.label}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {doc.description || "Additional application materials"}
+                      </p>
+                      <Button variant="outline" size="sm" className="mt-2" asChild>
+                        <a href={doc.url} target="_blank" rel="noopener noreferrer">
+                          <Download className="h-3.5 w-3.5 mr-1" />
+                          View Document
+                          <ExternalLink className="h-3 w-3 ml-1" />
+                        </a>
+                      </Button>
                     </div>
                   </div>
-                ))
-              ) : (
-                <div className="p-4 rounded-lg border bg-muted/10">
-                  <p className="font-medium text-sm">Supporting Documents</p>
-                  <p className="text-xs text-muted-foreground mt-1">Not provided</p>
                 </div>
-              )}
+              ))}
             </div>
           </CardContent>
         </Card>
