@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Dialog,
   DialogContent,
@@ -865,7 +866,7 @@ export default function StudentProfile() {
 
         {/* Awards Modal for Winner */}
         <Dialog open={showAwardsModal} onOpenChange={setShowAwardsModal}>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Trophy className="h-5 w-5 text-purple-500" />
@@ -876,95 +877,97 @@ export default function StudentProfile() {
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-6 py-4">
-              {/* Available Awards */}
-              {profile.awards.available.length > 0 && (
-                <div className="space-y-3">
-                  <Label className="text-sm font-medium">Available Awards</Label>
-                  {profile.awards.available.map((award) => (
-                    <div
-                      key={award.id}
-                      onClick={() => toggleAwardSelection(award.id)}
-                      className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all ${
-                        selectedAwards.includes(award.id)
-                          ? "border-primary bg-primary/5"
-                          : "border-border hover:border-primary/50"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-4 h-4 rounded border flex items-center justify-center ${
+            <ScrollArea className="flex-1 max-h-[60vh] pr-4">
+              <div className="space-y-6 py-4">
+                {/* Available Awards */}
+                {profile.awards.available.length > 0 && (
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Available Awards</Label>
+                    {profile.awards.available.map((award) => (
+                      <div
+                        key={award.id}
+                        onClick={() => toggleAwardSelection(award.id)}
+                        className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all ${
                           selectedAwards.includes(award.id)
-                            ? "bg-primary border-primary"
-                            : "border-muted-foreground"
-                        }`}>
-                          {selectedAwards.includes(award.id) && (
-                            <Check className="h-3 w-3 text-primary-foreground" />
-                          )}
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/50"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-4 h-4 rounded border flex items-center justify-center ${
+                            selectedAwards.includes(award.id)
+                              ? "bg-primary border-primary"
+                              : "border-muted-foreground"
+                          }`}>
+                            {selectedAwards.includes(award.id) && (
+                              <Check className="h-3 w-3 text-primary-foreground" />
+                            )}
+                          </div>
+                          <div>
+                            <span className="text-sm font-medium">{award.name}</span>
+                            <span className="text-xs text-muted-foreground ml-2">({award.percentage}%)</span>
+                          </div>
                         </div>
-                        <div>
-                          <span className="text-sm font-medium">{award.name}</span>
-                          <span className="text-xs text-muted-foreground ml-2">({award.percentage}%)</span>
-                        </div>
+                        <span className="text-sm font-medium">${award.value.toLocaleString()}</span>
                       </div>
-                      <span className="text-sm font-medium">${award.value.toLocaleString()}</span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Custom Awards - Only show if no predefined award is selected */}
+                <div className={`space-y-3 ${selectedAwards.length > 0 ? "opacity-50 pointer-events-none" : ""}`}>
+                  <Label className="text-sm font-medium flex items-center gap-2">
+                    Custom Awards
+                    {selectedAwards.length > 0 && (
+                      <span className="text-xs text-muted-foreground font-normal">(Disabled when predefined award is selected)</span>
+                    )}
+                  </Label>
+                  
+                  {customAwards.map((award, index) => (
+                    <div key={index} className="flex items-center gap-2 p-3 rounded-lg border border-primary/50 bg-primary/5">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{award.name}</p>
+                        <p className="text-xs text-muted-foreground">${parseFloat(award.amount).toLocaleString()}</p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        onClick={() => removeCustomAward(index)}
+                        disabled={selectedAwards.length > 0}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   ))}
-                </div>
-              )}
 
-              {/* Custom Awards - Only show if no predefined award is selected */}
-              <div className={`space-y-3 ${selectedAwards.length > 0 ? "opacity-50 pointer-events-none" : ""}`}>
-                <Label className="text-sm font-medium flex items-center gap-2">
-                  Custom Awards
-                  {selectedAwards.length > 0 && (
-                    <span className="text-xs text-muted-foreground font-normal">(Disabled when predefined award is selected)</span>
-                  )}
-                </Label>
-                
-                {customAwards.map((award, index) => (
-                  <div key={index} className="flex items-center gap-2 p-3 rounded-lg border border-primary/50 bg-primary/5">
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{award.name}</p>
-                      <p className="text-xs text-muted-foreground">${parseFloat(award.amount).toLocaleString()}</p>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-destructive hover:text-destructive"
-                      onClick={() => removeCustomAward(index)}
+                  {/* Add Custom Award Form */}
+                  <div className="grid grid-cols-[1fr,120px,auto] gap-2">
+                    <Input
+                      placeholder="Award name"
+                      value={newAwardName}
+                      onChange={(e) => setNewAwardName(e.target.value)}
                       disabled={selectedAwards.length > 0}
+                    />
+                    <Input
+                      placeholder="Amount"
+                      type="number"
+                      value={newAwardAmount}
+                      onChange={(e) => setNewAwardAmount(e.target.value)}
+                      disabled={selectedAwards.length > 0}
+                    />
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={addCustomAward}
+                      disabled={selectedAwards.length > 0 || !newAwardName.trim() || !newAwardAmount.trim()}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Plus className="h-4 w-4" />
                     </Button>
                   </div>
-                ))}
-
-                {/* Add Custom Award Form */}
-                <div className="grid grid-cols-[1fr,120px,auto] gap-2">
-                  <Input
-                    placeholder="Award name"
-                    value={newAwardName}
-                    onChange={(e) => setNewAwardName(e.target.value)}
-                    disabled={selectedAwards.length > 0}
-                  />
-                  <Input
-                    placeholder="Amount"
-                    type="number"
-                    value={newAwardAmount}
-                    onChange={(e) => setNewAwardAmount(e.target.value)}
-                    disabled={selectedAwards.length > 0}
-                  />
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={addCustomAward}
-                    disabled={selectedAwards.length > 0 || !newAwardName.trim() || !newAwardAmount.trim()}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
                 </div>
               </div>
-            </div>
+            </ScrollArea>
 
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowAwardsModal(false)}>
