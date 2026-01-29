@@ -1,9 +1,16 @@
+import { useState, useMemo } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -13,316 +20,422 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Search,
-  Filter,
-  MoreHorizontal,
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { Skeleton } from "@/components/ui/skeleton";
+import { 
+  Users, 
+  UserPlus, 
+  Eye, 
+  MousePointer, 
+  Search, 
   Download,
-  Eye,
-  Mail,
-  Phone,
-  UserCheck,
-  Users,
-  TrendingUp,
-  Clock,
-  Building2,
+  Loader2,
 } from "lucide-react";
+import {
+  useLeadUserData,
+  useLeadStats,
+  useLeadPrograms,
+  useLeadCountries,
+  useLeads,
+  useExportLeads,
+} from "@/hooks/useLeads";
+import { LeadsFilter } from "@/lib/api/leads";
+import { format } from "date-fns";
 
-const profileLeads = [
-  {
-    id: "1",
-    name: "Akash Gupta",
-    email: "akash.g@email.com",
-    phone: "+91 99887 76655",
-    source: "School Profile View",
-    school: "Harvard Business School",
-    program: "MBA Full-Time",
-    viewedAt: "2 hours ago",
-    engagementScore: 85,
-    status: "qualified",
-  },
-  {
-    id: "2",
-    name: "Emma Wilson",
-    email: "emma.w@email.com",
-    phone: "+44 7700 900123",
-    source: "Program Page",
-    school: "Stanford GSB",
-    program: "Executive MBA",
-    viewedAt: "5 hours ago",
-    engagementScore: 72,
-    status: "new",
-  },
-  {
-    id: "3",
-    name: "Liu Wei",
-    email: "liu.wei@email.com",
-    phone: "+86 138 0013 8000",
-    source: "Brochure Download",
-    school: "Wharton",
-    program: "MS Finance",
-    viewedAt: "1 day ago",
-    engagementScore: 91,
-    status: "qualified",
-  },
-  {
-    id: "4",
-    name: "Fatima Al-Hassan",
-    email: "fatima.a@email.com",
-    phone: "+971 50 123 4567",
-    source: "Application Started",
-    school: "MIT Sloan",
-    program: "MBA Full-Time",
-    viewedAt: "3 hours ago",
-    engagementScore: 95,
-    status: "hot",
-  },
-  {
-    id: "5",
-    name: "Carlos Mendez",
-    email: "c.mendez@email.com",
-    phone: "+1 555 234 5678",
-    source: "School Profile View",
-    school: "Columbia Business School",
-    program: "MBA Part-Time",
-    viewedAt: "6 hours ago",
-    engagementScore: 58,
-    status: "new",
-  },
-];
-
-const statusConfig = {
-  hot: { label: "Hot", className: "bg-destructive/10 text-destructive border-destructive/20" },
-  qualified: { label: "Qualified", className: "bg-success/10 text-success border-success/20" },
-  new: { label: "New", className: "bg-info/10 text-info border-info/20" },
-  contacted: { label: "Contacted", className: "bg-warning/10 text-warning border-warning/20" },
-};
-
-const sourceColors = {
-  "School Profile View": "bg-primary/10 text-primary",
-  "Program Page": "bg-info/10 text-info",
-  "Brochure Download": "bg-accent/10 text-accent",
-  "Application Started": "bg-success/10 text-success",
-};
+// Country code to flag emoji mapping
+function getFlagEmoji(countryCode: string): string {
+  if (!countryCode || countryCode.length !== 2) return "";
+  const codePoints = countryCode
+    .toUpperCase()
+    .split("")
+    .map((char) => 127397 + char.charCodeAt(0));
+  return String.fromCodePoint(...codePoints);
+}
 
 export default function ProfileLeads() {
+  // Filters
+  const [filterPage, setFilterPage] = useState<string>("all");
+  const [dateFilter, setDateFilter] = useState<string>("all");
+  const [countryFilter, setCountryFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(15);
+
+  // Build filter object for API
+  const apiFilters: LeadsFilter = useMemo(() => {
+    const filters: LeadsFilter = {};
+    if (filterPage !== "all") filters.filter_page = filterPage;
+    if (dateFilter !== "all") filters.date_filter = dateFilter;
+    if (countryFilter !== "all") filters.country = countryFilter;
+    return filters;
+  }, [filterPage, dateFilter, countryFilter]);
+
+  // Queries
+  const { data: userData } = useLeadUserData();
+  const { data: stats, isLoading: statsLoading } = useLeadStats();
+  const { data: programs = [] } = useLeadPrograms();
+  const { data: countries = [] } = useLeadCountries();
+  const { data: leads = [], isLoading: leadsLoading } = useLeads(apiFilters);
+  const exportMutation = useExportLeads();
+
+  // Client-side search filtering
+  const filteredLeads = useMemo(() => {
+    if (!searchQuery.trim()) return leads;
+    const query = searchQuery.toLowerCase();
+    return leads.filter(
+      (lead) =>
+        lead.name?.toLowerCase().includes(query) ||
+        lead.email?.toLowerCase().includes(query) ||
+        lead.phone?.toLowerCase().includes(query) ||
+        lead.country?.toLowerCase().includes(query)
+    );
+  }, [leads, searchQuery]);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredLeads.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, filteredLeads.length);
+  const paginatedLeads = filteredLeads.slice(startIndex, endIndex);
+
+  // Reset page on filter change
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
+  };
+
+  const handlePageSizeChange = (value: string) => {
+    setPageSize(Number(value));
+    setCurrentPage(1);
+  };
+
+  // Page number generator
+  const getPageNumbers = () => {
+    const pages: (number | "ellipsis")[] = [];
+    const maxVisible = 5;
+
+    if (totalPages <= maxVisible) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (currentPage > 3) pages.push("ellipsis");
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      for (let i = start; i <= end; i++) pages.push(i);
+      if (currentPage < totalPages - 2) pages.push("ellipsis");
+      pages.push(totalPages);
+    }
+    return pages;
+  };
+
+  // Stats cards config
+  const statsCards = [
+    {
+      title: "TOTAL LEADS",
+      value: stats?.total_leads ?? 0,
+      icon: Users,
+      iconBg: "bg-slate-600",
+    },
+    {
+      title: "NEW LEADS (7 DAYS)",
+      value: stats?.new_leads_7days ?? 0,
+      icon: UserPlus,
+      iconBg: "bg-orange-500",
+    },
+    {
+      title: "ACTIVE LEADS",
+      value: stats?.active_leads ?? 0,
+      subtitle: "Viewed multiple pages",
+      icon: Eye,
+      iconBg: "bg-slate-600",
+    },
+    {
+      title: "ENGAGED LEADS",
+      value: stats?.engaged_leads ?? 0,
+      subtitle: "Multiple clicks recorded",
+      icon: MousePointer,
+      iconBg: "bg-orange-500",
+    },
+  ];
+
   return (
     <DashboardLayout>
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 animate-fade-in">
-        <div>
-          <h1 className="text-3xl font-display font-bold mb-2">School Profile Leads</h1>
-          <p className="text-muted-foreground">
-            Track leads generated from school profile views and engagement.
-          </p>
-        </div>
-        <Button variant="outline">
-          <Download className="h-4 w-4 mr-2" />
-          Export Leads
-        </Button>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Card variant="stats" className="animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Profile Leads</p>
-                <p className="text-2xl font-bold font-display">1,247</p>
-              </div>
-              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Users className="h-5 w-5 text-primary" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card variant="stats" className="animate-fade-in-up" style={{ animationDelay: '150ms' }}>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Qualified Leads</p>
-                <p className="text-2xl font-bold font-display text-success">486</p>
-              </div>
-              <div className="h-10 w-10 rounded-lg bg-success/10 flex items-center justify-center">
-                <UserCheck className="h-5 w-5 text-success" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card variant="stats" className="animate-fade-in-up" style={{ animationDelay: '200ms' }}>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Conversion Rate</p>
-                <p className="text-2xl font-bold font-display text-accent">38.9%</p>
-              </div>
-              <div className="h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center">
-                <TrendingUp className="h-5 w-5 text-accent" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card variant="stats" className="animate-fade-in-up" style={{ animationDelay: '250ms' }}>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Last 24 Hours</p>
-                <p className="text-2xl font-bold font-display">+67</p>
-              </div>
-              <div className="h-10 w-10 rounded-lg bg-info/10 flex items-center justify-center">
-                <Clock className="h-5 w-5 text-info" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Top Schools by Profile Leads */}
-      <Card variant="elevated" className="mb-8 animate-fade-in-up" style={{ animationDelay: '300ms' }}>
-        <CardHeader>
-          <CardTitle>Top Schools by Profile Engagement</CardTitle>
-          <CardDescription>Schools generating the most profile-based leads</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
-            {[
-              { school: "Harvard Business School", leads: 312, icon: "HBS" },
-              { school: "Stanford GSB", leads: 267, icon: "GSB" },
-              { school: "Wharton", leads: 234, icon: "W" },
-              { school: "MIT Sloan", leads: 198, icon: "MIT" },
-              { school: "Columbia Business School", leads: 167, icon: "CBS" },
-            ].map((item, index) => (
-              <div
-                key={item.school}
-                className="flex flex-col items-center text-center p-4 rounded-lg bg-muted/30 animate-fade-in-up opacity-0"
-                style={{ animationDelay: `${350 + index * 50}ms`, animationFillMode: 'forwards' }}
-              >
-                <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
-                  <span className="font-bold text-primary text-sm">{item.icon}</span>
+      <div className="space-y-6">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {statsCards.map((stat, idx) => (
+            <Card key={idx} className="shadow-sm">
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className={`p-3 rounded-lg ${stat.iconBg}`}>
+                  <stat.icon className="h-6 w-6 text-white" />
                 </div>
-                <p className="text-2xl font-bold font-display">{item.leads}</p>
-                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{item.school}</p>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    {stat.title}
+                  </p>
+                  {statsLoading ? (
+                    <Skeleton className="h-8 w-12 mt-1" />
+                  ) : (
+                    <p className="text-2xl font-bold">{stat.value}</p>
+                  )}
+                  {stat.subtitle && (
+                    <p className="text-xs text-muted-foreground">{stat.subtitle}</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
-      {/* Leads Table */}
-      <Card variant="elevated" className="animate-fade-in-up" style={{ animationDelay: '350ms' }}>
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <CardTitle>Recent Profile Leads</CardTitle>
-              <CardDescription>Leads from school profile interactions</CardDescription>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search leads..." className="pl-9 w-64" variant="ghost" />
+        {/* Main Card with Filters & Table */}
+        <Card className="shadow-sm">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-xl">All Leads</CardTitle>
+            {userData?.school_name && (
+              <p className="text-sm text-muted-foreground">{userData.school_name}</p>
+            )}
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Filters Row */}
+            <div className="flex flex-wrap gap-4 items-end">
+              <div className="flex flex-col gap-1.5">
+                <span className="text-sm font-medium">Pages</span>
+                <Select value={filterPage} onValueChange={(v) => { setFilterPage(v); setCurrentPage(1); }}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="All Pages" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Pages</SelectItem>
+                    {programs.map((p) => (
+                      <SelectItem key={p.program_id} value={p.program_id}>
+                        {p.program_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <Button variant="outline" size="icon">
-                <Filter className="h-4 w-4" />
+
+              <div className="flex flex-col gap-1.5">
+                <span className="text-sm font-medium">Date Range</span>
+                <Select value={dateFilter} onValueChange={(v) => { setDateFilter(v); setCurrentPage(1); }}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="All Time" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Time</SelectItem>
+                    <SelectItem value="7days">Last 7 Days</SelectItem>
+                    <SelectItem value="30days">Last 30 Days</SelectItem>
+                    <SelectItem value="90days">Last 90 Days</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <span className="text-sm font-medium">Country</span>
+                <Select value={countryFilter} onValueChange={(v) => { setCountryFilter(v); setCurrentPage(1); }}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="All Countries" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Countries</SelectItem>
+                    {countries.map((c) => (
+                      <SelectItem key={c.country_code} value={c.country_name}>
+                        {getFlagEmoji(c.country_code)} {c.country_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Button
+                variant="default"
+                className="bg-orange-500 hover:bg-orange-600 text-white ml-auto"
+                onClick={() => exportMutation.mutate(apiFilters)}
+                disabled={exportMutation.isPending}
+              >
+                {exportMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4 mr-2" />
+                )}
+                Export Leads
               </Button>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Lead</TableHead>
-                <TableHead>Source</TableHead>
-                <TableHead>School</TableHead>
-                <TableHead>Program</TableHead>
-                <TableHead>Engagement</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Activity</TableHead>
-                <TableHead className="w-12"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {profileLeads.map((lead, index) => {
-                const status = statusConfig[lead.status as keyof typeof statusConfig];
-                return (
-                  <TableRow
-                    key={lead.id}
-                    className="animate-fade-in opacity-0"
-                    style={{ animationDelay: `${450 + index * 50}ms`, animationFillMode: 'forwards' }}
-                  >
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-9 w-9">
-                          <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
-                            {lead.name.split(' ').map(n => n[0]).join('')}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">{lead.name}</p>
-                          <p className="text-xs text-muted-foreground">{lead.email}</p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={sourceColors[lead.source as keyof typeof sourceColors]}>
-                        {lead.source}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1.5">
-                        <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
-                        <span className="text-sm">{lead.school}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{lead.program}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div className={`h-2 w-2 rounded-full ${lead.engagementScore >= 80 ? 'bg-success' : lead.engagementScore >= 60 ? 'bg-warning' : 'bg-muted-foreground'}`} />
-                        <span className="font-medium">{lead.engagementScore}%</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={status.className}>
-                        {status.label}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground text-sm">{lead.viewedAt}</TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon-sm">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
-                            <Eye className="h-4 w-4 mr-2" />
-                            View Profile
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Mail className="h-4 w-4 mr-2" />
-                            Send Email
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Phone className="h-4 w-4 mr-2" />
-                            Call
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+
+            {/* Page Size & Search Row */}
+            <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>Show</span>
+                <Select value={String(pageSize)} onValueChange={handlePageSizeChange}>
+                  <SelectTrigger className="w-[70px] h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[10, 15, 25, 50].map((size) => (
+                      <SelectItem key={size} value={String(size)}>
+                        {size}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <span>leads per page</span>
+              </div>
+
+              <div className="relative w-full sm:w-80">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search leads..."
+                  value={searchQuery}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+            </div>
+
+            {/* Table */}
+            <div className="rounded-md border overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[50px]"></TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Country</TableHead>
+                    <TableHead>Programs Viewed</TableHead>
+                    <TableHead className="text-center">Start Year</TableHead>
+                    <TableHead className="text-center">Registered On</TableHead>
+                    <TableHead className="text-center">Page Views</TableHead>
                   </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                  {leadsLoading ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell><Skeleton className="h-4 w-4" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-40" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                        <TableCell><Skeleton className="h-6 w-32" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-12 mx-auto" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-24 mx-auto" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-10 mx-auto" /></TableCell>
+                      </TableRow>
+                    ))
+                  ) : paginatedLeads.length > 0 ? (
+                    paginatedLeads.map((lead, idx) => (
+                      <TableRow key={lead.lead_id || idx}>
+                        <TableCell>
+                          <input type="checkbox" className="rounded border-gray-300" />
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{lead.name}</p>
+                            {lead.phone && (
+                              <p className="text-xs text-muted-foreground">{lead.phone}</p>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm">{lead.email}</TableCell>
+                        <TableCell>
+                          <span className="flex items-center gap-1.5">
+                            {lead.country_code && (
+                              <span>{getFlagEmoji(lead.country_code)}</span>
+                            )}
+                            {lead.country}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            {lead.programs_viewed?.map((program, pIdx) => (
+                              <Badge
+                                key={pIdx}
+                                variant="secondary"
+                                className="bg-purple-500 text-white text-xs"
+                              >
+                                {program}
+                              </Badge>
+                            ))}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center">{lead.start_year}</TableCell>
+                        <TableCell className="text-center">
+                          {lead.registered_on
+                            ? format(new Date(lead.registered_on), "MMM d, yyyy")
+                            : "-"}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex items-center justify-center gap-2">
+                            <span>{lead.page_views}</span>
+                            {lead.clicks > 0 && (
+                              <Badge className="bg-orange-500 text-white text-xs">
+                                {lead.clicks} cli
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
+                        No leads found
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-2">
+                <p className="text-sm text-muted-foreground">
+                  Showing {startIndex + 1}-{endIndex} of {filteredLeads.length} leads
+                </p>
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                    {getPageNumbers().map((page, idx) =>
+                      page === "ellipsis" ? (
+                        <PaginationItem key={`ellipsis-${idx}`}>
+                          <PaginationEllipsis />
+                        </PaginationItem>
+                      ) : (
+                        <PaginationItem key={page}>
+                          <PaginationLink
+                            onClick={() => setCurrentPage(page)}
+                            isActive={currentPage === page}
+                            className="cursor-pointer"
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      )
+                    )}
+                    <PaginationItem>
+                      <PaginationNext
+                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                        className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </DashboardLayout>
   );
 }

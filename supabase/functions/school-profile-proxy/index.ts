@@ -89,6 +89,25 @@ serve(async (req) => {
       case "pocs-delete":
         backendUrl = `${BACKEND_BASE_URL}/pocs/delete.php`;
         break;
+      // Leads endpoints
+      case "leads-user-data":
+        backendUrl = `${BACKEND_BASE_URL}/leads.php?action=get_user_data`;
+        break;
+      case "leads-stats":
+        backendUrl = `${BACKEND_BASE_URL}/leads.php?action=get_stats`;
+        break;
+      case "leads-programs":
+        backendUrl = `${BACKEND_BASE_URL}/leads.php?action=get_programs`;
+        break;
+      case "leads-countries":
+        backendUrl = `${BACKEND_BASE_URL}/leads.php?action=get_countries`;
+        break;
+      case "leads-list":
+        backendUrl = `${BACKEND_BASE_URL}/leads.php?action=get_leads`;
+        break;
+      case "leads-export":
+        backendUrl = `${BACKEND_BASE_URL}/leads.php?action=export_leads`;
+        break;
       default:
         backendUrl = `${BACKEND_BASE_URL}/update_general_info.php`;
     }
