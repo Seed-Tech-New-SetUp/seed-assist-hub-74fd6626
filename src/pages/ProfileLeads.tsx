@@ -143,26 +143,26 @@ export default function ProfileLeads() {
   const statsCards = [
     {
       title: "TOTAL LEADS",
-      value: stats?.total_leads ?? 0,
+      value: stats?.totalLeads ?? 0,
       icon: Users,
       iconBg: "bg-slate-600",
     },
     {
       title: "NEW LEADS (7 DAYS)",
-      value: stats?.new_leads_7days ?? 0,
+      value: stats?.newLeads ?? 0,
       icon: UserPlus,
       iconBg: "bg-orange-500",
     },
     {
       title: "ACTIVE LEADS",
-      value: stats?.active_leads ?? 0,
+      value: stats?.activeLeads ?? 0,
       subtitle: "Viewed multiple pages",
       icon: Eye,
       iconBg: "bg-slate-600",
     },
     {
       title: "ENGAGED LEADS",
-      value: stats?.engaged_leads ?? 0,
+      value: stats?.engagedLeads ?? 0,
       subtitle: "Multiple clicks recorded",
       icon: MousePointer,
       iconBg: "bg-orange-500",

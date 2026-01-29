@@ -5,10 +5,10 @@ import { handleUnauthorized, isUnauthorizedError } from "@/lib/utils/auth-handle
 // ============ Types ============
 
 export interface LeadStats {
-  total_leads: number;
-  new_leads_7days: number;
-  active_leads: number;
-  engaged_leads: number;
+  totalLeads: number;
+  newLeads: number;
+  activeLeads: number;
+  engagedLeads: number;
 }
 
 export interface LeadProgram {
