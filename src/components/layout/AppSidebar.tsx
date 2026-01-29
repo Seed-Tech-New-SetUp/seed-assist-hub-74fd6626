@@ -103,9 +103,9 @@ const baseNavigation: NavItem[] = [
       {
         title: "",
         items: [
-          { title: "General Information", href: "/school-profile/edit" },
+          { title: "Organisation Details", href: "/school-profile/edit" },
           { title: "Academic Programs", href: "/school-profile/programs" },
-          { title: "Access Leads", href: "/lead-analytics", permissionKey: "accessLeads", alwaysShow: true },
+          { title: "Access Leads", href: "/profile-leads", permissionKey: "accessLeads", alwaysShow: true },
         ],
       },
     ],
