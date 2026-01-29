@@ -158,7 +158,7 @@ const BSFReports = () => {
         );
 
         if (!response.ok) {
-          throw new Error("Failed to fetch BSF events");
+          throw new Error("Failed to fetch Business School Festival events");
         }
 
         const result = await response.json();
@@ -167,7 +167,7 @@ const BSFReports = () => {
         if (decodedResult.success && decodedResult.data?.events) {
           const transformedEvents = decodedResult.data.events.map((event: any) => ({
             id: event.event_id,
-            eventName: `BSF ${event.city} ${new Date(event.date).getFullYear()}`,
+            eventName: `Business School Festival ${event.city} ${new Date(event.date).getFullYear()}`,
             city: event.city,
             date: event.date,
             venue: event.venue_name,
@@ -194,7 +194,7 @@ const BSFReports = () => {
           }
         }
       } catch (error) {
-        console.error("Error fetching BSF events:", error);
+        console.error("Error fetching Business School Festival events:", error);
       } finally {
         setLoading(false);
       }
@@ -364,7 +364,7 @@ const BSFReports = () => {
         {/* Header */}
         <div>
           <h1 className="text-2xl font-display font-bold text-foreground">Business School Festivals</h1>
-          <p className="text-muted-foreground mt-1">All BSF events - upcoming, ongoing, and past</p>
+          <p className="text-muted-foreground mt-1">All Business School Festival events - upcoming, ongoing, and past</p>
         </div>
 
         {/* Summary Stats */}

@@ -24,11 +24,11 @@ export interface CampusTourReport {
 
 // Mock data - Replace with actual API calls
 const mockBSFReports: BSFReport[] = [
-  { id: "1", eventName: "BSF Lagos 2024", city: "Lagos", date: "2024-03-15", registrants: 245, attendees: 198, connections: 156 },
-  { id: "2", eventName: "BSF Nairobi 2024", city: "Nairobi", date: "2024-04-20", registrants: 312, attendees: 267, connections: 201 },
-  { id: "3", eventName: "BSF Accra 2024", city: "Accra", date: "2024-05-10", registrants: 189, attendees: 145, connections: 112 },
-  { id: "4", eventName: "BSF Mumbai 2024", city: "Mumbai", date: "2024-06-08", registrants: 278, attendees: 234, connections: 189 },
-  { id: "5", eventName: "BSF Dubai 2024", city: "Dubai", date: "2024-07-12", registrants: 221, attendees: 198, connections: 134 },
+  { id: "1", eventName: "Business School Festival Lagos 2024", city: "Lagos", date: "2024-03-15", registrants: 245, attendees: 198, connections: 156 },
+  { id: "2", eventName: "Business School Festival Nairobi 2024", city: "Nairobi", date: "2024-04-20", registrants: 312, attendees: 267, connections: 201 },
+  { id: "3", eventName: "Business School Festival Accra 2024", city: "Accra", date: "2024-05-10", registrants: 189, attendees: 145, connections: 112 },
+  { id: "4", eventName: "Business School Festival Mumbai 2024", city: "Mumbai", date: "2024-06-08", registrants: 278, attendees: 234, connections: 189 },
+  { id: "5", eventName: "Business School Festival Dubai 2024", city: "Dubai", date: "2024-07-12", registrants: 221, attendees: 198, connections: 134 },
 ];
 
 const mockCampusTourReports: CampusTourReport[] = [

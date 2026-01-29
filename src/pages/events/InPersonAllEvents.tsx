@@ -30,7 +30,7 @@ interface Event {
 const mockEvents: Event[] = [
   {
     id: "1",
-    title: "BSF Mumbai 2025",
+    title: "Business School Festival Mumbai 2025",
     date: "2025-01-15T10:00:00",
     venue: "Jio Convention Centre, Mumbai",
     status: "upcoming",
@@ -50,7 +50,7 @@ const mockEvents: Event[] = [
   },
   {
     id: "3",
-    title: "BSF Bangalore 2024",
+    title: "Business School Festival Bangalore 2024",
     date: "2024-12-10T10:00:00",
     venue: "Palace Grounds, Bangalore",
     status: "completed",
@@ -70,7 +70,7 @@ const mockEvents: Event[] = [
   },
   {
     id: "5",
-    title: "BSF Chennai 2024",
+    title: "Business School Festival Chennai 2024",
     date: "2024-10-15T10:00:00",
     venue: "Chennai Trade Centre",
     status: "completed",

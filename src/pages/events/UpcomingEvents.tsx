@@ -19,7 +19,7 @@ const upcomingEvents = [
   {
     id: "1",
     name: "Business School Festival - Singapore",
-    type: "BSF",
+    type: "BUSINESS_SCHOOL_FESTIVAL",
     date: "2024-05-20",
     time: "10:00 AM - 6:00 PM",
     location: "Marina Bay Sands Convention Centre",
@@ -39,7 +39,7 @@ const upcomingEvents = [
   {
     id: "3",
     name: "Business School Festival - Hong Kong",
-    type: "BSF",
+    type: "BUSINESS_SCHOOL_FESTIVAL",
     date: "2024-06-05",
     time: "10:00 AM - 6:00 PM",
     location: "Hong Kong Convention Centre",
@@ -140,7 +140,7 @@ export default function UpcomingEvents() {
                 </div>
                 
                 <Badge variant="outline" className="text-xs">
-                  {event.type === "BSF" ? "Business School Festival" : "Campus Tour"}
+                  {event.type === "BUSINESS_SCHOOL_FESTIVAL" ? "Business School Festival" : "Campus Tour"}
                 </Badge>
 
                 {!event.isParticipating && !event.hasShownInterest && (
