@@ -706,6 +706,55 @@ export default function StudentProfile() {
                 </div>
               )}
             </div>
+            
+            {/* Resume */}
+            <div className="mt-4 pt-4 border-t">
+              <p className="text-xs text-muted-foreground mb-2">Resume / CV</p>
+              {profile.workExperience.resumeUrl ? (
+                <Button variant="outline" size="sm" asChild>
+                  <a href={normalizeExternalUrl(profile.workExperience.resumeUrl)} target="_blank" rel="noopener noreferrer">
+                    <Download className="h-3.5 w-3.5 mr-1" />
+                    View Resume
+                    <ExternalLink className="h-3 w-3 ml-1" />
+                  </a>
+                </Button>
+              ) : (
+                <p className="text-sm text-muted-foreground">Not provided</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Essay */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Essay</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {profile.essaysUrl ? (
+              <div className="p-4 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors inline-block">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <FileText className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm">Application Essay</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Motivational letter / Essay submission
+                    </p>
+                    <Button variant="outline" size="sm" className="mt-2" asChild>
+                      <a href={normalizeExternalUrl(profile.essaysUrl)} target="_blank" rel="noopener noreferrer">
+                        <Download className="h-3.5 w-3.5 mr-1" />
+                        View PDF
+                        <ExternalLink className="h-3 w-3 ml-1" />
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No essay submitted</p>
+            )}
           </CardContent>
         </Card>
 
@@ -777,34 +826,6 @@ export default function StudentProfile() {
                 </div>
               )}
 
-              {/* Resume / CV */}
-              {profile.workExperience.resumeUrl ? (
-                <div className="p-4 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors">
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 bg-primary/10 rounded-lg">
-                      <FileText className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm">Resume / CV</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {profile.name}'s resume
-                      </p>
-                      <Button variant="outline" size="sm" className="mt-2" asChild>
-                        <a href={normalizeExternalUrl(profile.workExperience.resumeUrl)} target="_blank" rel="noopener noreferrer">
-                          <Download className="h-3.5 w-3.5 mr-1" />
-                          View PDF
-                          <ExternalLink className="h-3 w-3 ml-1" />
-                        </a>
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="p-4 rounded-lg border bg-muted/10">
-                  <p className="font-medium text-sm">Resume / CV</p>
-                  <p className="text-xs text-muted-foreground mt-1">Not provided</p>
-                </div>
-              )}
 
               {/* Supporting Documents */}
               {supportingDocs.length > 0 ? (
@@ -841,38 +862,6 @@ export default function StudentProfile() {
         </Card>
 
 
-        {/* Essays */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Essays</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {profile.essaysUrl ? (
-              <div className="p-4 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors inline-block">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-primary/10 rounded-lg">
-                    <FileText className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm">Application Essay</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Motivational letter / Essay submission
-                    </p>
-                    <Button variant="outline" size="sm" className="mt-2" asChild>
-                      <a href={normalizeExternalUrl(profile.essaysUrl)} target="_blank" rel="noopener noreferrer">
-                        <Download className="h-3.5 w-3.5 mr-1" />
-                        View PDF
-                        <ExternalLink className="h-3 w-3 ml-1" />
-                      </a>
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">No essay submitted</p>
-            )}
-          </CardContent>
-        </Card>
 
         {/* Awards Modal for Winner */}
         <Dialog open={showAwardsModal} onOpenChange={setShowAwardsModal}>
@@ -888,7 +877,7 @@ export default function StudentProfile() {
             </DialogHeader>
 
             <div className="space-y-6 py-4">
-              {/* Available Awards from API */}
+              {/* Available Awards */}
               {profile.awards.available.length > 0 && (
                 <div className="space-y-3">
                   <Label className="text-sm font-medium">Available Awards</Label>
