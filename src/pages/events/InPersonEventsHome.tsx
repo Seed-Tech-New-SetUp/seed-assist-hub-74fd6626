@@ -64,6 +64,7 @@ interface OverviewData {
     date: string;
     registrant_count: number;
     attendees_count: number;
+    female_candidates_percentage?: number;
   } | null;
 }
 
@@ -363,6 +364,12 @@ export default function InPersonEventsHome() {
                       <p className="font-semibold">{latestReport.attendees_count}</p>
                       <p className="text-muted-foreground text-xs">Attended</p>
                     </div>
+                    {latestReport.female_candidates_percentage !== undefined && (
+                      <div className="text-center">
+                        <p className="font-semibold text-pink-500">{latestReport.female_candidates_percentage}%</p>
+                        <p className="text-muted-foreground text-xs">Female %</p>
+                      </div>
+                    )}
                   </div>
                   <Button variant="ghost" size="sm">
                     View Report <ArrowRight className="h-4 w-4 ml-1" />
