@@ -427,14 +427,23 @@ export function AppSidebar() {
                             const subActive = isPathActive(subItem.href);
                             
                             // Check if this item is locked (has alwaysShow but no permission)
-                            // For Organisation Profile (no permissionKey), check top-level permissions directly
+                            // In the "no-title" branch, items rely on the parent module's `subModules`.
+                            // Example: Organisation Profile -> permissions.orgProfile.subModules.accessLeads
                             let isLocked = false;
                             if (subItem.alwaysShow && subItem.permissionKey) {
-                              const directPermission = permissions?.[subItem.permissionKey as keyof Permissions];
-                              if (directPermission && typeof directPermission === 'object' && 'enabled' in directPermission) {
-                                isLocked = !directPermission.enabled;
-                              } else if (directPermission === undefined) {
+                              const permModule = item.permissionKey
+                                ? permissions?.[item.permissionKey as keyof Permissions]
+                                : null;
+
+                              const subModules = permModule && typeof permModule === "object" && "subModules" in permModule
+                                ? permModule.subModules
+                                : null;
+
+                              // If we can't resolve subModules, keep it locked (safe default)
+                              if (!subModules) {
                                 isLocked = true;
+                              } else {
+                                isLocked = subModules[subItem.permissionKey as keyof typeof subModules] === false;
                               }
                             }
                             
