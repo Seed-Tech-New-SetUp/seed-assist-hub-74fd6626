@@ -84,3 +84,16 @@ export function buildCampusTourFallbackFilename(
   
   return `${sanitize(eventTypeName)}_${sanitize(campusName || "Event")}_${season}_${year}_${formattedDate}.xlsx`;
 }
+
+/**
+ * Builds fallback filename for Masterclass reports.
+ * Pattern: SEED_Masterclass_{Month}_{Day}_{Year}.xlsx
+ */
+export function buildMasterclassFallbackFilename(eventDate: string): string {
+  const date = new Date(eventDate);
+  const month = date.toLocaleString("en-US", { month: "long" });
+  const day = date.getDate();
+  const year = date.getFullYear();
+  
+  return `SEED_Masterclass_${month}_${day}_${year}.xlsx`;
+}
