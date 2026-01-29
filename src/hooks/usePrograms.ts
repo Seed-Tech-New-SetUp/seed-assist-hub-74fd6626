@@ -21,6 +21,7 @@ import {
   saveProgramFAQs,
   fetchProgramPOC,
   saveProgramPOC,
+  requestNewProgram,
   Program,
   ProgramInfo,
   ProgramFeature,
@@ -320,6 +321,23 @@ export function useSaveProgramPOC() {
     onSuccess: (_, { programId }) => {
       queryClient.invalidateQueries({ queryKey: ["program-poc", programId] });
       toast({ title: "Success", description: "Contact saved successfully." });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+}
+
+// ============ Request New Program Hook ============
+
+export function useRequestNewProgram() {
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: ({ programName, programDescription }: { programName: string; programDescription: string }) =>
+      requestNewProgram(programName, programDescription),
+    onSuccess: () => {
+      toast({ title: "Request Submitted", description: "Your request for a new program has been submitted for review." });
     },
     onError: (error: Error) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });

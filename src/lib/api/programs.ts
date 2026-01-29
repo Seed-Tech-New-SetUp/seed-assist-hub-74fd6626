@@ -185,6 +185,18 @@ export async function fetchPrograms(): Promise<Program[]> {
   return result.data?.programs || [];
 }
 
+// ============ Request New Program ============
+
+export async function requestNewProgram(programName: string, programDescription: string): Promise<boolean> {
+  const result = await callProgramsProxy<{ success: boolean }>(
+    "request-new-program",
+    "POST",
+    {},
+    { programName, programDescription }
+  );
+  return result.success;
+}
+
 // ============ Program Information ============
 
 export async function fetchProgramInfo(programId: string): Promise<ProgramInfo | null> {

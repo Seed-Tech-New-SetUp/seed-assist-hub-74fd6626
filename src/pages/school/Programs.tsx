@@ -20,6 +20,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { OrganizationCombobox } from "@/components/programs/OrganizationCombobox";
 import {
   Info,
@@ -66,6 +74,7 @@ import {
   useSaveProgramFAQs,
   useProgramPOC,
   useSaveProgramPOC,
+  useRequestNewProgram,
 } from "@/hooks/usePrograms";
 import type {
   ProgramInfo,
@@ -96,11 +105,15 @@ export default function Programs() {
   const [selectedProgram, setSelectedProgram] = useState("");
   const [activeSection, setActiveSection] = useState("info");
   const [completedSections, setCompletedSections] = useState<string[]>([]);
+  const [requestModalOpen, setRequestModalOpen] = useState(false);
+  const [newProgramName, setNewProgramName] = useState("");
+  const [newProgramDescription, setNewProgramDescription] = useState("");
   const { toast } = useToast();
   const { isAdmin } = useAdminStatus();
 
   // Fetch programs list
   const { data: programs = [], isLoading: programsLoading } = usePrograms();
+  const requestNewProgramMutation = useRequestNewProgram();
 
   // Set first program as default when loaded
   useEffect(() => {
@@ -133,10 +146,33 @@ export default function Programs() {
   };
 
   const handleRequestNewProgram = () => {
-    toast({
-      title: "Request Submitted",
-      description: "Your request for a new program has been submitted for review.",
-    });
+    if (!newProgramName.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Program name is required.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!newProgramDescription.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Program description is required.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    requestNewProgramMutation.mutate(
+      { programName: newProgramName.trim(), programDescription: newProgramDescription.trim() },
+      {
+        onSuccess: () => {
+          setRequestModalOpen(false);
+          setNewProgramName("");
+          setNewProgramDescription("");
+        },
+      }
+    );
   };
 
   const selectedProgramData = programs.find((p) => p.id === selectedProgram);
@@ -151,12 +187,54 @@ export default function Programs() {
             <p className="text-muted-foreground mt-1">Manage your program portfolio and settings</p>
           </div>
           {isAdmin && (
-            <Button onClick={handleRequestNewProgram}>
+            <Button onClick={() => setRequestModalOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Request New Program
             </Button>
           )}
         </div>
+
+        {/* Request New Program Modal */}
+        <Dialog open={requestModalOpen} onOpenChange={setRequestModalOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Request New Program</DialogTitle>
+              <DialogDescription>
+                Submit a request to add a new academic program. Our team will review and process your request.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="programName">Program Name *</Label>
+                <Input
+                  id="programName"
+                  value={newProgramName}
+                  onChange={(e) => setNewProgramName(e.target.value)}
+                  placeholder="e.g. Master of Finance"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="programDescription">Program Description *</Label>
+                <Textarea
+                  id="programDescription"
+                  value={newProgramDescription}
+                  onChange={(e) => setNewProgramDescription(e.target.value)}
+                  placeholder="e.g. A 2-year full-time program focused on financial analytics and investment management."
+                  rows={4}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setRequestModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleRequestNewProgram} disabled={requestNewProgramMutation.isPending}>
+                {requestNewProgramMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Submit Request
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Program Selector */}
         <Card>

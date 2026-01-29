@@ -115,6 +115,9 @@ serve(async (req) => {
       case "ranking-orgs":
         backendUrl = `${PROGRAMS_BASE_URL}/ranking_organizations.php`;
         break;
+      case "request-new-program":
+        backendUrl = `${PROGRAM_PROFILE_URL}/request_new_program.php`;
+        break;
       default:
         backendUrl = PROGRAM_PROFILE_URL;
     }
