@@ -498,7 +498,7 @@ export function AppSidebar() {
                     <item.icon className="h-4 w-4 flex-shrink-0" />
                     {!collapsed && (
                       <>
-                        <span className="flex-1 truncate">{item.title}</span>
+                        <span className="flex-1 leading-tight">{item.title}</span>
                         {item.badge && (
                           <span className={cn(
                             "px-1.5 py-0.5 text-[10px] font-semibold rounded-full min-w-[18px] text-center",
