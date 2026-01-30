@@ -40,6 +40,7 @@ import UniversityApplications from "./pages/applications/UniversityApplications"
 import Analytics from "./pages/Analytics";
 import UserManagement from "./pages/UserManagement";
 import ReportDetail from "./pages/ReportDetail";
+import SecureReportDownload from "./pages/SecureReportDownload";
 import InCountryReports from "./pages/InCountryReports";
 import LeadAnalytics from "./pages/lae/LeadAnalytics";
 import ProfileLeads from "./pages/ProfileLeads";
@@ -102,6 +103,7 @@ const App = () => (
                 <Route path="/user-management" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
 
                 {/* Public Routes */}
+                <Route path="/reports/download/:hashId" element={<SecureReportDownload />} />
                 <Route path="/reports/:reportId" element={<ReportDetail />} />
 
                 {/* 404 */}
