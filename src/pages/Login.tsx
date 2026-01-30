@@ -530,7 +530,7 @@ export default function Login() {
             <img 
               src={seedAssistLogoWhite} 
               alt="SEED Assist" 
-              className="h-10 w-auto object-contain"
+              className="h-14 w-auto object-contain"
             />
           </div>
 
@@ -579,7 +579,7 @@ export default function Login() {
             <img 
               src={seedAssistLogoBlue} 
               alt="SEED Assist" 
-              className="h-10 w-auto object-contain"
+              className="h-12 w-auto object-contain"
             />
           </div>
 

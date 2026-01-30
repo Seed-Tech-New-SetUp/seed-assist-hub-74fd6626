@@ -284,7 +284,7 @@ export function AppSidebar() {
       )}
     >
       {/* Logo */}
-      <div className="flex h-14 items-center justify-between px-3 border-b border-sidebar-border">
+      <div className="flex h-16 items-center justify-between px-3 border-b border-sidebar-border">
         <div className={cn("flex items-center overflow-hidden", collapsed && "justify-center")}>
           {collapsed ? (
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground font-display font-bold text-sm flex-shrink-0">
@@ -294,7 +294,7 @@ export function AppSidebar() {
             <img 
               src={seedAssistLogoWhite} 
               alt="SEED Assist" 
-              className="h-8 w-auto object-contain"
+              className="h-10 w-auto object-contain"
             />
           )}
         </div>
