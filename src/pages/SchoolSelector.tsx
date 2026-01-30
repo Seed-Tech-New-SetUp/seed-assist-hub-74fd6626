@@ -6,6 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Building2, ChevronRight, LogOut, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import seedAssistLogoBlue from "@/assets/seed-assist-logo-blue.png";
+import seedAssistLogoWhite from "@/assets/seed-assist-logo-white.png";
 
 export default function SchoolSelector() {
   const { schools, setCurrentSchool, loading } = useSchool();
@@ -50,14 +52,12 @@ export default function SchoolSelector() {
         
         <div className="relative z-10 flex flex-col justify-between p-10 text-sidebar-accent-foreground w-full">
           {/* Logo */}
-          <div className="flex items-center gap-2.5">
-            <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center">
-              <span className="font-display font-bold text-lg text-primary-foreground">S</span>
-            </div>
-            <div>
-              <h1 className="font-display font-semibold text-lg">SEED Assist</h1>
-              <p className="text-xs text-sidebar-foreground">Client Portal</p>
-            </div>
+          <div className="flex items-center">
+            <img 
+              src={seedAssistLogoWhite} 
+              alt="SEED Assist" 
+              className="h-10 w-auto object-contain"
+            />
           </div>
 
           {/* Center Content */}
@@ -84,14 +84,12 @@ export default function SchoolSelector() {
       <div className="flex-1 flex items-center justify-center p-8 bg-background">
         <div className="w-full max-w-md space-y-6">
           {/* Mobile Logo */}
-          <div className="lg:hidden flex items-center justify-center gap-2.5 mb-8">
-            <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center">
-              <span className="font-display font-bold text-lg text-primary-foreground">S</span>
-            </div>
-            <div>
-              <h1 className="font-display font-semibold text-lg">SEED Assist</h1>
-              <p className="text-xs text-muted-foreground">Client Portal</p>
-            </div>
+          <div className="lg:hidden flex items-center justify-center mb-8">
+            <img 
+              src={seedAssistLogoBlue} 
+              alt="SEED Assist" 
+              className="h-10 w-auto object-contain"
+            />
           </div>
 
           <div className="space-y-1.5">
