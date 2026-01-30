@@ -141,7 +141,7 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
 
   if (loadingInfo) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-[#1e3a5f] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-10 w-10 animate-spin text-white/60" />
           <p className="text-white/60 text-sm">Loading report...</p>
@@ -155,7 +155,7 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
   const academicSeason = reportData?.data?.academic_season;
 
   const formattedDate = eventData?.date 
-    ? format(new Date(eventData.date), "d MMMM, yyyy")
+    ? format(new Date(eventData.date), "dd MMMM, yyyy")
     : "";
 
   const locationDisplay = eventData?.campus_event === 1 && eventData?.campus_name 
@@ -163,50 +163,78 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
     : eventData?.city;
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col">
-      {/* Logo Header */}
-      <header className="py-8 flex justify-center">
+    <div className="min-h-screen bg-[#1e3a5f] flex flex-col relative overflow-hidden">
+      {/* Background Watermark - Left */}
+      <div 
+        className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/4 w-[400px] h-[400px] opacity-10 pointer-events-none"
+        style={{
+          backgroundImage: `url("https://admin.seedglobaleducation.com/assets/img/seed-watermark.png")`,
+          backgroundSize: 'contain',
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'center'
+        }}
+      />
+      
+      {/* Background Watermark - Right */}
+      <div 
+        className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/4 w-[400px] h-[400px] opacity-10 pointer-events-none"
+        style={{
+          backgroundImage: `url("https://admin.seedglobaleducation.com/assets/img/seed-watermark.png")`,
+          backgroundSize: 'contain',
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'center'
+        }}
+      />
+
+      {/* Header with Logo */}
+      <header className="relative z-10 py-6 flex justify-center items-center gap-4">
         {assets?.logo_white?.url && assets.logo_white.filename && (
           <img 
             src={assets.logo_white.url} 
             alt="Event Logo" 
-            className="h-12 md:h-16 w-auto object-contain"
+            className="h-14 md:h-20 w-auto object-contain"
           />
+        )}
+        {eventData?.name && (
+          <>
+            <div className="w-px h-12 bg-white/30 hidden md:block" />
+            <h1 className="text-[#f97316] font-bold text-2xl md:text-3xl uppercase tracking-tight hidden md:block">
+              {eventData.name.split(' ').slice(0, 2).join(' ')}<br/>
+              {eventData.name.split(' ').slice(2).join(' ')}
+            </h1>
+          </>
         )}
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col items-center px-4 pb-12">
-        {/* Banner Image - Centered, 50% width, ~30vh height */}
+      <main className="relative z-10 flex-1 flex flex-col items-center px-4 pb-12">
+        {/* Banner Image */}
         {assets?.banner?.url && assets.banner.filename && (
-          <div className="w-full max-w-3xl mx-auto mb-8">
-            <div className="w-[50%] mx-auto">
-              <img 
-                src={assets.banner.url} 
-                alt={eventData?.name || "Event Banner"} 
-                className="w-full h-[30vh] object-cover rounded-xl shadow-2xl shadow-black/50"
-              />
-            </div>
+          <div className="w-full max-w-2xl mx-auto mb-6">
+            <img 
+              src={assets.banner.url} 
+              alt={eventData?.name || "Event Banner"} 
+              className="w-full h-auto rounded-lg shadow-2xl"
+            />
           </div>
         )}
 
-        {/* Event Details - Clean Typography */}
-        <div className="text-center mb-10 space-y-3">
-          <h1 className="text-white text-2xl md:text-3xl font-semibold tracking-tight">
-            {eventData?.name}
-            {locationDisplay && (
-              <span className="text-white/70"> — {locationDisplay}</span>
-            )}
-          </h1>
-          
-          <div className="flex items-center justify-center gap-3 text-white/60 text-sm md:text-base">
-            {formattedDate && <span>{formattedDate}</span>}
-            {formattedDate && academicSeason && <span className="text-white/30">•</span>}
-            {academicSeason && <span>{academicSeason}</span>}
-          </div>
+        {/* Event Title */}
+        <h2 className="text-white text-xl md:text-2xl font-medium text-center mb-6">
+          {eventData?.name}
+          {locationDisplay && ` - ${locationDisplay}`}
+        </h2>
 
+        {/* Event Details Card */}
+        <div className="bg-[#334155] rounded-lg px-8 py-6 mb-8 text-center min-w-[300px] md:min-w-[400px]">
+          {formattedDate && (
+            <p className="text-white text-base md:text-lg font-medium">{formattedDate}</p>
+          )}
           {eventData?.venue_name && (
-            <p className="text-white/40 text-sm">{eventData.venue_name}</p>
+            <p className="text-white text-base md:text-lg font-medium">{eventData.venue_name}</p>
+          )}
+          {academicSeason && (
+            <p className="text-white text-base md:text-lg font-medium">{academicSeason}</p>
           )}
         </div>
 
@@ -214,53 +242,53 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
         <Button 
           onClick={() => setShowModal(true)}
           size="lg"
-          className="h-14 px-10 text-base font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-900/30 transition-all duration-200"
+          className="h-12 px-12 text-base font-semibold bg-emerald-500 hover:bg-emerald-400 text-white rounded-md shadow-lg transition-all duration-200"
         >
-          <Download className="h-5 w-5 mr-3" />
+          <Download className="h-5 w-5 mr-2" />
           Download Report
         </Button>
       </main>
 
       {/* Footer */}
-      <footer className="py-6 text-center border-t border-white/5">
-        <p className="text-white/30 text-xs tracking-wider uppercase">
+      <footer className="relative z-10 py-4 text-center">
+        <p className="text-white/40 text-xs tracking-wider">
           © 2025 SEED Global Education
         </p>
       </footer>
 
       {/* Login Modal */}
       <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="sm:max-w-md bg-slate-900 border-slate-800">
+        <DialogContent className="sm:max-w-md bg-white border-0">
           <DialogHeader>
-            <DialogTitle className="text-xl font-semibold text-white text-center">
+            <DialogTitle className="text-xl font-semibold text-slate-900 text-center">
               Verify Your Identity
             </DialogTitle>
-            <DialogDescription className="text-center text-slate-400">
+            <DialogDescription className="text-center text-slate-500">
               Enter your credentials to download the report
             </DialogDescription>
           </DialogHeader>
 
           {errorMessage && (
-            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-red-400">{errorMessage}</p>
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-red-600">{errorMessage}</p>
             </div>
           )}
 
           <form onSubmit={handleDownload} className="space-y-4 mt-2">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-slate-300">
+              <Label htmlFor="email" className="text-slate-700">
                 Email Address
               </Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input
                   id="email"
                   type="email"
                   placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10 bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 focus:border-emerald-500 focus:ring-emerald-500/20"
+                  className="pl-10 bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-emerald-500/20"
                   disabled={isDownloading}
                   required
                 />
@@ -268,18 +296,18 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-slate-300">
+              <Label htmlFor="password" className="text-slate-700">
                 Password
               </Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input
                   id="password"
                   type="password"
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 focus:border-emerald-500 focus:ring-emerald-500/20"
+                  className="pl-10 bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-emerald-500/20"
                   disabled={isDownloading}
                   required
                 />
@@ -289,7 +317,7 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
             <Button
               type="submit"
               size="lg"
-              className="w-full h-12 text-base font-semibold bg-emerald-600 hover:bg-emerald-500"
+              className="w-full h-12 text-base font-semibold bg-emerald-500 hover:bg-emerald-400"
               disabled={isDownloading}
             >
               {isDownloading ? (
@@ -306,7 +334,7 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
             </Button>
           </form>
 
-          <p className="text-center text-xs text-slate-500">
+          <p className="text-center text-xs text-slate-400">
             Your credentials are encrypted and secure.
           </p>
         </DialogContent>
