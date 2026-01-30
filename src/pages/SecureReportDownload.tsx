@@ -45,7 +45,7 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
       if (!hashId) return;
       
       try {
-        const url = `${getInfoEndpointUrl()}?id=${encodeURIComponent(hashId)}`;
+        const url = `${getInfoEndpointUrl()}?${hashId}`;
         const response = await fetch(url);
 
         if (response.ok) {
