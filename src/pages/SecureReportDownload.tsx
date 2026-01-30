@@ -12,6 +12,7 @@ import { format } from "date-fns";
 
 interface EventData {
   event_id: string;
+  in_person_event_type_id?: string;
   name: string;
   city: string;
   date: string;
@@ -78,10 +79,13 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
     fetchReportInfo();
   }, [hashId, reportType]);
 
-  const getEndpointUrl = () => {
-    return reportType === "in-person"
-      ? `${API_BASE}/in-person-event/report_download.php`
-      : `${API_BASE}/virtual-event/report_download.php`;
+  const getDownloadEndpointUrl = () => {
+    const eventTypeId = reportData?.data?.[0]?.in_person_event_type_id;
+    // Use in-person endpoint for B001 (Campus Tour) and B004 (BSF)
+    if (eventTypeId === "B001" || eventTypeId === "B004") {
+      return `${API_BASE}/in-person-event/report_download.php`;
+    }
+    return `${API_BASE}/virtual-event/report_download.php`;
   };
 
   const handleDownload = async (e: React.FormEvent) => {
@@ -96,7 +100,7 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
     setErrorMessage("");
 
     try {
-      const response = await fetch(getEndpointUrl(), {
+      const response = await fetch(getDownloadEndpointUrl(), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
