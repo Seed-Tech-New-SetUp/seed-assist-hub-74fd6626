@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { extractFilenameFromHeader } from "@/lib/utils/download-filename";
 import { format } from "date-fns";
@@ -163,10 +164,10 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
     : eventData?.city;
 
   return (
-    <div className="min-h-screen bg-[#1e3a5f] flex flex-col relative overflow-hidden">
+    <div className="min-h-screen bg-[#1e3a5f] flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background Watermark - Left */}
       <div 
-        className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/4 w-[400px] h-[400px] opacity-10 pointer-events-none"
+        className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/4 w-[300px] h-[300px] opacity-10 pointer-events-none"
         style={{
           backgroundImage: `url("https://admin.seedglobaleducation.com/assets/img/seed-watermark.png")`,
           backgroundSize: 'contain',
@@ -177,7 +178,7 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
       
       {/* Background Watermark - Right */}
       <div 
-        className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/4 w-[400px] h-[400px] opacity-10 pointer-events-none"
+        className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/4 w-[300px] h-[300px] opacity-10 pointer-events-none"
         style={{
           backgroundImage: `url("https://admin.seedglobaleducation.com/assets/img/seed-watermark.png")`,
           backgroundSize: 'contain',
@@ -186,75 +187,77 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
         }}
       />
 
-      {/* Header with Logo */}
-      <header className="relative z-10 py-6 flex justify-center items-center gap-4">
-        {assets?.logo_white?.url && assets.logo_white.filename && (
-          <img 
-            src={assets.logo_white.url} 
-            alt="Event Logo" 
-            className="h-14 md:h-20 w-auto object-contain"
-          />
-        )}
-        {eventData?.name && (
-          <>
-            <div className="w-px h-12 bg-white/30 hidden md:block" />
-            <h1 className="text-[#f97316] font-bold text-2xl md:text-3xl uppercase tracking-tight hidden md:block">
-              {eventData.name.split(' ').slice(0, 2).join(' ')}<br/>
-              {eventData.name.split(' ').slice(2).join(' ')}
-            </h1>
-          </>
-        )}
-      </header>
-
-      {/* Main Content */}
-      <main className="relative z-10 flex-1 flex flex-col items-center px-4 pb-12">
-        {/* Banner Image */}
-        {assets?.banner?.url && assets.banner.filename && (
-          <div className="w-full max-w-2xl mx-auto mb-6">
+      {/* Main Card */}
+      <Card className="relative z-10 bg-white rounded-xl shadow-2xl max-w-lg w-full overflow-hidden">
+        {/* Header with Logo */}
+        <div className="bg-[#1e3a5f] py-4 px-6 flex justify-center items-center gap-3">
+          {assets?.logo_white?.url && assets.logo_white.filename && (
             <img 
-              src={assets.banner.url} 
-              alt={eventData?.name || "Event Banner"} 
-              className="w-full h-auto rounded-lg shadow-2xl"
+              src={assets.logo_white.url} 
+              alt="Event Logo" 
+              className="h-10 w-auto object-contain"
             />
-          </div>
-        )}
-
-        {/* Event Title */}
-        <h2 className="text-white text-xl md:text-2xl font-medium text-center mb-6">
-          {eventData?.name}
-          {locationDisplay && ` - ${locationDisplay}`}
-        </h2>
-
-        {/* Event Details Card */}
-        <div className="bg-[#334155] rounded-lg px-8 py-6 mb-8 text-center min-w-[300px] md:min-w-[400px]">
-          {formattedDate && (
-            <p className="text-white text-base md:text-lg font-medium">{formattedDate}</p>
           )}
-          {eventData?.venue_name && (
-            <p className="text-white text-base md:text-lg font-medium">{eventData.venue_name}</p>
-          )}
-          {academicSeason && (
-            <p className="text-white text-base md:text-lg font-medium">{academicSeason}</p>
+          {eventData?.name && (
+            <>
+              <div className="w-px h-8 bg-white/30" />
+              <span className="text-[#f97316] font-bold text-sm uppercase tracking-tight">
+                {eventData.name}
+              </span>
+            </>
           )}
         </div>
 
-        {/* Download Button */}
-        <Button 
-          onClick={() => setShowModal(true)}
-          size="lg"
-          className="h-12 px-12 text-base font-semibold bg-emerald-500 hover:bg-emerald-400 text-white rounded-md shadow-lg transition-all duration-200"
-        >
-          <Download className="h-5 w-5 mr-2" />
-          Download Report
-        </Button>
-      </main>
+        {/* Content */}
+        <div className="p-5">
+          {/* Banner Image */}
+          {assets?.banner?.url && assets.banner.filename && (
+            <div className="mb-4">
+              <img 
+                src={assets.banner.url} 
+                alt={eventData?.name || "Event Banner"} 
+                className="w-full h-auto rounded-lg shadow-md"
+              />
+            </div>
+          )}
 
-      {/* Footer */}
-      <footer className="relative z-10 py-4 text-center">
-        <p className="text-white/40 text-xs tracking-wider">
-          © 2025 SEED Global Education
-        </p>
-      </footer>
+          {/* Event Title */}
+          <h2 className="text-slate-800 text-lg font-medium text-center mb-4">
+            {eventData?.name}
+            {locationDisplay && ` - ${locationDisplay}`}
+          </h2>
+
+          {/* Event Details Card */}
+          <div className="bg-[#475569] rounded-lg px-6 py-4 mb-5 text-center">
+            {formattedDate && (
+              <p className="text-white text-sm font-medium">{formattedDate}</p>
+            )}
+            {eventData?.venue_name && (
+              <p className="text-white text-sm font-medium">{eventData.venue_name}</p>
+            )}
+            {academicSeason && (
+              <p className="text-white text-sm font-medium">{academicSeason}</p>
+            )}
+          </div>
+
+          {/* Download Button */}
+          <Button 
+            onClick={() => setShowModal(true)}
+            size="default"
+            className="w-full h-11 text-sm font-semibold bg-emerald-500 hover:bg-emerald-400 text-white rounded-md shadow-md transition-all duration-200"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Download Report
+          </Button>
+        </div>
+
+        {/* Footer */}
+        <div className="py-3 text-center border-t border-slate-100">
+          <p className="text-slate-400 text-xs">
+            © 2025 SEED Global Education
+          </p>
+        </div>
+      </Card>
 
       {/* Login Modal */}
       <Dialog open={showModal} onOpenChange={setShowModal}>
