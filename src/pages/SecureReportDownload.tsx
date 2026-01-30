@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Download, Loader2, Mail, Lock, ShieldCheck, FileText, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,15 @@ import { toast } from "sonner";
 import { extractFilenameFromHeader } from "@/lib/utils/download-filename";
 
 type VerificationStatus = "idle" | "verifying" | "success" | "error";
+
+interface ReportInfo {
+  title?: string;
+  event_date?: string;
+  venue?: string;
+  banner_image?: string;
+  school_logo?: string;
+  school_name?: string;
+}
 
 interface SecureReportDownloadProps {
   reportType: "virtual" | "in-person";
@@ -22,6 +31,41 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState<VerificationStatus>("idle");
   const [errorMessage, setErrorMessage] = useState("");
+  const [reportInfo, setReportInfo] = useState<ReportInfo | null>(null);
+  const [loadingInfo, setLoadingInfo] = useState(true);
+
+  const getInfoEndpointUrl = () => {
+    return reportType === "in-person"
+      ? `${API_BASE}/in-person-event/report_info.php`
+      : `${API_BASE}/virtual-event/report_info.php`;
+  };
+
+  useEffect(() => {
+    const fetchReportInfo = async () => {
+      if (!hashId) return;
+      
+      try {
+        const response = await fetch(getInfoEndpointUrl(), {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ hash_id: hashId }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setReportInfo(data);
+        }
+      } catch (error) {
+        console.error("Error fetching report info:", error);
+      } finally {
+        setLoadingInfo(false);
+      }
+    };
+
+    fetchReportInfo();
+  }, [hashId, reportType]);
 
   const getEndpointUrl = () => {
     return reportType === "in-person"
@@ -93,21 +137,49 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-white dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex flex-col">
-      {/* Branded Header */}
+      {/* Branded Header with Event Banner */}
       <header className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary/95 to-primary/90" />
+        
+        {/* Event Banner Background */}
+        {reportInfo?.banner_image && (
+          <div 
+            className="absolute inset-0 bg-cover bg-center opacity-20"
+            style={{ backgroundImage: `url(${reportInfo.banner_image})` }}
+          />
+        )}
+        
         <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%23ffffff%22%20fill-opacity%3D%220.05%22%3E%3Cpath%20d%3D%22M36%2034v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6%2034v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6%204V0H4v4H0v2h4v4h2V6h4V4H6z%22%2F%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E')] opacity-30" />
         
         {/* Logo/Brand Area */}
         <div className="relative z-10 flex flex-col items-center py-8">
-          <div className="flex items-center gap-3">
-            <div className="h-12 w-12 bg-primary-foreground/10 backdrop-blur-sm rounded-xl flex items-center justify-center border border-primary-foreground/20">
+          {/* School Logo */}
+          {reportInfo?.school_logo ? (
+            <div className="mb-4">
+              <img 
+                src={reportInfo.school_logo} 
+                alt={reportInfo.school_name || "School Logo"} 
+                className="h-16 w-auto object-contain bg-white/10 backdrop-blur-sm rounded-lg p-2"
+              />
+            </div>
+          ) : (
+            <div className="h-12 w-12 bg-primary-foreground/10 backdrop-blur-sm rounded-xl flex items-center justify-center border border-primary-foreground/20 mb-4">
               <FileText className="h-6 w-6 text-primary-foreground" />
             </div>
-            <div>
-              <h2 className="text-primary-foreground font-display font-bold text-xl tracking-tight">Secure Download</h2>
-              <p className="text-primary-foreground/70 text-xs font-medium uppercase tracking-widest">SEED Global Education</p>
-            </div>
+          )}
+          
+          <div className="text-center">
+            <h2 className="text-primary-foreground font-display font-bold text-xl tracking-tight">
+              {reportInfo?.title || "Secure Download"}
+            </h2>
+            {reportInfo?.event_date && (
+              <p className="text-primary-foreground/80 text-sm mt-1">
+                {reportInfo.event_date} {reportInfo?.venue && `• ${reportInfo.venue}`}
+              </p>
+            )}
+            <p className="text-primary-foreground/70 text-xs font-medium uppercase tracking-widest mt-2">
+              {reportInfo?.school_name || "SEED Global Education"}
+            </p>
           </div>
         </div>
       </header>
