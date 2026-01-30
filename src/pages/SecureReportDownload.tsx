@@ -100,17 +100,18 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
     setErrorMessage("");
 
     try {
+      const formData = new URLSearchParams();
+      formData.append("hash_id", hashId || "");
+      formData.append("email", email.trim());
+      formData.append("password", password.trim());
+      formData.append("report_type", reportType);
+
       const response = await fetch(getDownloadEndpointUrl(), {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "application/x-www-form-urlencoded",
         },
-        body: JSON.stringify({
-          hash_id: hashId,
-          email: email.trim(),
-          password: password.trim(),
-          report_type: reportType,
-        }),
+        body: formData.toString(),
       });
 
       const contentType = response.headers.get("Content-Type") || "";
