@@ -25,6 +25,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { useAuth, Permissions } from "@/contexts/AuthContext";
 import { useSidebarState } from "@/contexts/SidebarContext";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import seedAssistLogoWhite from "@/assets/seed-assist-logo-white.png";
 
 interface NavSubItem {
   title: string;
@@ -284,15 +285,17 @@ export function AppSidebar() {
     >
       {/* Logo */}
       <div className="flex h-14 items-center justify-between px-3 border-b border-sidebar-border">
-        <div className={cn("flex items-center gap-2.5 overflow-hidden", collapsed && "justify-center")}>
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-display font-bold text-sm flex-shrink-0">
-            S
-          </div>
-          {!collapsed && (
-            <div className="flex flex-col">
-              <span className="font-display font-semibold text-sm text-sidebar-accent-foreground">SEED Assist</span>
-              <span className="text-[10px] text-sidebar-foreground/60 leading-none">Client Portal</span>
+        <div className={cn("flex items-center overflow-hidden", collapsed && "justify-center")}>
+          {collapsed ? (
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground font-display font-bold text-sm flex-shrink-0">
+              S
             </div>
+          ) : (
+            <img 
+              src={seedAssistLogoWhite} 
+              alt="SEED Assist" 
+              className="h-8 w-auto object-contain"
+            />
           )}
         </div>
         <Button

@@ -21,6 +21,8 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { supabase } from "@/integrations/supabase/client";
+import seedAssistLogoBlue from "@/assets/seed-assist-logo-blue.png";
+import seedAssistLogoWhite from "@/assets/seed-assist-logo-white.png";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -524,14 +526,12 @@ export default function Login() {
         
         <div className="relative z-10 flex flex-col justify-between p-10 text-sidebar-accent-foreground w-full">
           {/* Logo */}
-          <div className="flex items-center gap-2.5">
-            <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center">
-              <span className="font-display font-bold text-lg text-primary-foreground">S</span>
-            </div>
-            <div>
-              <h1 className="font-display font-semibold text-lg">SEED Assist</h1>
-              <p className="text-xs text-sidebar-foreground">Client Portal</p>
-            </div>
+          <div className="flex items-center">
+            <img 
+              src={seedAssistLogoWhite} 
+              alt="SEED Assist" 
+              className="h-10 w-auto object-contain"
+            />
           </div>
 
           {/* Center Content */}
@@ -575,14 +575,12 @@ export default function Login() {
       <div className="flex-1 flex items-center justify-center p-8 bg-background">
         <div className="w-full max-w-sm space-y-6">
           {/* Mobile Logo */}
-          <div className="lg:hidden flex items-center justify-center gap-2.5 mb-8">
-            <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center">
-              <span className="font-display font-bold text-lg text-primary-foreground">S</span>
-            </div>
-            <div>
-              <h1 className="font-display font-semibold text-lg">SEED Assist</h1>
-              <p className="text-xs text-muted-foreground">Client Portal</p>
-            </div>
+          <div className="lg:hidden flex items-center justify-center mb-8">
+            <img 
+              src={seedAssistLogoBlue} 
+              alt="SEED Assist" 
+              className="h-10 w-auto object-contain"
+            />
           </div>
 
           <div className="space-y-1.5">
