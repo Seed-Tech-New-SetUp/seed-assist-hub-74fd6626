@@ -14,7 +14,7 @@ interface SecureReportDownloadProps {
   reportType: "virtual" | "in-person";
 }
 
-const API_BASE = "https://assist.seedglobaleducation.com/api";
+const API_BASE = "https://seedglobaleducation.com/api/assist";
 
 export default function SecureReportDownload({ reportType }: SecureReportDownloadProps) {
   const { hashId } = useParams<{ hashId: string }>();
