@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { extractFilenameFromHeader } from "@/lib/utils/download-filename";
+import { extractFilenameFromHeader, buildMasterclassFallbackFilename } from "@/lib/utils/download-filename";
 import { format } from "date-fns";
 import seedAssistLogoWhite from "@/assets/seed-assist-logo-white.png";
 
@@ -160,7 +160,20 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
           contentType.includes("application/octet-stream") ||
           contentType.includes("application/vnd.ms-excel")) {
         const blob = await response.blob();
-        const filename = extractFilenameFromHeader(response, "report.xlsx");
+        
+        // Build proper fallback filename based on report type
+        let fallbackFilename = "report.xlsx";
+        if (reportType === "virtual" && eventDetails?.date) {
+          fallbackFilename = buildMasterclassFallbackFilename(eventDetails.date);
+        } else if (reportType === "in-person" && eventDetails?.date && eventDetails?.name) {
+          // For in-person events, use event name and date
+          const date = new Date(eventDetails.date);
+          const formattedDate = `${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}`;
+          const sanitizedName = eventDetails.name.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_-]/g, "");
+          fallbackFilename = `${sanitizedName}_${formattedDate}.xlsx`;
+        }
+        
+        const filename = extractFilenameFromHeader(response, fallbackFilename);
         
         toast.success("Download starting...");
         setShowModal(false);
