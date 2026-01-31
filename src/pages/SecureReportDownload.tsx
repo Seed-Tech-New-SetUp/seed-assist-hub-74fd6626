@@ -81,9 +81,9 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
   }, [hashId, reportType]);
 
   const getDownloadEndpointUrl = () => {
+    // Use in-person endpoint if in_person_event_type_id exists, otherwise use virtual endpoint
     const eventTypeId = reportData?.data?.[0]?.in_person_event_type_id;
-    // Use in-person endpoint for B001 (Campus Tour) and B004 (BSF)
-    if (eventTypeId === "B001" || eventTypeId === "B004") {
+    if (eventTypeId) {
       return `${API_BASE}/in-person-event/report_download.php`;
     }
     return `${API_BASE}/virtual-event/report_download.php`;
