@@ -136,7 +136,9 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
         window.URL.revokeObjectURL(url);
       } else {
         const data = await response.json();
-        setErrorMessage(data.message || "Verification failed. Please check your credentials.");
+        // Handle nested error structure: { success: false, error: { code, message } }
+        const errorMsg = data.error?.message || data.message || "Verification failed. Please check your credentials.";
+        setErrorMessage(errorMsg);
       }
     } catch (error) {
       console.error("Download error:", error);
