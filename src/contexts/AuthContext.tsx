@@ -220,27 +220,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       );
 
-      const data = await response.json();
+      // Some non-2xx responses can still include a valid JSON body; however, JSON parsing can
+      // also fail (e.g., HTML error pages). We guard parsing so we can surface a useful message.
+      let data: any = null;
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
 
       // Handle error responses (non-2xx or success: false)
-      if (!response.ok || data.error || !data.success) {
+      if (!response.ok || data?.error || !data?.success) {
         // Extract error message from various possible response formats
         let errorMessage = 'Login failed';
         
-        if (data.error) {
+        if (data?.error) {
           if (typeof data.error === 'object' && data.error.message) {
             errorMessage = data.error.message;
           } else if (typeof data.error === 'string') {
             errorMessage = data.error;
           }
-        } else if (data.details?.error?.message) {
+        } else if (data?.details?.error?.message) {
           errorMessage = data.details.error.message;
+        } else if (!data) {
+          // If JSON parsing failed, try to read the raw body for debugging / better messaging.
+          try {
+            const text = await response.text();
+            if (text) errorMessage = text;
+          } catch {
+            // ignore
+          }
         }
         
         return { error: new Error(errorMessage) };
       }
 
-      if (!data.data) {
+      if (!data?.data) {
         return { error: new Error('Invalid response from server') };
       }
 
