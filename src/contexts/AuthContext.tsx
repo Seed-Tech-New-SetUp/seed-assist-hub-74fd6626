@@ -217,7 +217,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (data.error) {
-        return { error: new Error(data.error) };
+        // Handle nested error object from API
+        const errorMessage = typeof data.error === 'object' && data.error.message 
+          ? data.error.message 
+          : (typeof data.error === 'string' ? data.error : 'Login failed');
+        return { error: new Error(errorMessage) };
       }
 
       if (!data.success || !data.data) {
