@@ -207,24 +207,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { data, error } = await supabase.functions.invoke('portal-auth', {
-        body: { email, password },
-      });
+      // Use fetch directly instead of supabase.functions.invoke to properly handle error responses
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/portal-auth`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({ email, password }),
+        }
+      );
 
-      if (error) {
-        console.error('Portal auth error:', error);
-        return { error: new Error(error.message || 'Login failed') };
-      }
+      const data = await response.json();
 
-      if (data.error) {
-        // Handle nested error object from API
-        const errorMessage = typeof data.error === 'object' && data.error.message 
-          ? data.error.message 
-          : (typeof data.error === 'string' ? data.error : 'Login failed');
+      // Handle error responses (non-2xx or success: false)
+      if (!response.ok || data.error || !data.success) {
+        // Extract error message from various possible response formats
+        let errorMessage = 'Login failed';
+        
+        if (data.error) {
+          if (typeof data.error === 'object' && data.error.message) {
+            errorMessage = data.error.message;
+          } else if (typeof data.error === 'string') {
+            errorMessage = data.error;
+          }
+        } else if (data.details?.error?.message) {
+          errorMessage = data.details.error.message;
+        }
+        
         return { error: new Error(errorMessage) };
       }
 
-      if (!data.success || !data.data) {
+      if (!data.data) {
         return { error: new Error('Invalid response from server') };
       }
 
