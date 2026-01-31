@@ -23,7 +23,23 @@ interface EventData {
   academic_season: string;
 }
 
-interface ReportApiResponse {
+interface VirtualEventData {
+  header: string;
+  date: string;
+  desktop_banner_url: string;
+  youtube_url?: string;
+}
+
+interface SchoolLogo {
+  school_logo: string;
+}
+
+interface DownloadInfo {
+  client_name: string;
+  timestamp: string;
+}
+
+interface InPersonReportApiResponse {
   success: boolean;
   data: {
     0: EventData;
@@ -35,6 +51,15 @@ interface ReportApiResponse {
     };
   };
 }
+
+interface VirtualReportApiResponse {
+  success: boolean;
+  data: VirtualEventData;
+  schools: SchoolLogo[];
+  download_info?: DownloadInfo;
+}
+
+type ReportApiResponse = InPersonReportApiResponse | VirtualReportApiResponse;
 
 interface SecureReportDownloadProps {
   reportType: "virtual" | "in-person";
@@ -173,17 +198,57 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
     );
   }
 
-  const eventData = reportData?.data?.[0];
-  const assets = reportData?.data?.assets;
-  const academicSeason = reportData?.data?.academic_season;
+  // Helper to check if this is a virtual event response
+  const isVirtualEvent = (data: ReportApiResponse | null): data is VirtualReportApiResponse => {
+    return data !== null && 'schools' in data;
+  };
 
-  const formattedDate = eventData?.date 
-    ? format(new Date(eventData.date), "dd MMMM, yyyy")
+  // Extract data based on report type
+  const getEventDetails = () => {
+    if (!reportData) return null;
+
+    if (isVirtualEvent(reportData)) {
+      // Virtual event (mreports)
+      return {
+        name: reportData.data.header,
+        date: reportData.data.date,
+        bannerUrl: reportData.data.desktop_banner_url 
+          ? `https://admin.seedglobaleducation.com/assets/masterclass-images/main-banner/${reportData.data.desktop_banner_url}`
+          : null,
+        youtubeUrl: reportData.data.youtube_url || null,
+        schools: reportData.schools || [],
+        downloadInfo: reportData.download_info || null,
+        venue: null,
+        academicSeason: null,
+      };
+    } else {
+      // In-person event (reports)
+      const eventData = reportData.data?.[0];
+      const assets = reportData.data?.assets;
+      return {
+        name: eventData?.name || '',
+        date: eventData?.date || '',
+        bannerUrl: assets?.banner?.url || null,
+        youtubeUrl: null,
+        schools: [],
+        downloadInfo: null,
+        venue: eventData?.venue_name || null,
+        academicSeason: reportData.data?.academic_season || null,
+        locationDisplay: eventData?.campus_event === 1 && eventData?.campus_name 
+          ? eventData.campus_name 
+          : eventData?.city,
+      };
+    }
+  };
+
+  const eventDetails = getEventDetails();
+  const formattedDate = eventDetails?.date 
+    ? format(new Date(eventDetails.date), "dd MMMM, yyyy")
     : "";
 
-  const locationDisplay = eventData?.campus_event === 1 && eventData?.campus_name 
-    ? eventData.campus_name 
-    : eventData?.city;
+  const formattedDownloadDate = eventDetails?.downloadInfo?.timestamp
+    ? format(new Date(eventDetails.downloadInfo.timestamp), "EEEE, dd MMM yyyy")
+    : "";
 
   return (
     <div className="min-h-screen bg-[#1e3a5f] flex items-center justify-center p-4 relative overflow-hidden">
@@ -213,18 +278,16 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
       <Card className="relative z-10 bg-white rounded-xl shadow-2xl max-w-lg w-full overflow-hidden">
         {/* Header with Logo */}
         <div className="bg-[#1e3a5f] py-5 px-6 flex justify-center items-center gap-4">
-          {/* SEED Assist Logo - always show prominently */}
           <img 
             src={seedAssistLogoWhite} 
             alt="SEED Assist" 
             className="h-12 w-auto object-contain"
           />
-          {/* Event name if available */}
-          {eventData?.name && (
+          {eventDetails?.name && (
             <>
               <div className="w-px h-10 bg-white/30" />
               <span className="text-[#f97316] font-bold text-base uppercase tracking-tight">
-                {eventData.name}
+                {reportType === "virtual" ? "Masterclass" : eventDetails.name}
               </span>
             </>
           )}
@@ -232,45 +295,108 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
 
         {/* Content */}
         <div className="p-5">
-          {/* Banner Image */}
-          {assets?.banner?.url && assets.banner.filename && (
-            <div className="mb-4">
+          {/* Banner Image with School Logos Overlay (Virtual Events) */}
+          {eventDetails?.bannerUrl && (
+            <div className="mb-4 relative">
               <img 
-                src={assets.banner.url} 
-                alt={eventData?.name || "Event Banner"} 
+                src={eventDetails.bannerUrl} 
+                alt={eventDetails.name || "Event Banner"} 
                 className="w-full h-auto rounded-lg shadow-md"
               />
+              {/* School Logos Overlay for Virtual Events */}
+              {eventDetails.schools && eventDetails.schools.length > 0 && (
+                <div 
+                  className={`absolute flex flex-wrap gap-2 ${
+                    eventDetails.schools.length > 1 
+                      ? 'top-[20%] left-[15%]' 
+                      : 'top-[25%] left-[25%] md:top-[34%] md:left-[34%]'
+                  }`}
+                >
+                  {eventDetails.schools.map((school, index) => (
+                    <div 
+                      key={index} 
+                      className="bg-white p-2 rounded-lg"
+                      style={{ width: eventDetails.schools.length > 1 ? '120px' : '160px' }}
+                    >
+                      <img 
+                        src={`https://admin.seedglobaleducation.com/assets/img/school_logos/${school.school_logo}`}
+                        alt="School Logo"
+                        className="w-full h-auto"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
           {/* Event Title */}
-          <h2 className="text-slate-800 text-lg font-medium text-center mb-4">
-            {eventData?.name}
-            {locationDisplay && ` - ${locationDisplay}`}
+          <h2 className="text-slate-800 text-lg font-medium text-center mb-2">
+            {eventDetails?.name}
+            {eventDetails && 'locationDisplay' in eventDetails && eventDetails.locationDisplay && 
+              ` - ${eventDetails.locationDisplay}`
+            }
           </h2>
 
-          {/* Event Details Card */}
-          <div className="bg-[#475569] rounded-lg px-6 py-4 mb-5 text-center">
-            {formattedDate && (
-              <p className="text-white text-sm font-medium">{formattedDate}</p>
-            )}
-            {eventData?.venue_name && (
-              <p className="text-white text-sm font-medium">{eventData.venue_name}</p>
-            )}
-            {academicSeason && (
-              <p className="text-white text-sm font-medium">{academicSeason}</p>
+          {/* Event Date */}
+          {formattedDate && (
+            <h3 className="text-slate-600 text-base font-medium text-center mb-3">
+              {formattedDate}
+            </h3>
+          )}
+
+          {/* Last Downloaded Info (Virtual Events) */}
+          {eventDetails?.downloadInfo && (
+            <p className="text-slate-500 text-sm italic text-center mb-4">
+              Report was last downloaded by {eventDetails.downloadInfo.client_name} on {formattedDownloadDate}
+            </p>
+          )}
+
+          {/* Event Details Card (In-Person Events Only) */}
+          {reportType === "in-person" && (eventDetails?.venue || eventDetails?.academicSeason) && (
+            <div className="bg-[#475569] rounded-lg px-6 py-4 mb-5 text-center">
+              {eventDetails.venue && (
+                <p className="text-white text-sm font-medium">{eventDetails.venue}</p>
+              )}
+              {eventDetails.academicSeason && (
+                <p className="text-white text-sm font-medium">{eventDetails.academicSeason}</p>
+              )}
+            </div>
+          )}
+
+          <hr className="border-slate-200 mb-5" />
+
+          {/* Action Buttons */}
+          <div className="flex flex-col md:flex-row gap-3 justify-center">
+            <Button 
+              onClick={() => setShowModal(true)}
+              size="default"
+              className="flex-1 h-11 text-sm font-semibold bg-emerald-500 hover:bg-emerald-400 text-white rounded-md shadow-md transition-all duration-200"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download Report
+            </Button>
+
+            {eventDetails?.youtubeUrl && (
+              <a 
+                href={eventDetails.youtubeUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex-1"
+              >
+                <Button 
+                  variant="destructive"
+                  size="default"
+                  className="w-full h-11 text-sm font-semibold"
+                >
+                  <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                  </svg>
+                  Youtube Link
+                </Button>
+              </a>
             )}
           </div>
-
-          {/* Download Button */}
-          <Button 
-            onClick={() => setShowModal(true)}
-            size="default"
-            className="w-full h-11 text-sm font-semibold bg-emerald-500 hover:bg-emerald-400 text-white rounded-md shadow-md transition-all duration-200"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Download Report
-          </Button>
         </div>
 
         {/* Footer */}
