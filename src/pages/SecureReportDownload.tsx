@@ -283,11 +283,11 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
             alt="SEED Assist" 
             className="h-12 w-auto object-contain"
           />
-          {eventDetails?.name && (
+          {reportType === "in-person" && eventDetails?.name && (
             <>
               <div className="w-px h-10 bg-white/30" />
               <span className="text-[#f97316] font-bold text-base uppercase tracking-tight">
-                {reportType === "virtual" ? "Masterclass" : eventDetails.name}
+                {eventDetails.name}
               </span>
             </>
           )}
@@ -331,30 +331,30 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
           )}
 
           {/* Event Title */}
-          <h2 className="text-slate-800 text-lg font-medium text-center mb-2">
+          <h4 className="text-slate-800 text-xl font-semibold text-center mb-2">
             {eventDetails?.name}
             {eventDetails && 'locationDisplay' in eventDetails && eventDetails.locationDisplay && 
               ` - ${eventDetails.locationDisplay}`
             }
-          </h2>
+          </h4>
 
           {/* Event Date */}
           {formattedDate && (
-            <h3 className="text-slate-600 text-base font-medium text-center mb-3">
+            <h5 className="text-slate-600 text-base font-medium text-center my-2">
               {formattedDate}
-            </h3>
+            </h5>
           )}
 
           {/* Last Downloaded Info (Virtual Events) */}
           {eventDetails?.downloadInfo && (
-            <p className="text-slate-500 text-sm italic text-center mb-4">
+            <p className="text-slate-500 text-sm italic text-center mt-3">
               Report was last downloaded by {eventDetails.downloadInfo.client_name} on {formattedDownloadDate}
             </p>
           )}
 
           {/* Event Details Card (In-Person Events Only) */}
           {reportType === "in-person" && (eventDetails?.venue || eventDetails?.academicSeason) && (
-            <div className="bg-[#475569] rounded-lg px-6 py-4 mb-5 text-center">
+            <div className="bg-[#475569] rounded-lg px-6 py-4 my-4 text-center">
               {eventDetails.venue && (
                 <p className="text-white text-sm font-medium">{eventDetails.venue}</p>
               )}
