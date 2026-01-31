@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { extractFilenameFromHeader } from "@/lib/utils/download-filename";
 import { format } from "date-fns";
+import seedAssistLogoWhite from "@/assets/seed-assist-logo-white.png";
 
 interface EventData {
   event_id: string;
@@ -195,18 +196,18 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
       {/* Main Card */}
       <Card className="relative z-10 bg-white rounded-xl shadow-2xl max-w-lg w-full overflow-hidden">
         {/* Header with Logo */}
-        <div className="bg-[#1e3a5f] py-4 px-6 flex justify-center items-center gap-3">
-          {assets?.logo_white?.url && assets.logo_white.filename && (
-            <img 
-              src={assets.logo_white.url} 
-              alt="Event Logo" 
-              className="h-10 w-auto object-contain"
-            />
-          )}
+        <div className="bg-[#1e3a5f] py-5 px-6 flex justify-center items-center gap-4">
+          {/* SEED Assist Logo - always show prominently */}
+          <img 
+            src={seedAssistLogoWhite} 
+            alt="SEED Assist" 
+            className="h-12 w-auto object-contain"
+          />
+          {/* Event name if available */}
           {eventData?.name && (
             <>
-              <div className="w-px h-8 bg-white/30" />
-              <span className="text-[#f97316] font-bold text-sm uppercase tracking-tight">
+              <div className="w-px h-10 bg-white/30" />
+              <span className="text-[#f97316] font-bold text-base uppercase tracking-tight">
                 {eventData.name}
               </span>
             </>
