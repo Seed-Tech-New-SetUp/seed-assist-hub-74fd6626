@@ -28,6 +28,7 @@ interface VirtualEventData {
   date: string;
   desktop_banner_url: string;
   youtube_url?: string;
+  academic_season?: string;
 }
 
 interface SchoolLogo {
@@ -54,8 +55,11 @@ interface InPersonReportApiResponse {
 
 interface VirtualReportApiResponse {
   success: boolean;
-  data: VirtualEventData;
-  schools: SchoolLogo[];
+  data: {
+    0: VirtualEventData;
+    academic_season: string;
+  };
+  schools?: SchoolLogo[];
   download_info?: DownloadInfo;
 }
 
@@ -106,9 +110,8 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
   }, [hashId, reportType]);
 
   const getDownloadEndpointUrl = () => {
-    // Use in-person endpoint if in_person_event_type_id exists, otherwise use virtual endpoint
-    const eventTypeId = reportData?.data?.[0]?.in_person_event_type_id;
-    if (eventTypeId) {
+    // Use in-person endpoint if reportType is in-person, otherwise use virtual endpoint
+    if (reportType === "in-person") {
       return `${API_BASE}/in-person-event/report_download.php`;
     }
     return `${API_BASE}/virtual-event/report_download.php`;
@@ -198,9 +201,9 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
     );
   }
 
-  // Helper to check if this is a virtual event response
+  // Helper to check if this is a virtual event response (no assets property means virtual)
   const isVirtualEvent = (data: ReportApiResponse | null): data is VirtualReportApiResponse => {
-    return data !== null && 'schools' in data;
+    return data !== null && reportType === "virtual";
   };
 
   // Extract data based on report type
@@ -208,18 +211,19 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
     if (!reportData) return null;
 
     if (isVirtualEvent(reportData)) {
-      // Virtual event (mreports)
+      // Virtual event (mreports) - data is at data.0
+      const eventData = reportData.data?.[0] as VirtualEventData;
       return {
-        name: reportData.data.header,
-        date: reportData.data.date,
-        bannerUrl: reportData.data.desktop_banner_url 
-          ? `https://admin.seedglobaleducation.com/assets/masterclass-images/main-banner/${reportData.data.desktop_banner_url}`
+        name: eventData?.header || '',
+        date: eventData?.date || '',
+        bannerUrl: eventData?.desktop_banner_url 
+          ? `https://admin.seedglobaleducation.com/assets/masterclass-images/main-banner/${eventData.desktop_banner_url}`
           : null,
-        youtubeUrl: reportData.data.youtube_url || null,
+        youtubeUrl: eventData?.youtube_url || null,
         schools: reportData.schools || [],
         downloadInfo: reportData.download_info || null,
+        academicSeason: reportData.data?.academic_season || null,
         venue: null,
-        academicSeason: null,
       };
     } else {
       // In-person event (reports)
