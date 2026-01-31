@@ -29,6 +29,7 @@ interface VirtualEventData {
   desktop_banner_url: string;
   youtube_url?: string;
   academic_season?: string;
+  type?: string; // 'masterclass' or 'meetup'
 }
 
 interface SchoolLogo {
@@ -134,6 +135,11 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
       formData.append("email", email.trim());
       formData.append("password", password.trim());
       formData.append("report_type", reportType);
+      
+      // For virtual events, include the event type (masterclass/meetup)
+      if (reportType === "virtual" && eventDetails?.eventType) {
+        formData.append("event_type", eventDetails.eventType);
+      }
 
       const response = await fetch(getDownloadEndpointUrl(), {
         method: "POST",
@@ -224,6 +230,7 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
         downloadInfo: reportData.download_info || null,
         academicSeason: reportData.data?.academic_season || null,
         venue: null,
+        eventType: eventData?.type || null, // 'masterclass' or 'meetup'
       };
     } else {
       // In-person event (reports)
@@ -241,6 +248,7 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
         locationDisplay: eventData?.campus_event === 1 && eventData?.campus_name 
           ? eventData.campus_name 
           : eventData?.city,
+        eventType: null,
       };
     }
   };
