@@ -25,6 +25,37 @@ serve(async (req) => {
       );
     }
 
+    // Helper to safely parse JSON responses
+    const safeParseJson = async (response: Response, context: string): Promise<Response> => {
+      const contentType = response.headers.get('Content-Type') || '';
+      const rawText = await response.text();
+      
+      let data: unknown;
+      try {
+        data = JSON.parse(rawText);
+      } catch {
+        console.error(`Users Proxy (${context}): Non-JSON response`, {
+          status: response.status,
+          contentType,
+          snippet: rawText.slice(0, 500),
+        });
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: 'Backend returned non-JSON response',
+            error_code: 'PARSE_ERROR',
+            status: response.status,
+          }),
+          { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      return new Response(
+        JSON.stringify(data),
+        { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    };
+
     if (action === 'list') {
       // Fetch users list
       console.log('Fetching users list');
@@ -38,13 +69,8 @@ serve(async (req) => {
         },
       });
 
-      const data = await response.json();
       console.log(`Users list response status: ${response.status}`);
-
-      return new Response(
-        JSON.stringify(data),
-        { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return safeParseJson(response, 'list');
     }
 
     if (action === 'invite') {
@@ -62,13 +88,8 @@ serve(async (req) => {
         body: JSON.stringify(body),
       });
 
-      const data = await response.json();
       console.log(`Invite user response status: ${response.status}`);
-
-      return new Response(
-        JSON.stringify(data),
-        { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return safeParseJson(response, 'invite');
     }
 
     if (action === 'delete-invitation') {
@@ -93,13 +114,8 @@ serve(async (req) => {
         },
       });
 
-      const data = await response.json();
       console.log(`Delete invitation response status: ${response.status}`);
-
-      return new Response(
-        JSON.stringify(data),
-        { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return safeParseJson(response, 'delete-invitation');
     }
 
     return new Response(

@@ -84,7 +84,29 @@ serve(async (req) => {
     }
 
     const response = await fetch(apiUrl, fetchOptions);
-    const data = await response.json();
+    
+    // Safe JSON parsing - handle non-JSON responses gracefully
+    const contentType = response.headers.get('Content-Type') || '';
+    const rawText = await response.text();
+    
+    let data: unknown;
+    try {
+      data = JSON.parse(rawText);
+    } catch {
+      console.error('Scholarship Proxy: Non-JSON response', {
+        status: response.status,
+        contentType,
+        snippet: rawText.slice(0, 500),
+      });
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Backend returned non-JSON response',
+          status: response.status,
+        }),
+        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     return new Response(
       JSON.stringify(data),
@@ -95,8 +117,9 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error('Scholarship Proxy Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch scholarship data';
     return new Response(
-      JSON.stringify({ success: false, error: 'Failed to fetch scholarship data' }),
+      JSON.stringify({ success: false, error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
