@@ -11,7 +11,6 @@ import {
   ChevronRight,
   ChevronDown,
   LogOut,
-  Settings,
   MapPin,
   Video,
   FileText,
@@ -539,31 +538,18 @@ export function AppSidebar() {
 
       {/* Footer */}
       <div className="absolute bottom-0 left-0 right-0 p-2 border-t border-sidebar-border">
-        <div className={cn("flex gap-1", collapsed ? "flex-col" : "flex-row")}>
-          <Button
-            variant="ghost"
-            size="sm"
-            className={cn(
-              "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent h-8",
-              collapsed ? "w-full justify-center" : "flex-1 justify-start"
-            )}
-          >
-            <Settings className="h-4 w-4" />
-            {!collapsed && <span className="ml-2 text-xs">Settings</span>}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleLogout}
-            className={cn(
-              "text-sidebar-foreground/60 hover:text-destructive hover:bg-sidebar-accent h-8",
-              collapsed ? "w-full justify-center" : "flex-1 justify-start"
-            )}
-          >
-            <LogOut className="h-4 w-4" />
-            {!collapsed && <span className="ml-2 text-xs">Logout</span>}
-          </Button>
-        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleLogout}
+          className={cn(
+            "w-full text-sidebar-foreground/60 hover:text-destructive hover:bg-sidebar-accent h-8",
+            collapsed ? "justify-center" : "justify-start"
+          )}
+        >
+          <LogOut className="h-4 w-4" />
+          {!collapsed && <span className="ml-2 text-xs">Logout</span>}
+        </Button>
       </div>
     </aside>
   );
