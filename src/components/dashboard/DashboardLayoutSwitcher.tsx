@@ -16,9 +16,9 @@ interface DashboardLayoutSwitcherProps {
 
 const layouts: { type: DashboardLayoutType; icon: React.ElementType; label: string }[] = [
   { type: "pillars", icon: Columns3, label: "Pillars View" },
-  { type: "stats", icon: BarChart3, label: "Stats & Metrics" },
+  { type: "stats", icon: BarChart3, label: "Bento Grid" },
   { type: "tiles", icon: LayoutGrid, label: "Feature Tiles" },
-  { type: "compact", icon: List, label: "Compact List" },
+  { type: "compact", icon: List, label: "Quick Access" },
 ];
 
 export function DashboardLayoutSwitcher({ currentLayout, onLayoutChange }: DashboardLayoutSwitcherProps) {
