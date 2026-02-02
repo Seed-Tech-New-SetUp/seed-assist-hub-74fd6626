@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSchool } from "@/contexts/SchoolContext";
@@ -9,25 +8,35 @@ import {
   Video,
   GraduationCap,
   Building2,
-  FileText,
   Globe,
   BarChart3,
   Lock,
   Plane,
+  Magnet,
+  Heart,
+  Target,
+  ArrowRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface ModuleButton {
-  label: string;
-  href: string;
-  locked?: boolean;
-}
-
-interface ModuleCard {
+interface ModuleItem {
   title: string;
   icon: React.ElementType;
-  buttons: ModuleButton[];
+  href: string;
+  description: string;
   permissionKey?: string;
+  subModuleKey?: string;
+  parentKey?: string;
+}
+
+interface PillarSection {
+  title: string;
+  subtitle: string;
+  icon: React.ElementType;
+  gradient: string;
+  borderColor: string;
+  iconBg: string;
+  modules: ModuleItem[];
 }
 
 export default function Dashboard() {
@@ -63,129 +72,115 @@ export default function Dashboard() {
     return true;
   };
 
-  // Define module cards - names match sidebar exactly
-  const moduleCards: ModuleCard[] = [
+  const isModuleLocked = (item: ModuleItem): boolean => {
+    if (item.parentKey && item.subModuleKey) {
+      return !isSubModuleEnabled(item.parentKey, item.subModuleKey);
+    }
+    if (item.permissionKey) {
+      return !isModuleEnabled(item.permissionKey);
+    }
+    return false;
+  };
+
+  const isModuleVisible = (item: ModuleItem): boolean => {
+    // School Profile is always visible
+    if (item.permissionKey === "orgProfile") return true;
+    if (item.permissionKey) {
+      return isModuleEnabled(item.permissionKey);
+    }
+    if (item.parentKey) {
+      return isModuleEnabled(item.parentKey);
+    }
+    return true;
+  };
+
+  // Define the three pillars
+  const pillars: PillarSection[] = [
     {
-      title: "In-Person Events",
-      icon: Calendar,
-      permissionKey: "engagement",
-      buttons: [
+      title: "Attract",
+      subtitle: "Build awareness & generate interest",
+      icon: Magnet,
+      gradient: "from-blue-500/10 via-blue-500/5 to-transparent dark:from-blue-500/20 dark:via-blue-500/10",
+      borderColor: "border-blue-500/30 hover:border-blue-500/50",
+      iconBg: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+      modules: [
         {
-          label: "Business School Festivals",
+          title: "In-Person Events",
+          icon: Calendar,
           href: "/events/in-person/bsf",
-          locked: !isSubModuleEnabled("engagement", "bsf"),
+          description: "Business School Festivals & Campus Tours",
+          parentKey: "engagement",
         },
         {
-          label: "Campus Tours",
-          href: "/events/in-person/campus-tours",
-          locked: !isSubModuleEnabled("engagement", "campusTours"),
-        },
-      ],
-    },
-    {
-      title: "Virtual Events",
-      icon: Video,
-      permissionKey: "engagement",
-      buttons: [
-        {
-          label: "Masterclass",
+          title: "Virtual Events",
+          icon: Video,
           href: "/events/virtual/masterclass",
-          locked: !isSubModuleEnabled("engagement", "masterclasses"),
+          description: "Masterclasses & Profile Evaluations",
+          parentKey: "engagement",
         },
         {
-          label: "1:1 Profile Evaluation",
-          href: "/events/virtual/meetups",
-          locked: !isSubModuleEnabled("engagement", "meetups"),
-        },
-      ],
-    },
-    {
-      title: "Scholarship Program",
-      icon: GraduationCap,
-      permissionKey: "scholarshipPortal",
-      buttons: [
-        {
-          label: "Applicant Pool",
-          href: "/scholarships/applications",
-          locked: !isSubModuleEnabled("scholarshipPortal", "applicantPools"),
-        },
-        // { label: "Insights", href: "/scholarships/analytics" }, // Hidden for now
-      ],
-    },
-    {
-      title: "School Profile",
-      icon: Building2,
-      permissionKey: "orgProfile",
-      buttons: [
-        {
-          label: "School Details",
+          title: "School Profile",
+          icon: Building2,
           href: "/school-profile/edit",
-        },
-        {
-          label: "Academic Programs",
-          href: "/school-profile/programs",
-        },
-        {
-          label: "Access Leads",
-          href: "/profile-leads",
-          locked: !isSubModuleEnabled("orgProfile", "accessLeads"),
+          description: "Manage your school's digital presence",
+          permissionKey: "orgProfile",
         },
       ],
     },
     {
-      title: "Admissions",
-      icon: FileText,
-      permissionKey: "admissions",
-      buttons: [
+      title: "Nurture",
+      subtitle: "Engage & build relationships",
+      icon: Heart,
+      gradient: "from-amber-500/10 via-amber-500/5 to-transparent dark:from-amber-500/20 dark:via-amber-500/10",
+      borderColor: "border-amber-500/30 hover:border-amber-500/50",
+      iconBg: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+      modules: [
         {
-          label: "Application Pipeline",
-          href: "/university-applications/all",
-          locked: !isSubModuleEnabled("admissions", "applicationPipeline"),
-        },
-      ],
-    },
-    {
-      title: "In-Country Representation",
-      icon: Globe,
-      permissionKey: "icr",
-      buttons: [
-        {
-          label: "View Analytics",
+          title: "In-Country Representation",
+          icon: Globe,
           href: "/in-country-reports",
+          description: "Regional engagement & analytics",
+          permissionKey: "icr",
         },
-      ],
-    },
-    {
-      title: "Lead And Application Engagement",
-      icon: BarChart3,
-      permissionKey: "leadAndApplicationEngagement",
-      buttons: [
         {
-          label: "View Analytics",
+          title: "Lead & Application Engagement",
+          icon: BarChart3,
           href: "/lead-analytics",
+          description: "Track and analyze lead interactions",
+          permissionKey: "leadAndApplicationEngagement",
         },
       ],
     },
     {
-      title: "AI Visa Tutor",
-      icon: Plane,
-      permissionKey: "visaPrep",
-      buttons: [
+      title: "Convert",
+      subtitle: "Transform prospects into students",
+      icon: Target,
+      gradient: "from-emerald-500/10 via-emerald-500/5 to-transparent dark:from-emerald-500/20 dark:via-emerald-500/10",
+      borderColor: "border-emerald-500/30 hover:border-emerald-500/50",
+      iconBg: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+      modules: [
         {
-          label: "View Licenses",
+          title: "Scholarship Program",
+          icon: GraduationCap,
+          href: "/scholarships/applications",
+          description: "Manage scholarship applicant pool",
+          permissionKey: "scholarshipPortal",
+        },
+        {
+          title: "AI Visa Tutor",
+          icon: Plane,
           href: "/visa-prep",
+          description: "License management & student prep",
+          permissionKey: "visaPrep",
         },
       ],
     },
   ];
 
-  // Filter cards based on permissions
-  const visibleCards = moduleCards.filter((card) => {
-    if (!card.permissionKey) return true;
-    // School Profile is always visible
-    if (card.permissionKey === "orgProfile") return true;
-    return isModuleEnabled(card.permissionKey);
-  });
+  // Filter modules based on permissions
+  const getVisibleModules = (modules: ModuleItem[]) => {
+    return modules.filter(isModuleVisible);
+  };
 
   const handleNavigate = (href: string, locked?: boolean) => {
     if (!locked) {
@@ -196,52 +191,105 @@ export default function Dashboard() {
   return (
     <DashboardLayout>
       {/* Page Header */}
-      <div className="mb-8 animate-fade-in">
-        <h1 className="text-2xl lg:text-3xl font-semibold text-[#1a365d] dark:text-foreground">
-          Welcome, {displayName}
+      <div className="mb-10 animate-fade-in">
+        <h1 className="text-2xl lg:text-3xl font-display font-bold text-foreground">
+          Welcome back, {displayName}
         </h1>
-        <p className="text-muted-foreground mt-1">
-          {[designation, universityName, schoolName].filter(Boolean).join(" | ")}
+        <p className="text-muted-foreground mt-1.5 text-base">
+          {[designation, universityName, schoolName].filter(Boolean).join(" • ")}
         </p>
-        <div className="mt-4 border-b border-border" />
       </div>
 
-      {/* Module Cards Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {visibleCards.map((card) => (
-          <Card
-            key={card.title}
-            className="border-border shadow-sm hover:shadow-md transition-shadow"
-          >
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-3 text-lg font-semibold text-foreground">
-                <card.icon className="h-5 w-5 text-muted-foreground" />
-                {card.title}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="flex flex-wrap gap-3">
-                {card.buttons.map((btn) => (
-                  <Button
-                    key={btn.label}
-                    onClick={() => handleNavigate(btn.href, btn.locked)}
-                    disabled={btn.locked}
-                    className={cn(
-                      "flex-1 min-w-[140px] h-10 text-sm font-medium transition-all",
-                      btn.locked
-                        ? "bg-muted text-muted-foreground cursor-not-allowed border border-border"
-                        : "bg-[#e07830] hover:bg-[#c96828] text-white"
-                    )}
-                    variant={btn.locked ? "outline" : "default"}
-                  >
-                    {btn.label}
-                    {btn.locked && <Lock className="ml-2 h-3.5 w-3.5" />}
-                  </Button>
-                ))}
+      {/* Three Pillars Hero Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+        {pillars.map((pillar) => {
+          const visibleModules = getVisibleModules(pillar.modules);
+          if (visibleModules.length === 0) return null;
+
+          return (
+            <div
+              key={pillar.title}
+              className={cn(
+                "relative rounded-2xl border-2 bg-card overflow-hidden transition-all duration-300",
+                pillar.borderColor
+              )}
+            >
+              {/* Gradient Background */}
+              <div className={cn(
+                "absolute inset-0 bg-gradient-to-b pointer-events-none",
+                pillar.gradient
+              )} />
+
+              {/* Content */}
+              <div className="relative p-6 lg:p-8">
+                {/* Pillar Header */}
+                <div className="flex items-center gap-4 mb-6">
+                  <div className={cn(
+                    "flex items-center justify-center w-14 h-14 rounded-xl",
+                    pillar.iconBg
+                  )}>
+                    <pillar.icon className="w-7 h-7" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-display font-bold text-foreground">
+                      {pillar.title}
+                    </h2>
+                    <p className="text-sm text-muted-foreground mt-0.5">
+                      {pillar.subtitle}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Module Cards */}
+                <div className="space-y-4">
+                  {visibleModules.map((module) => {
+                    const locked = isModuleLocked(module);
+                    
+                    return (
+                      <button
+                        key={module.title}
+                        onClick={() => handleNavigate(module.href, locked)}
+                        disabled={locked}
+                        className={cn(
+                          "w-full group text-left p-4 rounded-xl border transition-all duration-200",
+                          locked
+                            ? "bg-muted/50 border-border cursor-not-allowed opacity-60"
+                            : "bg-card hover:bg-secondary/50 border-border hover:border-primary/30 hover:shadow-md cursor-pointer"
+                        )}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className={cn(
+                            "flex items-center justify-center w-10 h-10 rounded-lg flex-shrink-0",
+                            locked ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary"
+                          )}>
+                            <module.icon className="w-5 h-5" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <h3 className={cn(
+                                "font-semibold text-sm",
+                                locked ? "text-muted-foreground" : "text-foreground"
+                              )}>
+                                {module.title}
+                              </h3>
+                              {locked && <Lock className="w-3.5 h-3.5 text-muted-foreground" />}
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                              {module.description}
+                            </p>
+                          </div>
+                          {!locked && (
+                            <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all flex-shrink-0 mt-1" />
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        ))}
+            </div>
+          );
+        })}
       </div>
     </DashboardLayout>
   );
