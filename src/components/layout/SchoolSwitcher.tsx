@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSchool } from "@/contexts/SchoolContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { decodeUTF8 } from "@/lib/utils/decode-utf8";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,12 +22,14 @@ export function SchoolSwitcher() {
   const [open, setOpen] = useState(false);
   const [switchingSchoolId, setSwitchingSchoolId] = useState<string | null>(null);
 
-  // Get full school name from selectedSchool (has university info)
-  const fullSchoolName = selectedSchool?.university 
-    ? `${selectedSchool.university} - ${selectedSchool.school_name}` 
-    : selectedSchool?.school_name || currentSchool?.name || "";
+  // Get full school name from selectedSchool (has university info) - decode HTML entities
+  const fullSchoolName = decodeUTF8(
+    selectedSchool?.university 
+      ? `${selectedSchool.university} - ${selectedSchool.school_name}` 
+      : selectedSchool?.school_name || currentSchool?.name || ""
+  );
   
-  const schoolCountry = selectedSchool?.country || "";
+  const schoolCountry = decodeUTF8(selectedSchool?.country || "");
   const schoolLogo = selectedSchool?.school_logo 
     ? `https://admin.seedglobaleducation.com/assets/img/school_logos/${selectedSchool.school_logo}`
     : currentSchool?.logo_url;
@@ -150,7 +153,7 @@ export function SchoolSwitcher() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold leading-snug">
-                  {school.name}
+                  {decodeUTF8(school.name)}
                 </p>
                 {school.designation && (
                   <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
