@@ -59,8 +59,17 @@ export interface ReassignPayload {
 
 export interface VisaLicensesResponse {
   success: boolean;
-  data?: VisaLicense[];
-  total?: number;
+  data?: {
+    licenses: VisaLicense[];
+    pagination: {
+      total: number;
+      limit: number;
+      offset: number;
+      current_page: number;
+      total_pages: number;
+      has_more: boolean;
+    };
+  };
   error?: string;
 }
 

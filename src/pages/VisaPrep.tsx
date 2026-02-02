@@ -45,7 +45,8 @@ export default function VisaPrep() {
       }),
   });
 
-  const licenses = data?.data || [];
+  const licenses = data?.data?.licenses || [];
+  const pagination = data?.data?.pagination;
 
   const getActivationBadge = (status: string) => {
     switch (status) {
@@ -178,7 +179,7 @@ export default function VisaPrep() {
         <Card>
           <CardHeader className="pb-4">
             <CardTitle className="text-base font-medium">
-              Licenses {data?.total !== undefined && `(${data.total})`}
+              Licenses {pagination?.total !== undefined && `(${pagination.total})`}
             </CardTitle>
           </CardHeader>
           <CardContent>
