@@ -355,9 +355,8 @@ export default function ScholarshipApplications() {
           </Button>
         </div>
 
-        {/* Status Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {/* SEED Recommended Card */}
+        {/* Status Cards - Hidden for now */}
+        {/* <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           <Card
             className={`cursor-pointer transition-all ${statusFilter === "SEED_RECOMMENDED" ? "ring-2 ring-primary" : "hover:bg-muted/50"}`}
             onClick={() => setStatusFilter(statusFilter === "SEED_RECOMMENDED" ? "all" : "SEED_RECOMMENDED")}
@@ -396,7 +395,7 @@ export default function ScholarshipApplications() {
               </Card>
             );
           })}
-        </div>
+        </div> */}
 
         {/* Search & Filters */}
         <Card>
