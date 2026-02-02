@@ -279,8 +279,8 @@ export default function VisaPrep() {
                       <TableHead>Usage Expiry Date</TableHead>
                       <TableHead className="text-center">Usage Status</TableHead>
                       <TableHead>Usage Start Date</TableHead>
-                      <TableHead className="text-center">Test Attempted</TableHead>
-                      <TableHead className="text-center sticky right-0 bg-background z-10 shadow-[-2px_0_4px_-2px_rgba(0,0,0,0.1)]">Actions</TableHead>
+                      <TableHead className="text-center sticky right-[80px] bg-background z-10">Test Attempted</TableHead>
+                      <TableHead className="text-center sticky right-0 bg-background z-10 shadow-[-2px_0_4px_-2px_rgba(0,0,0,0.1)] min-w-[80px]">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -373,12 +373,13 @@ export default function VisaPrep() {
                             {getUsageBadge(license.usage_status)}
                           </TableCell>
                           <TableCell className="whitespace-nowrap">{license.usage_start_date || "—"}</TableCell>
-                          <TableCell className="text-center font-medium">
+                          {/* Test Attempted - Sticky */}
+                          <TableCell className="text-center font-medium sticky right-[80px] bg-background z-10">
                             {license.test_attempted ?? 0}
                           </TableCell>
                           
                           {/* Actions - Sticky */}
-                          <TableCell className="text-center sticky right-0 bg-background z-10 shadow-[-2px_0_4px_-2px_rgba(0,0,0,0.1)]">
+                          <TableCell className="text-center sticky right-0 bg-background z-10 shadow-[-2px_0_4px_-2px_rgba(0,0,0,0.1)] min-w-[80px]">
                             {isEditing ? (
                               <div className="flex items-center gap-1 justify-center">
                                 <Button
