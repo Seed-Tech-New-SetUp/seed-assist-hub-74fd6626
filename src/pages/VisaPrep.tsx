@@ -198,37 +198,55 @@ export default function VisaPrep() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>License #</TableHead>
+                      <TableHead>License Number</TableHead>
+                      <TableHead>Alloted To</TableHead>
+                      <TableHead>Created Date</TableHead>
+                      <TableHead>Assigned To</TableHead>
                       <TableHead>Student Name</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead className="text-center">Activation</TableHead>
-                      <TableHead className="text-center">Usage</TableHead>
-                      <TableHead className="text-center">Visa Status</TableHead>
-                      <TableHead>University</TableHead>
-                      <TableHead className="text-center">Actions</TableHead>
+                      <TableHead>Mobile Number</TableHead>
+                      <TableHead>Email Address</TableHead>
+                      <TableHead>Target Degree</TableHead>
+                      <TableHead>Visa App. Type</TableHead>
+                      <TableHead>Visa Slot Date</TableHead>
+                      <TableHead>Activation Expiry Date</TableHead>
+                      <TableHead className="text-center">Activation Status</TableHead>
+                      <TableHead>Activation Date</TableHead>
+                      <TableHead>Usage Expiry Date</TableHead>
+                      <TableHead className="text-center">Usage Status</TableHead>
+                      <TableHead>Usage Start Date</TableHead>
+                      <TableHead className="text-center">Test Attempted</TableHead>
+                      <TableHead className="text-center">View</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {licenses.map((license: VisaLicense) => (
                       <TableRow key={license.license_number}>
-                        <TableCell className="font-mono text-sm">
+                        <TableCell className="font-mono text-sm whitespace-nowrap">
                           {license.license_number}
                         </TableCell>
-                        <TableCell>{license.student_name || "—"}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
+                        <TableCell className="whitespace-nowrap">{license.alloted_to || "—"}</TableCell>
+                        <TableCell className="whitespace-nowrap">{license.created_date || "—"}</TableCell>
+                        <TableCell className="whitespace-nowrap">{license.sub_partner_id || "—"}</TableCell>
+                        <TableCell className="whitespace-nowrap">{license.student_name || "—"}</TableCell>
+                        <TableCell className="whitespace-nowrap">{license.mobile || "—"}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
                           {license.email || "—"}
                         </TableCell>
+                        <TableCell className="whitespace-nowrap">{license.target_degree || "—"}</TableCell>
+                        <TableCell className="whitespace-nowrap">{license.visa_app_type || "—"}</TableCell>
+                        <TableCell className="whitespace-nowrap">{license.visa_slot_date || "—"}</TableCell>
+                        <TableCell className="whitespace-nowrap">{license.activation_expiry_date || "—"}</TableCell>
                         <TableCell className="text-center">
                           {getActivationBadge(license.activation_status)}
                         </TableCell>
+                        <TableCell className="whitespace-nowrap">{license.activation_date || "—"}</TableCell>
+                        <TableCell className="whitespace-nowrap">{license.usage_expiry_date || "—"}</TableCell>
                         <TableCell className="text-center">
                           {getUsageBadge(license.usage_status)}
                         </TableCell>
-                        <TableCell className="text-center">
-                          {getVisaStatusBadge(license.visa_status)}
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {license.university || "—"}
+                        <TableCell className="whitespace-nowrap">{license.usage_start_date || "—"}</TableCell>
+                        <TableCell className="text-center font-medium">
+                          {license.test_attempted ?? 0}
                         </TableCell>
                         <TableCell className="text-center">
                           <Button

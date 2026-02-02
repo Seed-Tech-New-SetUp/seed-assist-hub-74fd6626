@@ -7,19 +7,45 @@ const getAuthToken = (): string | null => {
 
 export interface VisaLicense {
   license_number: string;
-  student_name: string;
+  alloted_to?: string | null;
+  created_date?: string;
+  partner_id?: string;
+  sub_partner_id?: string;
+  puid?: string;
+  student_name?: string | null;
   first_name?: string;
   last_name?: string;
-  email?: string;
-  mobile?: string;
-  activation_status: "active" | "inactive" | "expired";
-  usage_status: "used" | "unused" | "partial";
-  visa_status?: "not_applied" | "applied" | "approved" | "rejected" | "scheduled";
+  email?: string | null;
+  mobile?: string | null;
+  target_degree?: string | null;
+  visa_app_type?: string | null;
+  visa_slot_date?: string | null;
+  activation_expiry_date?: string;
+  activation_status: string;
+  activation_date?: string | null;
+  usage_expiry_date?: string | null;
+  usage_status: string;
+  usage_start_date?: string | null;
+  test_attempted?: number;
+  university?: string | null;
+  target_country?: string | null;
+  target_intake?: string | null;
+  visa_interview_status?: string | null;
+  rejection_visa_status?: string | null;
+  language_exam_taken?: boolean;
+  aptitude_exam_taken?: boolean;
+  performance?: {
+    avg_overall_score?: number | null;
+    best_overall_score?: number | null;
+    avg_communication_score?: number | null;
+    avg_body_language_score?: number | null;
+    avg_visa_score?: number | null;
+    first_test_date?: string | null;
+    last_test_date?: string | null;
+  };
+  // Legacy fields for backward compatibility
+  visa_status?: string;
   visa_interview_date?: string;
-  target_degree?: string;
-  university?: string;
-  target_country?: string;
-  target_intake?: string;
   created_at?: string;
   expires_at?: string;
   sessions_completed?: number;

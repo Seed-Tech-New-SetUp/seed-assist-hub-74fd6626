@@ -367,8 +367,8 @@ const BSFReports = () => {
           <p className="text-muted-foreground mt-1">All Business School Festival events - upcoming, ongoing, and past</p>
         </div>
 
-        {/* Summary Stats */}
-        {meta && (
+        {/* Summary Stats - commented out per user request */}
+        {/* {meta && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card className="bg-card/50 backdrop-blur-sm border-border/50">
               <CardContent className="p-4">
@@ -403,7 +403,7 @@ const BSFReports = () => {
               </CardContent>
             </Card>
           </div>
-        )}
+        )} */}
 
         {/* Live Events */}
         {liveEvents.length > 0 && (

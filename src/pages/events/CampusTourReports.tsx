@@ -380,8 +380,8 @@ const CampusTourReports = () => {
           </div>
         </div>
 
-        {/* Summary Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {/* Summary Stats - commented out per user request */}
+        {/* <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card className="bg-card/50 backdrop-blur-sm border-border/50">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
@@ -414,7 +414,7 @@ const CampusTourReports = () => {
               </div>
             </CardContent>
           </Card>
-        </div>
+        </div> */}
 
         {/* Live Events */}
         {liveEvents.length > 0 && (
