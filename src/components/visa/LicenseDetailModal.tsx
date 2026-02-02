@@ -86,6 +86,9 @@ export function LicenseDetailModal({
 
   const license = licenseData?.data;
   const sessions = sessionsData?.data || [];
+  
+  // Check if license is unassigned (no student data)
+  const isUnassigned = !license?.student_name && !license?.email;
 
   const handleEdit = () => {
     if (license) {
@@ -261,7 +264,27 @@ export function LicenseDetailModal({
                     </Button>
                   </div>
                 </div>
+              ) : isUnassigned ? (
+                // Unassigned license - show prominent assign CTA
+                <Card className="border-dashed border-2 border-muted-foreground/25">
+                  <CardContent className="py-8 text-center space-y-4">
+                    <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                      <User className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-lg">No Student Assigned</h3>
+                      <p className="text-muted-foreground text-sm mt-1">
+                        This license is currently unassigned. Click below to assign it to a student.
+                      </p>
+                    </div>
+                    <Button onClick={handleEdit} size="lg">
+                      <User className="h-4 w-4 mr-2" />
+                      Assign Student
+                    </Button>
+                  </CardContent>
+                </Card>
               ) : (
+                // Assigned license - show student details
                 <>
                   <Card>
                     <CardHeader className="pb-3">
