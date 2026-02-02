@@ -100,7 +100,7 @@ export default function Dashboard() {
       ],
     },
     {
-      title: "Scholarship Portal",
+      title: "Scholarship Program",
       icon: GraduationCap,
       permissionKey: "scholarshipPortal",
       buttons: [

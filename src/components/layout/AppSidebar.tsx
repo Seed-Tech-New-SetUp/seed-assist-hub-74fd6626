@@ -83,7 +83,7 @@ const baseNavigation: NavItem[] = [
     ],
   },
   {
-    title: "Scholarship Portal",
+    title: "Scholarship Program",
     icon: GraduationCap,
     permissionKey: "scholarshipPortal",
     children: [
