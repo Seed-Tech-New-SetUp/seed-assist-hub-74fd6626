@@ -167,7 +167,7 @@ export default function Dashboard() {
       ],
     },
     {
-      title: "Visa Prep",
+      title: "AI Visa Tutor",
       icon: Plane,
       permissionKey: "visaPrep",
       buttons: [

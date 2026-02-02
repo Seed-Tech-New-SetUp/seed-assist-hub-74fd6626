@@ -97,7 +97,7 @@ export default function VisaPrep() {
       <div className="space-y-6">
         {/* Page Header */}
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Visa Prep</h1>
+          <h1 className="text-2xl font-semibold text-foreground">AI Visa Tutor</h1>
           <p className="text-muted-foreground mt-1">
             Manage visa tutoring licenses and student sessions
           </p>

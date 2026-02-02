@@ -139,7 +139,7 @@ const baseNavigation: NavItem[] = [
     permissionKey: "leadAndApplicationEngagement",
   },
   {
-    title: "Visa Prep",
+    title: "AI Visa Tutor",
     href: "/visa-prep",
     icon: Plane,
     permissionKey: "visaPrep",
