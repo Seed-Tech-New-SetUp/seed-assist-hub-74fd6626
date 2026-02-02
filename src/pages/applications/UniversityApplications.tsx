@@ -127,8 +127,8 @@ export default function UniversityApplications() {
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Stats Cards - Hidden for now */}
+        {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
             <CardContent className="flex items-center gap-4 p-4">
               <div className="p-3 rounded-lg bg-primary/10">
@@ -162,7 +162,7 @@ export default function UniversityApplications() {
               </div>
             </CardContent>
           </Card>
-        </div>
+        </div> */}
 
         {/* Table Card */}
         <Card>
