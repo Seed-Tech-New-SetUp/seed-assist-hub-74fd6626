@@ -54,21 +54,21 @@ export function SchoolSwitcher() {
   // Single school - no dropdown needed
   if (!currentSchool || schools.length <= 1) {
     return currentSchool ? (
-      <div className="mx-3 my-3 p-4 bg-card rounded-lg shadow-sm border border-border">
+      <div className="mx-2 md:mx-3 my-2 md:my-3 p-3 md:p-4 bg-card rounded-lg shadow-sm border border-border">
         {schoolLogo && (
-          <div className="flex justify-center mb-3">
+          <div className="flex justify-center mb-2 md:mb-3">
             <img
               src={schoolLogo}
               alt={fullSchoolName}
-              className="h-12 object-contain"
+              className="h-10 md:h-12 object-contain"
             />
           </div>
         )}
-        <p className="text-sm font-semibold text-foreground text-center leading-snug">
+        <p className="text-xs md:text-sm font-semibold text-foreground text-center leading-snug">
           {fullSchoolName}
         </p>
         {schoolCountry && (
-          <p className="text-xs text-primary text-center mt-1 font-medium">{schoolCountry}</p>
+          <p className="text-[10px] md:text-xs text-primary text-center mt-1 font-medium">{schoolCountry}</p>
         )}
         {designation && (
           <p className="text-[10px] text-muted-foreground text-center mt-1 capitalize">{designation}</p>
@@ -83,7 +83,7 @@ export function SchoolSwitcher() {
       <DropdownMenuTrigger asChild>
         <button
           className={cn(
-            "mx-3 my-3 p-4 bg-card rounded-lg shadow-sm border border-border w-[calc(100%-1.5rem)] text-left",
+            "mx-2 md:mx-3 my-2 md:my-3 p-3 md:p-4 bg-card rounded-lg shadow-sm border border-border w-[calc(100%-1rem)] md:w-[calc(100%-1.5rem)] text-left",
             "hover:shadow-md hover:border-primary/30 transition-all cursor-pointer",
             "focus:outline-none focus:ring-2 focus:ring-primary/20"
           )}

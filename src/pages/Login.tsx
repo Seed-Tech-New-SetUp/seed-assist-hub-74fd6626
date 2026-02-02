@@ -572,14 +572,14 @@ export default function Login() {
       </div>
 
       {/* Right Panel - Login Form */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-background">
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 md:p-8 bg-background">
         <div className="w-full max-w-sm space-y-6">
           {/* Mobile Logo */}
-          <div className="lg:hidden flex items-center justify-center mb-8">
+          <div className="lg:hidden flex items-center justify-center mb-6 md:mb-8">
             <img 
               src={seedAssistLogoBlue} 
               alt="SEED Assist" 
-              className="h-12 w-auto object-contain"
+              className="h-10 sm:h-12 w-auto object-contain"
             />
           </div>
 

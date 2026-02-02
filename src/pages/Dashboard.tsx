@@ -203,17 +203,17 @@ export default function Dashboard() {
   return (
     <DashboardLayout>
       {/* Page Header */}
-      <div className="mb-10 animate-fade-in">
-        <h1 className="text-2xl lg:text-3xl font-display font-bold text-foreground">
+      <div className="mb-6 md:mb-10 animate-fade-in">
+        <h1 className="text-xl md:text-2xl lg:text-3xl font-display font-bold text-foreground">
           Welcome back, {displayName}
         </h1>
-        <p className="text-muted-foreground mt-1.5 text-base">
+        <p className="text-muted-foreground mt-1 md:mt-1.5 text-sm md:text-base">
           {[designation, universityName, schoolName].filter(Boolean).join(" • ")}
         </p>
       </div>
 
       {/* Three Pillars Hero Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
         {pillars.map((pillar) => {
           const visibleModules = getVisibleModules(pillar.modules);
           if (visibleModules.length === 0) return null;
@@ -233,49 +233,49 @@ export default function Dashboard() {
               )} />
 
               {/* Content */}
-              <div className="relative p-6 lg:p-8">
+              <div className="relative p-4 md:p-6 lg:p-8">
                 {/* Pillar Header */}
-                <div className="flex items-center gap-4 mb-6">
+                <div className="flex items-center gap-3 md:gap-4 mb-4 md:mb-6">
                   <div className={cn(
-                    "flex items-center justify-center w-14 h-14 rounded-xl",
+                    "flex items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-xl",
                     pillar.iconBg
                   )}>
-                    <pillar.icon className="w-7 h-7" />
+                    <pillar.icon className="w-6 h-6 md:w-7 md:h-7" />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-display font-bold text-foreground">
+                    <h2 className="text-xl md:text-2xl font-display font-bold text-foreground">
                       {pillar.title}
                     </h2>
-                    <p className="text-sm text-muted-foreground mt-0.5">
+                    <p className="text-xs md:text-sm text-muted-foreground mt-0.5">
                       {pillar.subtitle}
                     </p>
                   </div>
                 </div>
 
                 {/* Module Cards */}
-                <div className="space-y-5">
+                <div className="space-y-3 md:space-y-5">
                   {visibleModules.map((module) => (
                     <div
                       key={module.title}
-                      className="bg-card/80 backdrop-blur-sm rounded-xl border border-border p-4"
+                      className="bg-card/80 backdrop-blur-sm rounded-xl border border-border p-3 md:p-4"
                     >
                       {/* Module Header */}
-                      <div className="flex items-start gap-3 mb-3">
-                        <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary/10 text-primary flex-shrink-0">
-                          <module.icon className="w-4.5 h-4.5" />
+                      <div className="flex items-start gap-2.5 md:gap-3 mb-2.5 md:mb-3">
+                        <div className="flex items-center justify-center w-8 h-8 md:w-9 md:h-9 rounded-lg bg-primary/10 text-primary flex-shrink-0">
+                          <module.icon className="w-4 h-4 md:w-4.5 md:h-4.5" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-sm text-foreground">
+                          <h3 className="font-semibold text-xs md:text-sm text-foreground">
                             {module.title}
                           </h3>
-                          <p className="text-xs text-muted-foreground mt-0.5">
+                          <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5 line-clamp-2">
                             {module.description}
                           </p>
                         </div>
                       </div>
 
                       {/* Action Buttons */}
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-col sm:flex-row flex-wrap gap-1.5 md:gap-2">
                         {module.buttons.map((btn) => (
                           <Button
                             key={btn.label}
@@ -283,15 +283,15 @@ export default function Dashboard() {
                             disabled={btn.locked}
                             size="sm"
                             className={cn(
-                              "h-8 text-xs font-medium transition-all flex-1 min-w-[120px]",
+                              "h-8 md:h-8 text-[11px] md:text-xs font-medium transition-all flex-1 min-w-0 sm:min-w-[100px]",
                               btn.locked
                                 ? "bg-muted text-muted-foreground cursor-not-allowed border border-border"
                                 : "bg-primary hover:bg-primary/90 text-primary-foreground"
                             )}
                             variant={btn.locked ? "outline" : "default"}
                           >
-                            {btn.label}
-                            {btn.locked && <Lock className="ml-1.5 h-3 w-3" />}
+                            <span className="truncate">{btn.label}</span>
+                            {btn.locked && <Lock className="ml-1 h-3 w-3 flex-shrink-0" />}
                           </Button>
                         ))}
                       </div>
