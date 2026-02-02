@@ -13,6 +13,9 @@
    - [BSF Events](#21-bsf-events)
    - [Campus Tours](#22-campus-tours)
 3. [Virtual Events](#3-virtual-events)
+   - [Overview](#31-overview)
+   - [Masterclasses](#32-masterclasses)
+   - [Meetups (1:1 Profile Evaluation)](#33-meetups-11-profile-evaluation)
 4. [In-Country Representation (ICR)](#4-in-country-representation-icr)
 5. [Scholarship Portal](#5-scholarship-portal)
 6. [University Applications](#6-university-applications)
@@ -22,6 +25,7 @@
 10. [Programs Management](#10-programs-management)
 11. [Team Management](#11-team-management)
 12. [AI Visa Tutor](#12-ai-visa-tutor)
+13. [Secure Report Download](#13-secure-report-download)
 
 ---
 
@@ -33,7 +37,7 @@ All authenticated endpoints require the following header:
 Authorization: Bearer <portal_token>
 ```
 
-The `portal_token` is obtained from the login endpoint and stored in secure cookies.
+The `portal_token` is obtained from the login endpoint and stored in secure cookies (`portal_token` or `auth_token`).
 
 ---
 
@@ -42,6 +46,8 @@ The `portal_token` is obtained from the login endpoint and stored in secure cook
 ### 1.1 Login
 
 **Endpoint:** `POST /login.php`
+
+**Proxy:** `portal-auth`
 
 **Request Body:**
 ```json
@@ -64,16 +70,16 @@ The `portal_token` is obtained from the login endpoint and stored in secure cook
       "school_id": "456",
       "school_name": "Example Business School",
       "permissions": {
-        "leadGeneration": true,
-        "inPersonEvents": true,
-        "virtualEvents": true,
-        "icrReports": true,
-        "scholarshipPortal": true,
-        "applicantPools": true,
-        "leadAndApplicationEngagement": true,
-        "visaPrep": true,
-        "schoolProfile": true,
-        "teamManagement": true
+        "leadGeneration": { "enabled": true },
+        "inPersonEvents": { "enabled": true },
+        "virtualEvents": { "enabled": true },
+        "icrReports": { "enabled": true },
+        "scholarshipPortal": { "enabled": true },
+        "applicantPools": { "enabled": true },
+        "leadAndApplicationEngagement": { "enabled": true },
+        "visaPrep": { "enabled": true },
+        "schoolProfile": { "enabled": true },
+        "teamManagement": { "enabled": true }
       }
     }
   }
@@ -88,11 +94,17 @@ The `portal_token` is obtained from the login endpoint and stored in secure cook
 }
 ```
 
+**Error Codes:**
+- `EMAIL_NOT_FOUND` - Email not registered
+- `INVALID_PASSWORD` - Incorrect password
+
 ---
 
 ## 2. In-Person Events
 
 ### 2.1 BSF Events
+
+**Proxy:** `bsf-proxy`
 
 #### List BSF Events
 
@@ -135,6 +147,8 @@ Content-Disposition: attachment; filename="bsf_report_{event_id}.xlsx"
 
 ### 2.2 Campus Tours
 
+**Proxy:** `campus-tour-proxy`
+
 #### List Campus Tour Events
 
 **Endpoint:** `GET /in-person-event/campus-tour/`
@@ -170,48 +184,104 @@ Content-Disposition: attachment; filename="bsf_report_{event_id}.xlsx"
 
 ## 3. Virtual Events
 
-### 3.1 List Virtual Events
+**Proxy:** `virtual-events-proxy`
 
-**Endpoint:** `GET /virtual-events/`
+### 3.1 Overview
 
-**Query Parameters:**
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `type` | string | Filter by event type: `masterclass`, `meetup`, `all` |
-| `year` | string | Filter by year (e.g., `2024`) |
-| `month` | string | Filter by month (e.g., `03`) |
+**Endpoint:** `GET /virtual-event/overview.php`
 
 **Response:**
 ```json
 {
   "success": true,
   "data": {
-    "events": [
-      {
-        "id": "1",
-        "title": "MBA Application Masterclass",
-        "type": "masterclass",
-        "date": "2024-03-20",
-        "time": "14:00",
-        "timezone": "IST",
-        "registrants": 150,
-        "attendees": 98,
-        "recording_url": "https://...",
-        "has_report": true
-      }
-    ],
-    "summary": {
-      "total_events": 25,
-      "total_registrants": 3500,
-      "total_attendees": 2100
+    "total_registrations": 5000,
+    "total_attendance": 3200,
+    "total_events": 45,
+    "upcoming_event": {
+      "id": "1",
+      "title": "MBA Application Masterclass",
+      "date": "2024-03-20",
+      "time": "14:00",
+      "timezone": "IST"
+    },
+    "latest_report": {
+      "id": "10",
+      "title": "Career Switcher Webinar",
+      "date": "2024-03-15",
+      "type": "masterclass"
     }
   }
 }
 ```
 
-### 3.2 Download Virtual Event Report
+### 3.2 Masterclasses
 
-**Endpoint:** `GET /virtual-events/reports.php?id={event_id}`
+#### List Masterclasses
+
+**Endpoint:** `GET /virtual-event/masterclass`
+
+**Proxy Query:** `?action=masterclass`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "1",
+      "title": "MBA Application Masterclass",
+      "date": "2024-03-20",
+      "time": "14:00",
+      "timezone": "IST",
+      "registrants": 150,
+      "attendees": 98,
+      "recording_url": "https://...",
+      "has_report": true
+    }
+  ]
+}
+```
+
+#### Download Masterclass Report
+
+**Endpoint:** `GET /virtual-event/masterclass/report.php?id={event_id}`
+
+**Proxy Query:** `?action=download&id={event_id}`
+
+**Response:** Binary XLSX file
+
+### 3.3 Meetups (1:1 Profile Evaluation)
+
+#### List Meetups
+
+**Endpoint:** `GET /virtual-event/meetup`
+
+**Proxy Query:** `?action=meetup` or `?action=meetups`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "1",
+      "title": "Profile Evaluation Session - Lagos",
+      "date": "2024-03-18",
+      "registrants": 80,
+      "attendees": 65,
+      "connections": 45,
+      "has_report": true
+    }
+  ]
+}
+```
+
+#### Download Meetup Report
+
+**Endpoint:** `GET /virtual-event/meetup/reports.php?id={event_id}`
+
+**Proxy Query:** `?action=download-meetup&id={event_id}`
 
 **Response:** Binary XLSX file
 
@@ -219,15 +289,21 @@ Content-Disposition: attachment; filename="bsf_report_{event_id}.xlsx"
 
 ## 4. In-Country Representation (ICR)
 
+**Proxy:** `icr-proxy`
+
 ### 4.1 List ICR Reports
 
 **Endpoint:** `GET /in-country-representation/`
 
-**Query Parameters:**
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `year` | string | Filter by year |
-| `month` | string | Filter by month |
+**Request Method:** `POST` (via proxy with JSON body)
+
+**Request Body:**
+```json
+{
+  "year": "2024",
+  "month": "03"
+}
+```
 
 **Response:**
 ```json
@@ -265,21 +341,13 @@ Content-Disposition: attachment; filename="bsf_report_{event_id}.xlsx"
 
 ## 5. Scholarship Portal
 
+**Proxy:** `scholarship-proxy`
+
 ### 5.1 List Scholarship Applicants
 
-**Endpoint:** `GET /scholarship-portal/`
+**Endpoint:** `GET /scholarship/applicants.php`
 
-**Query Parameters:**
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `search` | string | Search by name or email |
-| `status` | string | Filter by status |
-| `nationality` | string | Filter by nationality |
-| `gender` | string | Filter by gender |
-| `test_type` | string | Filter by test type (GRE/GMAT) |
-| `round` | string | Filter by application round |
-| `page` | number | Page number |
-| `limit` | number | Items per page |
+**Proxy Query:** `?action=list` or `?action=applicants`
 
 **Response:**
 ```json
@@ -289,6 +357,7 @@ Content-Disposition: attachment; filename="bsf_report_{event_id}.xlsx"
     "applicants": [
       {
         "id": "1",
+        "contact_id": "C001",
         "first_name": "John",
         "last_name": "Doe",
         "email": "john@example.com",
@@ -301,12 +370,7 @@ Content-Disposition: attachment; filename="bsf_report_{event_id}.xlsx"
         "program_applied": "MBA",
         "round": "Round 1",
         "status": "Pending",
-        "applied_date": "2024-01-15",
-        "documents": {
-          "resume": "https://...",
-          "sop": "https://...",
-          "recommendation": "https://..."
-        }
+        "applied_date": "2024-01-15"
       }
     ],
     "meta": {
@@ -336,29 +400,11 @@ Content-Disposition: attachment; filename="bsf_report_{event_id}.xlsx"
 }
 ```
 
-### 5.2 Update Applicant Status
+### 5.2 Get Student Profile
 
-**Endpoint:** `POST /scholarship-portal/update-status.php`
+**Endpoint:** `GET /scholarship/profile.php?contact_id={contact_id}`
 
-**Request Body:**
-```json
-{
-  "applicant_ids": ["1", "2", "3"],
-  "status": "Shortlisted"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "3 applicants updated successfully"
-}
-```
-
-### 5.3 View Student Profile
-
-**Endpoint:** `GET /scholarship-portal/student.php?id={applicant_id}`
+**Proxy Query:** `?action=profile&contact_id={contact_id}`
 
 **Response:**
 ```json
@@ -366,6 +412,7 @@ Content-Disposition: attachment; filename="bsf_report_{event_id}.xlsx"
   "success": true,
   "data": {
     "id": "1",
+    "contact_id": "C001",
     "first_name": "John",
     "last_name": "Doe",
     "email": "john@example.com",
@@ -381,38 +428,38 @@ Content-Disposition: attachment; filename="bsf_report_{event_id}.xlsx"
         "graduation_year": "2017"
       }
     },
-    "work_experience": [
-      {
-        "company": "ABC Corp",
-        "title": "Financial Analyst",
-        "duration": "3 years",
-        "description": "..."
-      }
-    ],
+    "work_experience": [...],
     "test_scores": {
       "gmat": {
         "total": 720,
         "verbal": 38,
-        "quant": 49,
-        "ir": 7,
-        "awa": 5.5
+        "quant": 49
       }
     },
-    "application": {
-      "program": "MBA",
-      "round": "Round 1",
-      "status": "Pending",
-      "essay": "...",
-      "career_goals": "..."
-    },
-    "documents": [
-      {
-        "type": "Resume",
-        "url": "https://...",
-        "uploaded_at": "2024-01-10"
-      }
-    ]
+    "documents": [...]
   }
+}
+```
+
+### 5.3 Update Applicant Status
+
+**Endpoint:** `POST /scholarship/status_assignment.php`
+
+**Proxy Query:** `?action=status_assignment`
+
+**Request Body:**
+```json
+{
+  "contact_id": "C001",
+  "status": "Shortlisted"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Status updated successfully"
 }
 ```
 
@@ -420,9 +467,13 @@ Content-Disposition: attachment; filename="bsf_report_{event_id}.xlsx"
 
 ## 6. University Applications
 
+**Proxy:** `applications-proxy`
+
 ### 6.1 List Applications
 
 **Endpoint:** `GET /admissions/index.php`
+
+**Proxy Query:** `?action=list`
 
 **Query Parameters:**
 | Parameter | Type | Description |
@@ -479,15 +530,25 @@ Content-Disposition: attachment; filename="bsf_report_{event_id}.xlsx"
 
 **Endpoint:** `GET /admissions/download.php`
 
+**Proxy Query:** `?action=export`
+
+**Note:** The primary export method is client-side using the `xlsx` library. The backend endpoint is available as fallback.
+
 **Response:** Binary XLSX file
 
 ---
 
 ## 7. Lead & Application Engagement (LAE)
 
+**Proxy:** `lae-proxy`
+
+**Permission Requirement:** `leadAndApplicationEngagement.enabled` must be `true`
+
 ### 7.1 Get LAE Analytics
 
 **Endpoint:** `GET /lae/`
+
+**Proxy Query:** `?action=list`
 
 **Query Parameters:**
 | Parameter | Type | Description |
@@ -515,20 +576,12 @@ Content-Disposition: attachment; filename="bsf_report_{event_id}.xlsx"
         "assignment_type": "Application Review",
         "status": "Completed",
         "assigned_date": "2024-01-10",
-        "completed_date": "2024-01-15",
-        "notes": "..."
+        "completed_date": "2024-01-15"
       }
     ],
     "analytics": {
-      "by_month": [
-        { "month": "Jan", "assignments": 45, "completed": 40 },
-        { "month": "Feb", "assignments": 52, "completed": 48 }
-      ],
-      "by_type": [
-        { "type": "Application Review", "count": 80 },
-        { "type": "Interview Prep", "count": 50 },
-        { "type": "Essay Review", "count": 20 }
-      ]
+      "by_month": [...],
+      "by_type": [...]
     }
   }
 }
@@ -537,6 +590,8 @@ Content-Disposition: attachment; filename="bsf_report_{event_id}.xlsx"
 ### 7.2 Upload LAE File
 
 **Endpoint:** `POST /lae/upload.php`
+
+**Proxy Query:** `?action=upload`
 
 **Content-Type:** `multipart/form-data`
 
@@ -563,17 +618,15 @@ Content-Disposition: attachment; filename="bsf_report_{event_id}.xlsx"
 
 **Endpoint:** `GET /lae/download.php`
 
-**Query Parameters:**
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `year` | string | Filter by year |
-| `month` | string | Filter by month |
+**Proxy Query:** `?action=download`
 
 **Response:** Binary XLSX file
 
 ---
 
 ## 8. Profile Leads
+
+**Proxy:** `school-profile-proxy`
 
 ### 8.1 Get Lead Statistics
 
@@ -602,8 +655,7 @@ Content-Disposition: attachment; filename="bsf_report_{event_id}.xlsx"
   "success": true,
   "data": [
     { "id": "1", "name": "MBA Full-Time" },
-    { "id": "2", "name": "MBA Part-Time" },
-    { "id": "3", "name": "Executive MBA" }
+    { "id": "2", "name": "MBA Part-Time" }
   ]
 }
 ```
@@ -618,8 +670,7 @@ Content-Disposition: attachment; filename="bsf_report_{event_id}.xlsx"
   "success": true,
   "data": [
     { "key": "NG", "value": "Nigeria" },
-    { "key": "KE", "value": "Kenya" },
-    { "key": "GH", "value": "Ghana" }
+    { "key": "KE", "value": "Kenya" }
   ]
 }
 ```
@@ -654,7 +705,7 @@ Content-Disposition: attachment; filename="bsf_report_{event_id}.xlsx"
         "country_name": "Nigeria",
         "intended_pg_program_start_year": "2025",
         "intended_study_level": "Masters",
-        "intended_subject_area": "Business &amp; Management",
+        "intended_subject_area": "Business & Management",
         "page_views": 15,
         "registration_date": "2024-01-15T10:30:00Z",
         "last_activity": "2024-02-01T14:20:00Z",
@@ -674,6 +725,10 @@ Content-Disposition: attachment; filename="bsf_report_{event_id}.xlsx"
 ---
 
 ## 9. School Profile
+
+**Proxy:** `school-profile-proxy`
+
+**Authentication Note:** The JWT `portal_token` in the Authorization header identifies the school context. No explicit `school_id` parameter needed.
 
 ### 9.1 Get School Information
 
@@ -731,33 +786,9 @@ Content-Disposition: attachment; filename="bsf_report_{event_id}.xlsx"
 | `school_brochure_link` | string | Brochure URL |
 | `imageUpload` | File | Banner image file |
 
-**Response:**
-```json
-{
-  "success": true,
-  "message": "School information updated successfully"
-}
-```
-
 ### 9.3 Get School FAQs
 
 **Endpoint:** `GET /school-profile/faqs.php`
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": "1",
-      "question": "What is the application deadline?",
-      "answer": "The deadline for Round 1 is October 15th...",
-      "category": "Admissions",
-      "order": 1
-    }
-  ]
-}
-```
 
 ### 9.4 Update School FAQs
 
@@ -769,8 +800,8 @@ Content-Disposition: attachment; filename="bsf_report_{event_id}.xlsx"
   "faqs": [
     {
       "id": "1",
-      "question": "Updated question?",
-      "answer": "Updated answer...",
+      "question": "Question text?",
+      "answer": "Answer text...",
       "category": "Admissions",
       "order": 1
     }
@@ -781,20 +812,6 @@ Content-Disposition: attachment; filename="bsf_report_{event_id}.xlsx"
 ### 9.5 Get Social Media Links
 
 **Endpoint:** `GET /school-profile/social_media.php`
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "linkedin": "https://linkedin.com/school/example",
-    "twitter": "https://twitter.com/example",
-    "facebook": "https://facebook.com/example",
-    "instagram": "https://instagram.com/example",
-    "youtube": "https://youtube.com/example"
-  }
-}
-```
 
 ### 9.6 Update Social Media Links
 
@@ -815,6 +832,10 @@ Content-Disposition: attachment; filename="bsf_report_{event_id}.xlsx"
 
 ## 10. Programs Management
 
+**Proxy:** `programs-proxy`
+
+**UI Structure:** Multi-section form with 10 sub-sections: Core Details, Highlights, Faculty, Students, Alumni, Rankings, Recruiters, Job Roles, FAQs, and POCs.
+
 ### 10.1 List Programs
 
 **Endpoint:** `GET /school-profile/programs/?action=list`
@@ -833,7 +854,6 @@ Content-Disposition: attachment; filename="bsf_report_{event_id}.xlsx"
       "tuition": "80000",
       "currency": "USD",
       "start_date": "September",
-      "application_deadline": "2024-04-15",
       "status": "Active"
     }
   ]
@@ -844,41 +864,9 @@ Content-Disposition: attachment; filename="bsf_report_{event_id}.xlsx"
 
 **Endpoint:** `GET /school-profile/programs/?action=details&program_id={id}`
 
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "id": "1",
-    "name": "MBA Full-Time",
-    "description": "...",
-    "highlights": ["Global immersion", "Career services"],
-    "faculty": [...],
-    "students": [...],
-    "alumni": [...],
-    "rankings": [...],
-    "recruiters": [...],
-    "job_roles": [...],
-    "faqs": [...],
-    "pocs": [...]
-  }
-}
-```
-
 ### 10.3 Update Program Information
 
 **Endpoint:** `POST /school-profile/programs/update_program_information.php`
-
-**Request Body:**
-```json
-{
-  "program_id": "1",
-  "name": "MBA Full-Time",
-  "description": "...",
-  "duration": "2 years",
-  "tuition": "85000"
-}
-```
 
 ### 10.4 Add Program Highlight (USP)
 
@@ -895,6 +883,8 @@ Content-Disposition: attachment; filename="bsf_report_{event_id}.xlsx"
 ### 10.5 Update Program Member (Faculty/Student/Alumni)
 
 **Endpoint:** `POST /school-profile/programs/update_program_member.php`
+
+**Note:** Member photos are served from `school_member_uploads/` directory.
 
 **Request Body:**
 ```json
@@ -913,23 +903,13 @@ Content-Disposition: attachment; filename="bsf_report_{event_id}.xlsx"
 
 **Endpoint:** `POST /school-profile/programs/update_program_rankings.php`
 
-**Request Body:**
-```json
-{
-  "program_id": "1",
-  "rankings": [
-    {
-      "source": "Financial Times",
-      "rank": 15,
-      "year": 2024
-    }
-  ]
-}
-```
+**Note:** Rankings read.php provides both current data and the organization list (735+ items). Rankings require year/org normalization.
 
-### 10.7 Update Program Recruiters
+### 10.7 Update Program Recruiters (Batch)
 
 **Endpoint:** `POST /school-profile/programs/update_program_recruiters.php`
+
+**Note:** Sends the entire list as string array, replacing all existing items.
 
 **Request Body:**
 ```json
@@ -939,57 +919,27 @@ Content-Disposition: attachment; filename="bsf_report_{event_id}.xlsx"
 }
 ```
 
-### 10.8 Update Program Job Roles
+### 10.8 Update Program Job Roles (Batch)
 
 **Endpoint:** `POST /school-profile/programs/update_program_job_roles.php`
 
-**Request Body:**
-```json
-{
-  "program_id": "1",
-  "job_roles": ["Consultant", "Product Manager", "Investment Banker"]
-}
-```
+**Note:** Sends the entire list as string array, replacing all existing items.
 
-### 10.9 Update Program FAQs
+### 10.9 Update Program FAQs (Batch)
 
 **Endpoint:** `POST /school-profile/programs/update_program_faqs.php`
 
-**Request Body:**
-```json
-{
-  "program_id": "1",
-  "faqs": [
-    {
-      "question": "What is the class size?",
-      "answer": "Approximately 200 students per cohort."
-    }
-  ]
-}
-```
+**Note:** Sends the entire list as objects, replacing all existing items.
 
-### 10.10 Update Program POCs (Points of Contact)
+### 10.10 Update Program POCs
 
 **Endpoint:** `POST /school-profile/programs/update_program_poc.php`
-
-**Request Body:**
-```json
-{
-  "program_id": "1",
-  "pocs": [
-    {
-      "name": "Jane Doe",
-      "title": "Admissions Director",
-      "email": "jane@example.edu",
-      "phone": "+1234567890"
-    }
-  ]
-}
-```
 
 ---
 
 ## 11. Team Management
+
+**Proxy:** `users-proxy`
 
 ### 11.1 List Team Members
 
@@ -1026,84 +976,64 @@ Content-Disposition: attachment; filename="bsf_report_{event_id}.xlsx"
 }
 ```
 
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Invitation sent successfully"
-}
-```
-
 ### 11.3 Update Team Member Role
 
 **Endpoint:** `POST /users/?action=update_role`
-
-**Request Body:**
-```json
-{
-  "user_id": "1",
-  "role": "admin"
-}
-```
 
 ### 11.4 Remove Team Member
 
 **Endpoint:** `POST /users/?action=remove`
 
-**Request Body:**
-```json
-{
-  "user_id": "1"
-}
-```
-
 ---
 
 ## 12. AI Visa Tutor
+
+**Proxy:** `visa-tutor-proxy`
+
+**Config:** `verify_jwt = false` in `supabase/config.toml` (proxy handles its own JWT verification)
+
+**Table Features:** 18 columns including License Number, Alloted to, Created Date, Assigned To (sub_partner_id), Student Name, Contact Details, Target Degree, Visa App Type, and various activation/usage metrics. "Test Attempted" and "View" columns are sticky at the right side.
 
 ### 12.1 List Licenses
 
 **Endpoint:** `GET /visa-tutor/`
 
-**Query Parameters:**
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `search` | string | Search by license number or student name |
-| `status` | string | Filter by status |
-| `page` | number | Page number |
-| `limit` | number | Items per page |
+**Response Structure:** Data is nested under `data.data.licenses` and `data.data.pagination`
 
 **Response:**
 ```json
 {
   "success": true,
   "data": {
-    "licenses": [
-      {
-        "id": "1",
-        "license_number": "VT-2024-001",
-        "alloted_to": "Example Business School",
-        "created_date": "2024-01-15",
-        "assigned_to": "partner_123",
-        "student_name": "John Doe",
-        "student_email": "john@example.com",
-        "student_phone": "+234123456789",
-        "target_degree": "Masters",
-        "visa_app_type": "F-1",
-        "activation_status": "Active",
-        "activation_date": "2024-01-20",
-        "sessions_completed": 3,
-        "total_sessions": 5,
-        "last_session_date": "2024-02-01",
-        "expiry_date": "2024-07-20",
-        "notes": "..."
+    "data": {
+      "licenses": [
+        {
+          "id": "1",
+          "license_number": "VT-2024-001",
+          "alloted_to": "Example Business School",
+          "created_date": "2024-01-15",
+          "sub_partner_id": "partner_123",
+          "first_name": "John",
+          "last_name": "Doe",
+          "email": "john@example.com",
+          "mobile": "+234123456789",
+          "target_degree": "Masters",
+          "visa_app_type": "F-1",
+          "activation_status": "Active",
+          "activation_date": "2024-01-20",
+          "sessions_completed": 3,
+          "usage_expiry_date": "2024-07-20",
+          "usage_status": "Active",
+          "usage_start_date": "2024-01-20",
+          "test_attempted": 3
+        }
+      ],
+      "pagination": {
+        "total": 50,
+        "page": 1,
+        "limit": 20,
+        "total_pages": 3
       }
-    ],
-    "pagination": {
-      "total": 50,
-      "page": 1,
-      "limit": 20,
-      "total_pages": 3
     }
   }
 }
@@ -1138,16 +1068,7 @@ Content-Disposition: attachment; filename="bsf_report_{event_id}.xlsx"
         "consulate": "Lagos"
       }
     },
-    "sessions": [
-      {
-        "id": "1",
-        "date": "2024-01-25",
-        "duration": 45,
-        "topic": "DS-160 Review",
-        "tutor_notes": "...",
-        "student_feedback": "..."
-      }
-    ]
+    "sessions": [...]
   }
 }
 ```
@@ -1156,19 +1077,19 @@ Content-Disposition: attachment; filename="bsf_report_{event_id}.xlsx"
 
 **Endpoint:** `POST /visa-tutor/reassign.php`
 
+**Frontend Processing:**
+- Name field: First word → `first_name`, remaining words → `last_name`
+- All fields are `.trim()`ed before sending
+
 **Request Body:**
 ```json
 {
   "license_id": "1",
-  "new_partner_id": "partner_456"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "License reassigned successfully"
+  "first_name": "John",
+  "last_name": "Doe",
+  "email": "john@example.com",
+  "mobile": "+234123456789",
+  "target_degree": "Masters"
 }
 ```
 
@@ -1177,11 +1098,6 @@ Content-Disposition: attachment; filename="bsf_report_{event_id}.xlsx"
 **Endpoint:** `POST /visa-tutor/bulk-upload.php`
 
 **Content-Type:** `multipart/form-data`
-
-**Request Body:**
-| Field | Type | Description |
-|-------|------|-------------|
-| `file` | File | XLSX file with license data |
 
 **Response:**
 ```json
@@ -1201,6 +1117,62 @@ Content-Disposition: attachment; filename="bsf_report_{event_id}.xlsx"
   }
 }
 ```
+
+---
+
+## 13. Secure Report Download
+
+**Public Portal Routes:** `/reports/` and `/mreports/`
+
+### 13.1 Get Report Metadata
+
+**Endpoint:** `GET /report_info.php?id={hash_id}`
+
+**Note:** Virtual event data is nested under `data.0`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "abc123",
+    "title": "Business School Festival Lagos 2024",
+    "event_date": "2024-03-15",
+    "venue": "Lagos, Nigeria",
+    "type": "bsf",
+    "in_person_event_type_id": "B001"
+  }
+}
+```
+
+### 13.2 Verify Credentials
+
+**Endpoint:** `POST /report_verify.php`
+
+**Content-Type:** `application/x-www-form-urlencoded`
+
+**Request Body:**
+| Field | Type | Description |
+|-------|------|-------------|
+| `hash_id` | string | Report hash ID |
+| `report_type` | string | Type of report |
+| `email` | string | User email |
+| `password` | string | User password |
+| `event_type` | string | (Virtual only) `masterclass` or `meetup` |
+
+**Error Codes:**
+- `FORBIDDEN` - Access denied
+- `UNAUTHORIZED` / `INVALID_CREDENTIALS` - Credential mismatch
+
+### 13.3 Download Report
+
+**In-Person Events:** `GET /in-person-event/report_download.php?id={hash_id}`
+
+**Virtual Events:** `GET /virtual-event/report_download.php?id={hash_id}&event_type={type}`
+
+**Routing Logic:** Use `in-person-event/report_download.php` if `in_person_event_type_id` is present (e.g., B001, B002, B004), otherwise use `virtual-event/report_download.php`.
+
+**Response:** Binary XLSX file with content-disposition-based filename
 
 ---
 
@@ -1236,6 +1208,13 @@ All endpoints return consistent error responses:
 | `VALIDATION_ERROR` | 422 | Invalid request data |
 | `RATE_LIMITED` | 429 | Too many requests |
 | `INTERNAL_ERROR` | 500 | Server error |
+
+### Safe JSON Parsing
+
+All Edge Function proxies implement safe-parsing:
+1. Read `response.text()` from upstream
+2. Attempt `JSON.parse()` in try-catch
+3. If non-JSON (e.g., HTML from WAF), return 502 with diagnostic info
 
 ---
 
@@ -1288,19 +1267,39 @@ Handle these responses as binary data, not JSON.
 
 All API requests from the frontend are routed through Supabase Edge Functions:
 
-| Proxy Function | Backend Endpoint |
-|----------------|------------------|
-| `portal-auth` | `/login.php` |
-| `bsf-proxy` | `/in-person-event/bsf` |
-| `campus-tour-proxy` | `/in-person-event/campus-tour/` |
-| `virtual-events-proxy` | `/virtual-events/` |
-| `icr-proxy` | `/in-country-representation/` |
-| `scholarship-proxy` | `/scholarship-portal/` |
-| `applications-proxy` | `/admissions/` |
-| `lae-proxy` | `/lae/` |
-| `school-profile-proxy` | `/school-profile/` |
-| `programs-proxy` | `/school-profile/programs/` |
-| `users-proxy` | `/users/` |
-| `visa-tutor-proxy` | `/visa-tutor/` |
+| Proxy Function | Backend Endpoint | JWT Verify |
+|----------------|------------------|------------|
+| `portal-auth` | `/login.php` | `false` |
+| `bsf-proxy` | `/in-person-event/bsf` | `true` |
+| `campus-tour-proxy` | `/in-person-event/campus-tour/` | `true` |
+| `virtual-events-proxy` | `/virtual-event/` | `true` |
+| `icr-proxy` | `/in-country-representation/` | `true` |
+| `scholarship-proxy` | `/scholarship/` | `true` |
+| `applications-proxy` | `/admissions/` | `true` |
+| `lae-proxy` | `/lae/` | `false` |
+| `school-profile-proxy` | `/school-profile/` | `true` |
+| `programs-proxy` | `/school-profile/programs/` | `true` |
+| `users-proxy` | `/users/` | `false` |
+| `visa-tutor-proxy` | `/visa-tutor/` | `false` |
 
-This architecture handles CORS, secure token forwarding, and error normalization.
+**Configured in `supabase/config.toml`:**
+```toml
+[functions.users-proxy]
+verify_jwt = false
+
+[functions.portal-auth]
+verify_jwt = false
+
+[functions.lae-proxy]
+verify_jwt = false
+
+[functions.visa-tutor-proxy]
+verify_jwt = false
+```
+
+This architecture handles:
+- CORS preflight requests
+- Secure JWT forwarding (prioritizes `portal_token`)
+- Error normalization (safe JSON parsing)
+- Binary file streaming for report downloads
+- Multipart/form-data forwarding for file uploads
