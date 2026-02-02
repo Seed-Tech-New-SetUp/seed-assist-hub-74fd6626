@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -21,18 +21,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Filter, RefreshCw, Eye, Upload } from "lucide-react";
-import { fetchVisaLicenses, VisaLicense } from "@/lib/api/visa-tutor";
+import { Search, Filter, RefreshCw, Eye, Upload, Pencil, Check, X } from "lucide-react";
+import { fetchVisaLicenses, reassignLicense, VisaLicense, ReassignPayload } from "@/lib/api/visa-tutor";
 import { LicenseDetailModal } from "@/components/visa/LicenseDetailModal";
 import { BulkUploadModal } from "@/components/visa/BulkUploadModal";
+import { useToast } from "@/hooks/use-toast";
 
 export default function VisaPrep() {
+  const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [activationStatus, setActivationStatus] = useState<string>("all");
   const [usageStatus, setUsageStatus] = useState<string>("all");
   const [visaStatus, setVisaStatus] = useState<string>("all");
   const [selectedLicense, setSelectedLicense] = useState<string | null>(null);
   const [showBulkUpload, setShowBulkUpload] = useState(false);
+  
+  // Inline editing state
+  const [editingLicense, setEditingLicense] = useState<string | null>(null);
+  const [editFormData, setEditFormData] = useState<Partial<ReassignPayload>>({});
 
   const { data, isLoading, refetch, isFetching } = useQuery({
     queryKey: ["visa-licenses", search, activationStatus, usageStatus, visaStatus],
@@ -45,8 +51,52 @@ export default function VisaPrep() {
       }),
   });
 
+  const reassignMutation = useMutation({
+    mutationFn: reassignLicense,
+    onSuccess: (result) => {
+      if (result.success) {
+        toast({ title: "Success", description: "License assignment updated" });
+        setEditingLicense(null);
+        setEditFormData({});
+        refetch();
+      } else {
+        toast({ title: "Error", description: result.error, variant: "destructive" });
+      }
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to update license", variant: "destructive" });
+    },
+  });
+
   const licenses = data?.data?.licenses || [];
   const pagination = data?.data?.pagination;
+
+  const startEditing = (license: VisaLicense) => {
+    setEditingLicense(license.license_number);
+    setEditFormData({
+      license_number: license.license_number,
+      first_name: license.first_name || "",
+      last_name: license.last_name || "",
+      email: license.email || "",
+      mobile: license.mobile || "",
+      target_degree: license.target_degree || "",
+    });
+  };
+
+  const cancelEditing = () => {
+    setEditingLicense(null);
+    setEditFormData({});
+  };
+
+  const saveEditing = () => {
+    if (editFormData.license_number) {
+      reassignMutation.mutate(editFormData as ReassignPayload);
+    }
+  };
+
+  const handleEditChange = (field: keyof ReassignPayload, value: string) => {
+    setEditFormData((prev) => ({ ...prev, [field]: value }));
+  };
 
   const getActivationBadge = (status: string) => {
     switch (status) {
@@ -198,7 +248,7 @@ export default function VisaPrep() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>License Number</TableHead>
+                      <TableHead className="sticky left-0 bg-background z-10">License Number</TableHead>
                       <TableHead>Alloted To</TableHead>
                       <TableHead>Created Date</TableHead>
                       <TableHead>Assigned To</TableHead>
@@ -214,51 +264,150 @@ export default function VisaPrep() {
                       <TableHead>Usage Expiry Date</TableHead>
                       <TableHead className="text-center">Usage Status</TableHead>
                       <TableHead>Usage Start Date</TableHead>
-                      <TableHead className="text-center sticky right-12 bg-background z-10 shadow-[-2px_0_4px_-2px_rgba(0,0,0,0.1)]">Test Attempted</TableHead>
-                      <TableHead className="text-center sticky right-0 bg-background z-10">View</TableHead>
+                      <TableHead className="text-center">Test Attempted</TableHead>
+                      <TableHead className="text-center sticky right-0 bg-background z-10 shadow-[-2px_0_4px_-2px_rgba(0,0,0,0.1)]">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {licenses.map((license: VisaLicense) => (
-                      <TableRow key={license.license_number}>
-                        <TableCell className="font-mono text-sm whitespace-nowrap">
-                          {license.license_number}
-                        </TableCell>
-                        <TableCell className="whitespace-nowrap">{license.alloted_to || "—"}</TableCell>
-                        <TableCell className="whitespace-nowrap">{license.created_date || "—"}</TableCell>
-                        <TableCell className="whitespace-nowrap">{license.sub_partner_id || "—"}</TableCell>
-                        <TableCell className="whitespace-nowrap">{license.student_name || "—"}</TableCell>
-                        <TableCell className="whitespace-nowrap">{license.mobile || "—"}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
-                          {license.email || "—"}
-                        </TableCell>
-                        <TableCell className="whitespace-nowrap">{license.target_degree || "—"}</TableCell>
-                        <TableCell className="whitespace-nowrap">{license.visa_app_type || "—"}</TableCell>
-                        <TableCell className="whitespace-nowrap">{license.visa_slot_date || "—"}</TableCell>
-                        <TableCell className="whitespace-nowrap">{license.activation_expiry_date || "—"}</TableCell>
-                        <TableCell className="text-center">
-                          {getActivationBadge(license.activation_status)}
-                        </TableCell>
-                        <TableCell className="whitespace-nowrap">{license.activation_date || "—"}</TableCell>
-                        <TableCell className="whitespace-nowrap">{license.usage_expiry_date || "—"}</TableCell>
-                        <TableCell className="text-center">
-                          {getUsageBadge(license.usage_status)}
-                        </TableCell>
-                        <TableCell className="whitespace-nowrap">{license.usage_start_date || "—"}</TableCell>
-                        <TableCell className="text-center font-medium sticky right-12 bg-background z-10 shadow-[-2px_0_4px_-2px_rgba(0,0,0,0.1)]">
-                          {license.test_attempted ?? 0}
-                        </TableCell>
-                        <TableCell className="text-center sticky right-0 bg-background z-10">
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            onClick={() => setSelectedLicense(license.license_number)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {licenses.map((license: VisaLicense) => {
+                      const isEditing = editingLicense === license.license_number;
+                      
+                      return (
+                        <TableRow key={license.license_number}>
+                          <TableCell className="font-mono text-sm whitespace-nowrap sticky left-0 bg-background z-10">
+                            {license.license_number}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">{license.alloted_to || "—"}</TableCell>
+                          <TableCell className="whitespace-nowrap">{license.created_date || "—"}</TableCell>
+                          <TableCell className="whitespace-nowrap">{license.sub_partner_id || "—"}</TableCell>
+                          
+                          {/* Student Name - Editable */}
+                          <TableCell className="whitespace-nowrap min-w-[160px]">
+                            {isEditing ? (
+                              <div className="flex gap-1">
+                                <Input
+                                  value={editFormData.first_name || ""}
+                                  onChange={(e) => handleEditChange("first_name", e.target.value)}
+                                  placeholder="First"
+                                  className="h-8 w-20 text-xs"
+                                />
+                                <Input
+                                  value={editFormData.last_name || ""}
+                                  onChange={(e) => handleEditChange("last_name", e.target.value)}
+                                  placeholder="Last"
+                                  className="h-8 w-20 text-xs"
+                                />
+                              </div>
+                            ) : (
+                              license.student_name || "—"
+                            )}
+                          </TableCell>
+                          
+                          {/* Mobile - Editable */}
+                          <TableCell className="whitespace-nowrap min-w-[140px]">
+                            {isEditing ? (
+                              <Input
+                                value={editFormData.mobile || ""}
+                                onChange={(e) => handleEditChange("mobile", e.target.value)}
+                                placeholder="Mobile"
+                                className="h-8 w-32 text-xs"
+                              />
+                            ) : (
+                              license.mobile || "—"
+                            )}
+                          </TableCell>
+                          
+                          {/* Email - Editable */}
+                          <TableCell className="text-sm text-muted-foreground whitespace-nowrap min-w-[180px]">
+                            {isEditing ? (
+                              <Input
+                                type="email"
+                                value={editFormData.email || ""}
+                                onChange={(e) => handleEditChange("email", e.target.value)}
+                                placeholder="Email"
+                                className="h-8 w-44 text-xs"
+                              />
+                            ) : (
+                              license.email || "—"
+                            )}
+                          </TableCell>
+                          
+                          {/* Target Degree - Editable */}
+                          <TableCell className="whitespace-nowrap min-w-[120px]">
+                            {isEditing ? (
+                              <Input
+                                value={editFormData.target_degree || ""}
+                                onChange={(e) => handleEditChange("target_degree", e.target.value)}
+                                placeholder="Degree"
+                                className="h-8 w-28 text-xs"
+                              />
+                            ) : (
+                              license.target_degree || "—"
+                            )}
+                          </TableCell>
+                          
+                          <TableCell className="whitespace-nowrap">{license.visa_app_type || "—"}</TableCell>
+                          <TableCell className="whitespace-nowrap">{license.visa_slot_date || "—"}</TableCell>
+                          <TableCell className="whitespace-nowrap">{license.activation_expiry_date || "—"}</TableCell>
+                          <TableCell className="text-center">
+                            {getActivationBadge(license.activation_status)}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">{license.activation_date || "—"}</TableCell>
+                          <TableCell className="whitespace-nowrap">{license.usage_expiry_date || "—"}</TableCell>
+                          <TableCell className="text-center">
+                            {getUsageBadge(license.usage_status)}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">{license.usage_start_date || "—"}</TableCell>
+                          <TableCell className="text-center font-medium">
+                            {license.test_attempted ?? 0}
+                          </TableCell>
+                          
+                          {/* Actions - Sticky */}
+                          <TableCell className="text-center sticky right-0 bg-background z-10 shadow-[-2px_0_4px_-2px_rgba(0,0,0,0.1)]">
+                            {isEditing ? (
+                              <div className="flex items-center gap-1 justify-center">
+                                <Button
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  onClick={saveEditing}
+                                  disabled={reassignMutation.isPending}
+                                  className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                                >
+                                  <Check className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  onClick={cancelEditing}
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1 justify-center">
+                                <Button
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  onClick={() => startEditing(license)}
+                                  title="Edit assignment"
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  onClick={() => setSelectedLicense(license.license_number)}
+                                  title="View details"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
