@@ -24,6 +24,7 @@ import { useAuth, Permissions } from "@/contexts/AuthContext";
 import { useSidebarState } from "@/contexts/SidebarContext";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import seedAssistLogoWhite from "@/assets/seed-assist-logo-white.png";
+import { SchoolSwitcher } from "./SchoolSwitcher";
 
 interface NavSubItem {
   title: string;
@@ -302,29 +303,13 @@ export function AppSidebar() {
         )}
       </div>
 
-      {/* School Details Card */}
+      {/* School Details Card with Switcher */}
       {!collapsed && selectedSchool && (
-        <div className="mx-3 my-3 p-3 bg-white rounded-lg">
-          {selectedSchool.school_logo && (
-            <div className="flex justify-center mb-2">
-              <img 
-                src={`https://admin.seedglobaleducation.com/assets/img/school_logos/${selectedSchool.school_logo}`}
-                alt={selectedSchool.school_name}
-                className="h-10 object-contain"
-              />
-            </div>
-          )}
-          <p className="text-[11px] font-semibold text-gray-800 text-center leading-tight">
-            {selectedSchool.university ? `${selectedSchool.university} - ${selectedSchool.school_name}` : selectedSchool.school_name}
-          </p>
-          {selectedSchool.country && (
-            <p className="text-[10px] text-primary text-center mt-0.5">{selectedSchool.country}</p>
-          )}
-        </div>
+        <SchoolSwitcher />
       )}
 
       {/* Navigation */}
-      <ScrollArea className="flex-1 h-[calc(100vh-11rem)]">
+      <ScrollArea className="flex-1 h-[calc(100vh-15rem)]">
         <nav className="p-2 space-y-1">
           {navigation.map((item) => {
             const hasChildren = item.children && item.children.length > 0;
