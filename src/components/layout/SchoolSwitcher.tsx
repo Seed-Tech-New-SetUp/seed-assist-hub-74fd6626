@@ -84,7 +84,7 @@ export function SchoolSwitcher() {
         <button
           className={cn(
             "mx-3 my-3 p-4 bg-card rounded-lg shadow-sm border border-border w-[calc(100%-1.5rem)] text-left",
-            "hover:bg-accent/50 hover:border-accent transition-all cursor-pointer",
+            "hover:shadow-md hover:border-primary/30 transition-all cursor-pointer",
             "focus:outline-none focus:ring-2 focus:ring-primary/20"
           )}
         >
@@ -130,8 +130,8 @@ export function SchoolSwitcher() {
             onClick={() => handleSchoolChange(school)}
             className={cn(
               "cursor-pointer py-3 px-3",
-              "focus:bg-accent focus:text-accent-foreground",
-              "hover:bg-accent hover:text-accent-foreground",
+              "focus:bg-secondary focus:text-secondary-foreground",
+              "hover:bg-secondary hover:text-secondary-foreground",
               switchingSchoolId === school.id && "opacity-75"
             )}
             disabled={switchingSchoolId !== null}
