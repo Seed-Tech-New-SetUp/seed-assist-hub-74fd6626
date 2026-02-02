@@ -15,18 +15,22 @@ import {
   Magnet,
   Heart,
   Target,
-  ArrowRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+interface ModuleButton {
+  label: string;
+  href: string;
+  locked?: boolean;
+}
 
 interface ModuleItem {
   title: string;
   icon: React.ElementType;
-  href: string;
   description: string;
   permissionKey?: string;
-  subModuleKey?: string;
   parentKey?: string;
+  buttons: ModuleButton[];
 }
 
 interface PillarSection {
@@ -72,16 +76,6 @@ export default function Dashboard() {
     return true;
   };
 
-  const isModuleLocked = (item: ModuleItem): boolean => {
-    if (item.parentKey && item.subModuleKey) {
-      return !isSubModuleEnabled(item.parentKey, item.subModuleKey);
-    }
-    if (item.permissionKey) {
-      return !isModuleEnabled(item.permissionKey);
-    }
-    return false;
-  };
-
   const isModuleVisible = (item: ModuleItem): boolean => {
     // School Profile is always visible
     if (item.permissionKey === "orgProfile") return true;
@@ -94,7 +88,7 @@ export default function Dashboard() {
     return true;
   };
 
-  // Define the three pillars
+  // Define the three pillars with buttons
   const pillars: PillarSection[] = [
     {
       title: "Attract",
@@ -107,23 +101,33 @@ export default function Dashboard() {
         {
           title: "In-Person Events",
           icon: Calendar,
-          href: "/events/in-person/bsf",
           description: "Business School Festivals & Campus Tours",
           parentKey: "engagement",
+          buttons: [
+            { label: "Business School Festivals", href: "/events/in-person/bsf", locked: !isSubModuleEnabled("engagement", "bsf") },
+            { label: "Campus Tours", href: "/events/in-person/campus-tours", locked: !isSubModuleEnabled("engagement", "campusTours") },
+          ],
         },
         {
           title: "Virtual Events",
           icon: Video,
-          href: "/events/virtual/masterclass",
           description: "Masterclasses & Profile Evaluations",
           parentKey: "engagement",
+          buttons: [
+            { label: "Masterclass", href: "/events/virtual/masterclass", locked: !isSubModuleEnabled("engagement", "masterclasses") },
+            { label: "1:1 Profile Evaluation", href: "/events/virtual/meetups", locked: !isSubModuleEnabled("engagement", "meetups") },
+          ],
         },
         {
           title: "School Profile",
           icon: Building2,
-          href: "/school-profile/edit",
           description: "Manage your school's digital presence",
           permissionKey: "orgProfile",
+          buttons: [
+            { label: "School Details", href: "/school-profile/edit" },
+            { label: "Academic Programs", href: "/school-profile/programs" },
+            { label: "Access Leads", href: "/profile-leads", locked: !isSubModuleEnabled("orgProfile", "accessLeads") },
+          ],
         },
       ],
     },
@@ -138,16 +142,20 @@ export default function Dashboard() {
         {
           title: "In-Country Representation",
           icon: Globe,
-          href: "/in-country-reports",
           description: "Regional engagement & analytics",
           permissionKey: "icr",
+          buttons: [
+            { label: "View Analytics", href: "/in-country-reports" },
+          ],
         },
         {
           title: "Lead & Application Engagement",
           icon: BarChart3,
-          href: "/lead-analytics",
           description: "Track and analyze lead interactions",
           permissionKey: "leadAndApplicationEngagement",
+          buttons: [
+            { label: "View Analytics", href: "/lead-analytics" },
+          ],
         },
       ],
     },
@@ -162,16 +170,20 @@ export default function Dashboard() {
         {
           title: "Scholarship Program",
           icon: GraduationCap,
-          href: "/scholarships/applications",
           description: "Manage scholarship applicant pool",
           permissionKey: "scholarshipPortal",
+          buttons: [
+            { label: "Applicant Pool", href: "/scholarships/applications", locked: !isSubModuleEnabled("scholarshipPortal", "applicantPools") },
+          ],
         },
         {
           title: "AI Visa Tutor",
           icon: Plane,
-          href: "/visa-prep",
           description: "License management & student prep",
           permissionKey: "visaPrep",
+          buttons: [
+            { label: "View Licenses", href: "/visa-prep" },
+          ],
         },
       ],
     },
@@ -241,50 +253,50 @@ export default function Dashboard() {
                 </div>
 
                 {/* Module Cards */}
-                <div className="space-y-4">
-                  {visibleModules.map((module) => {
-                    const locked = isModuleLocked(module);
-                    
-                    return (
-                      <button
-                        key={module.title}
-                        onClick={() => handleNavigate(module.href, locked)}
-                        disabled={locked}
-                        className={cn(
-                          "w-full group text-left p-4 rounded-xl border transition-all duration-200",
-                          locked
-                            ? "bg-muted/50 border-border cursor-not-allowed opacity-60"
-                            : "bg-card hover:bg-secondary/50 border-border hover:border-primary/30 hover:shadow-md cursor-pointer"
-                        )}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className={cn(
-                            "flex items-center justify-center w-10 h-10 rounded-lg flex-shrink-0",
-                            locked ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary"
-                          )}>
-                            <module.icon className="w-5 h-5" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <h3 className={cn(
-                                "font-semibold text-sm",
-                                locked ? "text-muted-foreground" : "text-foreground"
-                              )}>
-                                {module.title}
-                              </h3>
-                              {locked && <Lock className="w-3.5 h-3.5 text-muted-foreground" />}
-                            </div>
-                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
-                              {module.description}
-                            </p>
-                          </div>
-                          {!locked && (
-                            <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all flex-shrink-0 mt-1" />
-                          )}
+                <div className="space-y-5">
+                  {visibleModules.map((module) => (
+                    <div
+                      key={module.title}
+                      className="bg-card/80 backdrop-blur-sm rounded-xl border border-border p-4"
+                    >
+                      {/* Module Header */}
+                      <div className="flex items-start gap-3 mb-3">
+                        <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary/10 text-primary flex-shrink-0">
+                          <module.icon className="w-4.5 h-4.5" />
                         </div>
-                      </button>
-                    );
-                  })}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-sm text-foreground">
+                            {module.title}
+                          </h3>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {module.description}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex flex-wrap gap-2">
+                        {module.buttons.map((btn) => (
+                          <Button
+                            key={btn.label}
+                            onClick={() => handleNavigate(btn.href, btn.locked)}
+                            disabled={btn.locked}
+                            size="sm"
+                            className={cn(
+                              "h-8 text-xs font-medium transition-all flex-1 min-w-[120px]",
+                              btn.locked
+                                ? "bg-muted text-muted-foreground cursor-not-allowed border border-border"
+                                : "bg-primary hover:bg-primary/90 text-primary-foreground"
+                            )}
+                            variant={btn.locked ? "outline" : "default"}
+                          >
+                            {btn.label}
+                            {btn.locked && <Lock className="ml-1.5 h-3 w-3" />}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
