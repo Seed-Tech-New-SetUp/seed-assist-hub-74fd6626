@@ -7,8 +7,6 @@ import {
   Users,
   Building2,
   GraduationCap,
-  ChevronLeft,
-  ChevronRight,
   ChevronDown,
   LogOut,
   MapPin,
@@ -290,28 +288,18 @@ export function AppSidebar() {
       )}
     >
       {/* Logo */}
-      <div className="flex h-16 items-center justify-between px-3 border-b border-sidebar-border">
-        <div className={cn("flex items-center overflow-hidden", collapsed && "justify-center")}>
-          {collapsed ? (
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground font-display font-bold text-sm flex-shrink-0">
-              S
-            </div>
-          ) : (
-            <img 
-              src={seedAssistLogoWhite} 
-              alt="SEED Assist" 
-              className="h-10 w-auto object-contain"
-            />
-          )}
-        </div>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          className="text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent h-7 w-7"
-          onClick={toggleCollapsed}
-        >
-          {collapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
-        </Button>
+      <div className="flex h-16 items-center justify-center px-3 border-b border-sidebar-border">
+        {collapsed ? (
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground font-display font-bold text-sm flex-shrink-0">
+            S
+          </div>
+        ) : (
+          <img 
+            src={seedAssistLogoWhite} 
+            alt="SEED Assist" 
+            className="h-10 w-auto object-contain"
+          />
+        )}
       </div>
 
       {/* School Details Card */}
