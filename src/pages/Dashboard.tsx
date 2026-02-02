@@ -11,6 +11,7 @@ import {
   Building2,
   FileText,
   Globe,
+  BarChart3,
   Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -61,7 +62,7 @@ export default function Dashboard() {
     return true;
   };
 
-  // Define module cards
+  // Define module cards - names match sidebar exactly
   const moduleCards: ModuleCard[] = [
     {
       title: "In-Person Events",
@@ -69,7 +70,7 @@ export default function Dashboard() {
       permissionKey: "engagement",
       buttons: [
         {
-          label: "Business School Festival",
+          label: "Business School Festivals",
           href: "/events/in-person/bsf",
           locked: !isSubModuleEnabled("engagement", "bsf"),
         },
@@ -81,12 +82,12 @@ export default function Dashboard() {
       ],
     },
     {
-      title: "Masterclasses and Virtual Events",
+      title: "Virtual Events",
       icon: Video,
       permissionKey: "engagement",
       buttons: [
         {
-          label: "Master Class",
+          label: "Masterclass",
           href: "/events/virtual/masterclass",
           locked: !isSubModuleEnabled("engagement", "masterclasses"),
         },
@@ -98,29 +99,33 @@ export default function Dashboard() {
       ],
     },
     {
-      title: "Scholarships",
+      title: "Scholarship Portal",
       icon: GraduationCap,
       permissionKey: "scholarshipPortal",
       buttons: [
         {
-          label: "Scholarship Applications",
+          label: "Applicant Pool",
           href: "/scholarships/applications",
           locked: !isSubModuleEnabled("scholarshipPortal", "applicantPools"),
         },
         {
-          label: "View Analytics",
+          label: "Insights",
           href: "/scholarships/analytics",
         },
       ],
     },
     {
-      title: "School Profile",
+      title: "Organisation Profile",
       icon: Building2,
       permissionKey: "orgProfile",
       buttons: [
         {
-          label: "Edit Information",
+          label: "Organisation Details",
           href: "/school-profile/edit",
+        },
+        {
+          label: "Academic Programs",
+          href: "/school-profile/programs",
         },
         {
           label: "Access Leads",
@@ -130,25 +135,36 @@ export default function Dashboard() {
       ],
     },
     {
-      title: "University Applications",
+      title: "Admissions",
       icon: FileText,
       permissionKey: "admissions",
       buttons: [
         {
-          label: "All Applications via SEED",
+          label: "Application Pipeline",
           href: "/university-applications/all",
           locked: !isSubModuleEnabled("admissions", "applicationPipeline"),
         },
       ],
     },
     {
-      title: "In Country Representation",
+      title: "In-Country Representation",
       icon: Globe,
       permissionKey: "icr",
       buttons: [
         {
           label: "View Analytics",
           href: "/in-country-reports",
+        },
+      ],
+    },
+    {
+      title: "Lead And Application Engagement",
+      icon: BarChart3,
+      permissionKey: "leadAndApplicationEngagement",
+      buttons: [
+        {
+          label: "View Analytics",
+          href: "/lead-analytics",
         },
       ],
     },
