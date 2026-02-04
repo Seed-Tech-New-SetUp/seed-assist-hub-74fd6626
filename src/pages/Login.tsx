@@ -536,31 +536,17 @@ export default function Login() {
 
           {/* Center Content */}
           <div className="space-y-6 max-w-md">
-            <div className="space-y-3">
+            <div className="space-y-4">
               <h2 className="font-display text-3xl lg:text-4xl font-semibold leading-tight tracking-tight">
-                Your Gateway to<br />
-                <span className="text-primary">Global Education</span><br />
-                Excellence
+                International Recruitment<br />
+                <span className="text-primary">Made Simple</span>
               </h2>
-              <p className="text-sm text-sidebar-foreground leading-relaxed">
-                Access comprehensive reports, track leads, manage scholarships, and derive holistic ROI insights — all in one powerful platform.
+              <p className="text-base text-sidebar-foreground leading-relaxed">
+                with <span className="font-semibold text-sidebar-accent-foreground">SEED Global Education</span>
               </p>
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-4 pt-4">
-              <div className="space-y-0.5">
-                <p className="text-2xl font-display font-semibold">110+</p>
-                <p className="text-xs text-sidebar-foreground">Partner Universities</p>
-              </div>
-              <div className="space-y-0.5">
-                <p className="text-2xl font-display font-semibold">35K+</p>
-                <p className="text-xs text-sidebar-foreground">Students Helped</p>
-              </div>
-              <div className="space-y-0.5">
-                <p className="text-2xl font-display font-semibold">8+</p>
-                <p className="text-xs text-sidebar-foreground">Study Destinations</p>
-              </div>
+              <p className="text-sm text-sidebar-foreground leading-relaxed pt-2">
+                Your all-in-one platform to attract qualified candidates, nurture prospective students, and convert leads into enrolled scholars. From event management and lead analytics to scholarship administration and visa preparation — streamline your entire international recruitment journey.
+              </p>
             </div>
           </div>
 
