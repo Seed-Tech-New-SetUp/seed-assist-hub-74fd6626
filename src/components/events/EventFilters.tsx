@@ -101,25 +101,25 @@ export function MonthFilter({ value, onChange }: MonthFilterProps) {
   );
 }
 
-interface CountryFilterProps {
+interface RegionFilterProps {
   value: string;
   onChange: (value: string) => void;
-  countries: string[];
+  regions: string[];
 }
 
-export function CountryFilter({ value, onChange, countries }: CountryFilterProps) {
-  const options = ["All", ...countries.filter(Boolean).sort()];
+export function RegionFilter({ value, onChange, regions }: RegionFilterProps) {
+  const options = ["All", ...regions.filter(Boolean).sort()];
   return (
     <div className="flex items-center gap-2">
-      <Label className="text-sm text-muted-foreground whitespace-nowrap">Country:</Label>
+      <Label className="text-sm text-muted-foreground whitespace-nowrap">Region:</Label>
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger className="w-[140px]">
-          <SelectValue placeholder="Country" />
+          <SelectValue placeholder="Region" />
         </SelectTrigger>
         <SelectContent>
-          {options.map((country) => (
-            <SelectItem key={country} value={country}>
-              {country}
+          {options.map((region) => (
+            <SelectItem key={region} value={region}>
+              {region}
             </SelectItem>
           ))}
         </SelectContent>
@@ -127,6 +127,9 @@ export function CountryFilter({ value, onChange, countries }: CountryFilterProps
     </div>
   );
 }
+
+// Backward compatibility alias
+export const CountryFilter = RegionFilter;
 
 interface CityFilterProps {
   value: string;
