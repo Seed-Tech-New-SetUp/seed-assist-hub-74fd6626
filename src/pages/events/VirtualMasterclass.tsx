@@ -303,22 +303,6 @@ export default function VirtualMasterclass() {
       ),
     },
     {
-      key: "female",
-      header: "Female %",
-      className: "text-center",
-      render: (event: MasterclassEvent) => (
-        <span className="font-medium text-pink-600">{event.female_percentage}%</span>
-      ),
-    },
-    {
-      key: "prospects",
-      header: "Prospects",
-      className: "text-center",
-      render: (event: MasterclassEvent) => (
-        <span className="font-medium">{event.prospects.toLocaleString()}</span>
-      ),
-    },
-    {
       key: "download",
       header: "Report",
       className: "text-right",

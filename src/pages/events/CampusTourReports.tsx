@@ -23,8 +23,12 @@ import { EventsDataTable } from "@/components/events/EventsDataTable";
 import { 
   YearFilter, 
   SeasonFilter, 
+  CountryFilter,
+  CityFilter,
   filterByYear, 
-  filterBySeason 
+  filterBySeason,
+  filterByCountry,
+  filterByCity
 } from "@/components/events/EventFilters";
 
 const formatDate = (dateStr: string) => {
@@ -145,6 +149,8 @@ const CampusTourReports = () => {
   // Filter states
   const [yearFilter, setYearFilter] = useState("All");
   const [seasonFilter, setSeasonFilter] = useState("All");
+  const [countryFilter, setCountryFilter] = useState("All");
+  const [cityFilter, setCityFilter] = useState("All");
 
   useEffect(() => {
     const fetchCampusTourEvents = async () => {
@@ -263,8 +269,25 @@ const CampusTourReports = () => {
     let filtered = pastEvents;
     filtered = filterByYear(filtered, yearFilter);
     filtered = filterBySeason(filtered, seasonFilter);
+    filtered = filterByCountry(filtered, countryFilter);
+    filtered = filterByCity(filtered, cityFilter);
     return filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [pastEvents, yearFilter, seasonFilter]);
+  }, [pastEvents, yearFilter, seasonFilter, countryFilter, cityFilter]);
+
+  // Extract unique countries and cities for filter dropdowns
+  const uniqueCountries = useMemo(() => {
+    const countries = new Set(pastEvents.map(e => e.country).filter(Boolean));
+    return Array.from(countries);
+  }, [pastEvents]);
+
+  const uniqueCities = useMemo(() => {
+    let filtered = pastEvents;
+    if (countryFilter !== "All") {
+      filtered = filtered.filter(e => e.country === countryFilter);
+    }
+    const cities = new Set(filtered.map(e => e.city).filter(Boolean));
+    return Array.from(cities);
+  }, [pastEvents, countryFilter]);
 
   // Stats from API meta - calculate from events if not provided
   const totalEvents = meta?.totalEvents ?? events.length;
@@ -325,14 +348,6 @@ const CampusTourReports = () => {
       className: "text-center",
       render: (event: CampusTourEvent) => (
         <span className="font-medium">{event.attended.toLocaleString()}</span>
-      ),
-    },
-    {
-      key: "female",
-      header: "Female %",
-      className: "text-center",
-      render: (event: CampusTourEvent) => (
-        <span className="font-medium text-pink-600">{event.femalePercentage}%</span>
       ),
     },
     {
@@ -514,6 +529,8 @@ const CampusTourReports = () => {
                   <>
                     <YearFilter value={yearFilter} onChange={setYearFilter} />
                     <SeasonFilter value={seasonFilter} onChange={setSeasonFilter} />
+                    <CountryFilter value={countryFilter} onChange={setCountryFilter} countries={uniqueCountries} />
+                    <CityFilter value={cityFilter} onChange={setCityFilter} cities={uniqueCities} />
                   </>
                 }
                 emptyMessage="No past events found"
