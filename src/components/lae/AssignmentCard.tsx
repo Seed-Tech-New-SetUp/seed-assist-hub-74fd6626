@@ -1,4 +1,4 @@
-import { BarChart3, Calendar, RefreshCw } from "lucide-react";
+import { BarChart3, Calendar, RefreshCw, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { LAEAssignment } from "@/lib/api/lae";
@@ -7,6 +7,7 @@ import { format } from "date-fns";
 interface AssignmentCardProps {
   assignment: LAEAssignment;
   onViewAnalytics: (assignmentId: string, assignmentType: string) => void;
+  onViewContacts: (assignmentId: string, assignmentType: string) => void;
 }
 
 function getStatusBadge(status: string) {
@@ -29,7 +30,7 @@ function getStatusBadge(status: string) {
   };
 }
 
-export function AssignmentCard({ assignment, onViewAnalytics }: AssignmentCardProps) {
+export function AssignmentCard({ assignment, onViewAnalytics, onViewContacts }: AssignmentCardProps) {
   const statusBadge = getStatusBadge(assignment.status);
 
   return (
@@ -59,13 +60,21 @@ export function AssignmentCard({ assignment, onViewAnalytics }: AssignmentCardPr
             </span>
           </div>
         </div>
-        <Button
-          onClick={() => onViewAnalytics(assignment.assignment_id, assignment.assignment_type)}
-          className="flex-shrink-0"
-        >
-          <BarChart3 className="h-4 w-4 mr-2" />
-          View Analytics
-        </Button>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Button
+            variant="outline"
+            onClick={() => onViewContacts(assignment.assignment_id, assignment.assignment_type)}
+          >
+            <Users className="h-4 w-4 mr-2" />
+            View Applications Generated
+          </Button>
+          <Button
+            onClick={() => onViewAnalytics(assignment.assignment_id, assignment.assignment_type)}
+          >
+            <BarChart3 className="h-4 w-4 mr-2" />
+            View Analytics
+          </Button>
+        </div>
       </div>
     </div>
   );

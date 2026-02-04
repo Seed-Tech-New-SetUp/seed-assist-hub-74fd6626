@@ -7,6 +7,7 @@ import { FileUploadZone } from "@/components/lae/FileUploadZone";
 import { FilesList } from "@/components/lae/FilesList";
 import { AssignmentCard } from "@/components/lae/AssignmentCard";
 import { AnalyticsModal } from "@/components/lae/AnalyticsModal";
+import { DetailModal } from "@/components/lae/DetailModal";
 import {
   LAEFile,
   LAEAssignment,
@@ -37,6 +38,11 @@ export default function LeadAnalytics() {
   const [analyticsModalOpen, setAnalyticsModalOpen] = useState(false);
   const [selectedAssignmentId, setSelectedAssignmentId] = useState<string | null>(null);
   const [selectedAssignmentName, setSelectedAssignmentName] = useState("");
+
+  // Contacts modal state (all applications)
+  const [contactsModalOpen, setContactsModalOpen] = useState(false);
+  const [contactsAssignmentId, setContactsAssignmentId] = useState<string | null>(null);
+  const [contactsAssignmentName, setContactsAssignmentName] = useState("");
 
   // Load files
   const loadFiles = useCallback(async () => {
@@ -147,6 +153,13 @@ export default function LeadAnalytics() {
     setAnalyticsModalOpen(true);
   };
 
+  // Handle view contacts (all applications)
+  const handleViewContacts = (assignmentId: string, assignmentName: string) => {
+    setContactsAssignmentId(assignmentId);
+    setContactsAssignmentName(assignmentName);
+    setContactsModalOpen(true);
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6 animate-fade-in">
@@ -225,6 +238,7 @@ export default function LeadAnalytics() {
                     key={assignment.assignment_id}
                     assignment={assignment}
                     onViewAnalytics={handleViewAnalytics}
+                    onViewContacts={handleViewContacts}
                   />
                 ))}
               </div>
@@ -239,6 +253,16 @@ export default function LeadAnalytics() {
         onOpenChange={setAnalyticsModalOpen}
         assignmentId={selectedAssignmentId}
         assignmentName={selectedAssignmentName}
+      />
+
+      {/* Contacts Modal (All Applications) */}
+      <DetailModal
+        open={contactsModalOpen}
+        onOpenChange={setContactsModalOpen}
+        assignmentId={contactsAssignmentId}
+        filterType="status"
+        filterValues={["all"]}
+        filterLabel={contactsAssignmentName}
       />
     </DashboardLayout>
   );
