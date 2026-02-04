@@ -101,6 +101,60 @@ export function MonthFilter({ value, onChange }: MonthFilterProps) {
   );
 }
 
+interface CountryFilterProps {
+  value: string;
+  onChange: (value: string) => void;
+  countries: string[];
+}
+
+export function CountryFilter({ value, onChange, countries }: CountryFilterProps) {
+  const options = ["All", ...countries.filter(Boolean).sort()];
+  return (
+    <div className="flex items-center gap-2">
+      <Label className="text-sm text-muted-foreground whitespace-nowrap">Country:</Label>
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger className="w-[140px]">
+          <SelectValue placeholder="Country" />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((country) => (
+            <SelectItem key={country} value={country}>
+              {country}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
+interface CityFilterProps {
+  value: string;
+  onChange: (value: string) => void;
+  cities: string[];
+}
+
+export function CityFilter({ value, onChange, cities }: CityFilterProps) {
+  const options = ["All", ...cities.filter(Boolean).sort()];
+  return (
+    <div className="flex items-center gap-2">
+      <Label className="text-sm text-muted-foreground whitespace-nowrap">City:</Label>
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger className="w-[140px]">
+          <SelectValue placeholder="City" />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((city) => (
+            <SelectItem key={city} value={city}>
+              {city}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
 // Helper functions for filtering
 export function getSeasonFromDate(dateStr: string): string {
   const month = new Date(dateStr).getMonth() + 1; // 1-12
@@ -133,4 +187,14 @@ export function filterBySeason<T extends { date: string }>(items: T[], season: s
 export function filterByMonth<T extends { date: string }>(items: T[], month: string): T[] {
   if (month === "All") return items;
   return items.filter((item) => getMonthFromDate(item.date) === month);
+}
+
+export function filterByCountry<T extends { country?: string }>(items: T[], country: string): T[] {
+  if (country === "All") return items;
+  return items.filter((item) => item.country === country);
+}
+
+export function filterByCity<T extends { city?: string }>(items: T[], city: string): T[] {
+  if (city === "All") return items;
+  return items.filter((item) => item.city === city);
 }

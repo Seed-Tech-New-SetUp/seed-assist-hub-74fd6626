@@ -23,8 +23,12 @@ import { EventsDataTable } from "@/components/events/EventsDataTable";
 import { 
   YearFilter, 
   SeasonFilter, 
+  CountryFilter,
+  CityFilter,
   filterByYear, 
-  filterBySeason 
+  filterBySeason,
+  filterByCountry,
+  filterByCity
 } from "@/components/events/EventFilters";
 
 const formatDate = (dateStr: string) => {
@@ -110,6 +114,7 @@ interface BSFEvent {
   id: string;
   eventName: string;
   city: string;
+  country: string;
   date: string;
   venue: string;
   registrants: number;
@@ -138,6 +143,8 @@ const BSFReports = () => {
   // Filter states
   const [yearFilter, setYearFilter] = useState("All");
   const [seasonFilter, setSeasonFilter] = useState("All");
+  const [countryFilter, setCountryFilter] = useState("All");
+  const [cityFilter, setCityFilter] = useState("All");
 
   useEffect(() => {
     const fetchBSFEvents = async () => {
@@ -169,6 +176,7 @@ const BSFReports = () => {
             id: event.event_id,
             eventName: `Business School Festival ${event.city} ${new Date(event.date).getFullYear()}`,
             city: event.city,
+            country: event.country || "",
             date: event.date,
             venue: event.venue_name,
             registrants: event.registrants || 0,
@@ -214,8 +222,25 @@ const BSFReports = () => {
     let filtered = completedEvents;
     filtered = filterByYear(filtered, yearFilter);
     filtered = filterBySeason(filtered, seasonFilter);
+    filtered = filterByCountry(filtered, countryFilter);
+    filtered = filterByCity(filtered, cityFilter);
     return filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [completedEvents, yearFilter, seasonFilter]);
+  }, [completedEvents, yearFilter, seasonFilter, countryFilter, cityFilter]);
+
+  // Extract unique countries and cities for filter dropdowns
+  const uniqueCountries = useMemo(() => {
+    const countries = new Set(completedEvents.map(e => e.country).filter(Boolean));
+    return Array.from(countries);
+  }, [completedEvents]);
+
+  const uniqueCities = useMemo(() => {
+    let filtered = completedEvents;
+    if (countryFilter !== "All") {
+      filtered = filtered.filter(e => e.country === countryFilter);
+    }
+    const cities = new Set(filtered.map(e => e.city).filter(Boolean));
+    return Array.from(cities);
+  }, [completedEvents, countryFilter]);
 
   const handleDownload = async (event: BSFEvent) => {
     if (!portalToken) {
@@ -313,14 +338,6 @@ const BSFReports = () => {
       className: "text-center",
       render: (event: BSFEvent) => (
         <span className="font-medium">{event.attendees.toLocaleString()}</span>
-      ),
-    },
-    {
-      key: "female",
-      header: "Female %",
-      className: "text-center",
-      render: (event: BSFEvent) => (
-        <span className="font-medium text-pink-600">{event.femalePercentage}%</span>
       ),
     },
     {
@@ -529,6 +546,8 @@ const BSFReports = () => {
                   <>
                     <YearFilter value={yearFilter} onChange={setYearFilter} />
                     <SeasonFilter value={seasonFilter} onChange={setSeasonFilter} />
+                    <CountryFilter value={countryFilter} onChange={setCountryFilter} countries={uniqueCountries} />
+                    <CityFilter value={cityFilter} onChange={setCityFilter} cities={uniqueCities} />
                   </>
                 }
                 emptyMessage="No completed events found"
