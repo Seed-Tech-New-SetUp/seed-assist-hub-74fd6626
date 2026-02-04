@@ -546,7 +546,7 @@ const BSFReports = () => {
                   <>
                     <YearFilter value={yearFilter} onChange={setYearFilter} />
                     <SeasonFilter value={seasonFilter} onChange={setSeasonFilter} />
-                    <CountryFilter value={countryFilter} onChange={setCountryFilter} countries={uniqueCountries} />
+                    <CountryFilter value={countryFilter} onChange={setCountryFilter} regions={uniqueCountries} />
                     <CityFilter value={cityFilter} onChange={setCityFilter} cities={uniqueCities} />
                   </>
                 }
