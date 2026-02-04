@@ -111,32 +111,30 @@ serve(async (req) => {
         url = `${BASE_URL}/analytics.php?${analyticsParams.toString()}`;
         break;
 
-      case 'detail':
       case 'all_records':
-        // GET /api/assist/lae/detail.php - Get detail records
-        // For 'all_records' action, we fetch without filters
+        // GET /api/assist/lae/detail.php - Get ALL records
+        // Don't pass filter_type/filter_value - just assignment_id
+        const allRecordsParams = new URLSearchParams();
+        allRecordsParams.append('assignment_id', params.assignment_id);
+        url = `${BASE_URL}/detail.php?${allRecordsParams.toString()}`;
+        break;
+
+      case 'detail':
+        // GET /api/assist/lae/detail.php - Get filtered detail records
         const detailParams = new URLSearchParams();
         detailParams.append('assignment_id', params.assignment_id);
-        
-        if (action === 'all_records') {
-          // For all records, don't pass filter_type/filter_value to get everything
-          // The backend should return all records when no filter is specified
-          detailParams.append('filter_type', 'all');
-          detailParams.append('filter_value', 'all');
+        detailParams.append('filter_type', params.filter_type);
+        if (Array.isArray(params.filter_values)) {
+          detailParams.append('filter_value', params.filter_values.join(','));
         } else {
-          detailParams.append('filter_type', params.filter_type);
-          if (Array.isArray(params.filter_values)) {
-            detailParams.append('filter_value', params.filter_values.join(','));
-          } else {
-            detailParams.append('filter_value', params.filter_values || '');
-          }
-          if (params.multiple) detailParams.append('multiple', '1');
-          if (params.status && params.status !== 'all') {
-            detailParams.append('status', params.status);
-          }
-          if (params.program && params.program !== 'all') {
-            detailParams.append('program', params.program);
-          }
+          detailParams.append('filter_value', params.filter_values || '');
+        }
+        if (params.multiple) detailParams.append('multiple', '1');
+        if (params.status && params.status !== 'all') {
+          detailParams.append('status', params.status);
+        }
+        if (params.program && params.program !== 'all') {
+          detailParams.append('program', params.program);
         }
         url = `${BASE_URL}/detail.php?${detailParams.toString()}`;
         break;
