@@ -22,7 +22,7 @@ import {
   TableIcon,
   AlertCircle,
 } from "lucide-react";
-import { fetchAllRecords, DetailDataResponse } from "@/lib/api/lae";
+import { fetchAnalyticsData, fetchDetailData, DetailDataResponse } from "@/lib/api/lae";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import * as XLSX from "xlsx";
@@ -57,7 +57,25 @@ export function AllRecordsModal({
     setError(null);
 
     try {
-      const data = await fetchAllRecords(assignmentId);
+      // Step 1: Fetch analytics to get all available statuses
+      const analyticsData = await fetchAnalyticsData(assignmentId);
+      
+      // Get all statuses from the analytics data
+      const allStatuses = analyticsData.filters?.statuses || [];
+      
+      if (allStatuses.length === 0) {
+        // No statuses found, show empty state
+        setDetailData({ success: true, data: [], columns: [], headers: null });
+        return;
+      }
+      
+      // Step 2: Fetch detail data with all statuses
+      const data = await fetchDetailData(
+        assignmentId,
+        "status",
+        allStatuses,
+        {}
+      );
       
       // Deduplicate columns array (API sometimes returns duplicates)
       if (data.columns) {
