@@ -285,7 +285,7 @@ const CampusTourReports = () => {
     if (countryFilter !== "All") {
       filtered = filtered.filter(e => e.country === countryFilter);
     }
-    const cities = new Set(filtered.map(e => e.city).filter(Boolean));
+    const cities = new Set(filtered.map(e => e.city));
     return Array.from(cities);
   }, [pastEvents, countryFilter]);
 

@@ -135,7 +135,10 @@ interface CityFilterProps {
 }
 
 export function CityFilter({ value, onChange, cities }: CityFilterProps) {
-  const options = ["All", ...cities.filter(Boolean).sort()];
+  // Include empty cities as "Unknown"
+  const hasEmptyCities = cities.some(c => !c);
+  const nonEmptyCities = cities.filter(Boolean).sort();
+  const options = ["All", ...nonEmptyCities, ...(hasEmptyCities ? ["Unknown"] : [])];
   return (
     <div className="flex items-center gap-2">
       <Label className="text-sm text-muted-foreground whitespace-nowrap">City:</Label>
@@ -196,5 +199,6 @@ export function filterByCountry<T extends { country?: string }>(items: T[], coun
 
 export function filterByCity<T extends { city?: string }>(items: T[], city: string): T[] {
   if (city === "All") return items;
+  if (city === "Unknown") return items.filter((item) => !item.city);
   return items.filter((item) => item.city === city);
 }
