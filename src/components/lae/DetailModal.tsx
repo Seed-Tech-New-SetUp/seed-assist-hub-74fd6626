@@ -79,11 +79,14 @@ export function DetailModal({
       );
       
       // Deduplicate columns array (API sometimes returns duplicates)
+      // Normalize to handle subtle duplicates like casing/whitespace.
       if (data.columns) {
         const seen = new Set<string>();
         data.columns = data.columns.filter((col) => {
-          if (seen.has(col)) return false;
-          seen.add(col);
+          const key = String(col ?? "").trim().toLowerCase();
+          if (!key) return false;
+          if (seen.has(key)) return false;
+          seen.add(key);
           return true;
         });
       }
