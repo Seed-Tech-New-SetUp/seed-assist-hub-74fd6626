@@ -545,7 +545,7 @@ export default function Login() {
                 with <span className="font-semibold text-sidebar-accent-foreground">SEED Global Education</span>
               </p>
               <p className="text-sm text-sidebar-foreground leading-relaxed pt-2">
-                Attract, nurture, and convert — all in one platform.
+                Attract top talent through events, nurture prospects with insights, and convert leads into enrolled students — all in one platform.
               </p>
             </div>
           </div>
