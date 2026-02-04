@@ -112,7 +112,7 @@ const baseNavigation: NavItem[] = [
     ],
   },
   {
-    title: "Admissions",
+    title: "Applicant Tracking",
     icon: FileText,
     permissionKey: "admissions",
     children: [
