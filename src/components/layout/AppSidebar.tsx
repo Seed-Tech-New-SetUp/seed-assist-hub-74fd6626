@@ -119,7 +119,7 @@ const baseNavigation: NavItem[] = [
       {
         title: "",
         items: [
-          { title: "Application Pipeline", href: "/university-applications/all", permissionKey: "applicationPipeline" },
+          { title: "Applications & Admits Pipeline", href: "/university-applications/all", permissionKey: "applicationPipeline" },
         ],
       },
     ],

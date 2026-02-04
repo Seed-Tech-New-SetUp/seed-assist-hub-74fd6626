@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,13 +12,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Download, Search, FileSpreadsheet, Users, GraduationCap, Clock, RefreshCw, Loader2 } from "lucide-react";
+import { Download, Search, FileSpreadsheet, Users, GraduationCap, Clock, RefreshCw, Loader2, CheckCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
   UniversityApplication,
   fetchApplications,
   downloadApplicationsAsExcel,
 } from "@/lib/api/applications";
+import { cn } from "@/lib/utils";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   Applied: { label: "Applied", className: "bg-blue-500/10 text-blue-600 border-blue-500/20" },
@@ -28,11 +29,14 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   "Under Review": { label: "Under Review", className: "bg-amber-500/10 text-amber-600 border-amber-500/20" },
 };
 
+type FilterType = "all" | "applications" | "admits";
+
 export default function UniversityApplications() {
   const [applications, setApplications] = useState<UniversityApplication[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const [stats, setStats] = useState({
     total: 0,
     admitted: 0,
@@ -51,7 +55,7 @@ export default function UniversityApplications() {
         setStats({
           total: response.data.meta?.total_applications || apps.length,
           admitted: apps.filter((a) => a.status === "Admitted").length,
-          applied: apps.filter((a) => a.status === "Applied").length,
+          applied: apps.filter((a) => a.status !== "Admitted").length,
         });
       }
     } catch (error) {
@@ -69,8 +73,20 @@ export default function UniversityApplications() {
     loadApplications();
   }, [loadApplications]);
 
+  // Filter by active filter type
+  const filteredByType = useMemo(() => {
+    switch (activeFilter) {
+      case "applications":
+        return applications.filter((app) => app.status !== "Admitted");
+      case "admits":
+        return applications.filter((app) => app.status === "Admitted");
+      default:
+        return applications;
+    }
+  }, [applications, activeFilter]);
+
   // Filter locally for immediate search feedback
-  const filteredApplications = applications.filter(
+  const filteredApplications = filteredByType.filter(
     (app) =>
       app.first_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       app.last_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -82,7 +98,7 @@ export default function UniversityApplications() {
   const handleDownload = () => {
     setIsExporting(true);
     try {
-      downloadApplicationsAsExcel(applications);
+      downloadApplicationsAsExcel(filteredApplications);
       toast({
         title: "Success",
         description: "Excel file downloaded successfully",
@@ -98,6 +114,12 @@ export default function UniversityApplications() {
     }
   };
 
+  const filterCards: { id: FilterType; label: string; icon: React.ElementType; count: number; description: string }[] = [
+    { id: "all", label: "All Applications & Admits", icon: Users, count: stats.total, description: "View all records" },
+    { id: "applications", label: "All Applications", icon: Clock, count: stats.applied, description: "Pending decisions" },
+    { id: "admits", label: "All Admits", icon: GraduationCap, count: stats.admitted, description: "Admitted students" },
+  ];
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -105,7 +127,7 @@ export default function UniversityApplications() {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl font-display font-bold text-foreground">
-              Application Pipeline
+              Applications & Admits Pipeline
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
               All student applications submitted via SEED
@@ -127,42 +149,50 @@ export default function UniversityApplications() {
           </div>
         </div>
 
-        {/* Stats Cards - Hidden for now */}
-        {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="flex items-center gap-4 p-4">
-              <div className="p-3 rounded-lg bg-primary/10">
-                <Users className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total Applications</p>
-                <p className="text-2xl font-bold text-foreground">{stats.total}</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="flex items-center gap-4 p-4">
-              <div className="p-3 rounded-lg bg-emerald-500/10">
-                <GraduationCap className="h-5 w-5 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Admitted</p>
-                <p className="text-2xl font-bold text-foreground">{stats.admitted}</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="flex items-center gap-4 p-4">
-              <div className="p-3 rounded-lg bg-blue-500/10">
-                <Clock className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Applied</p>
-                <p className="text-2xl font-bold text-foreground">{stats.applied}</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div> */}
+        {/* Filter Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {filterCards.map((card) => {
+            const Icon = card.icon;
+            const isActive = activeFilter === card.id;
+            return (
+              <Card
+                key={card.id}
+                className={cn(
+                  "cursor-pointer transition-all hover:shadow-md",
+                  isActive 
+                    ? "ring-2 ring-primary border-primary bg-primary/5" 
+                    : "hover:border-primary/50"
+                )}
+                onClick={() => setActiveFilter(card.id)}
+              >
+                <CardContent className="flex items-center gap-4 p-4">
+                  <div className={cn(
+                    "p-3 rounded-lg",
+                    isActive ? "bg-primary/20" : "bg-muted"
+                  )}>
+                    <Icon className={cn(
+                      "h-5 w-5",
+                      isActive ? "text-primary" : "text-muted-foreground"
+                    )} />
+                  </div>
+                  <div className="flex-1">
+                    <p className={cn(
+                      "text-sm font-medium",
+                      isActive ? "text-primary" : "text-muted-foreground"
+                    )}>
+                      {card.label}
+                    </p>
+                    <p className="text-2xl font-bold text-foreground">{card.count}</p>
+                    <p className="text-xs text-muted-foreground">{card.description}</p>
+                  </div>
+                  {isActive && (
+                    <CheckCircle className="h-5 w-5 text-primary" />
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
 
         {/* Table Card */}
         <Card>
@@ -170,7 +200,9 @@ export default function UniversityApplications() {
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <CardTitle className="text-lg font-semibold flex items-center gap-2">
                 <FileSpreadsheet className="h-5 w-5 text-muted-foreground" />
-                Applications List
+                {activeFilter === "all" && "All Applications & Admits"}
+                {activeFilter === "applications" && "Applications"}
+                {activeFilter === "admits" && "Admits"}
               </CardTitle>
               <div className="relative w-full sm:w-72">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -208,7 +240,7 @@ export default function UniversityApplications() {
                       {filteredApplications.length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
-                            No applications found
+                            No {activeFilter === "admits" ? "admits" : activeFilter === "applications" ? "applications" : "records"} found
                           </TableCell>
                         </TableRow>
                       ) : (
@@ -232,7 +264,7 @@ export default function UniversityApplications() {
                   </Table>
                 </div>
                 <div className="mt-4 text-sm text-muted-foreground">
-                  Showing {filteredApplications.length} of {applications.length} applications
+                  Showing {filteredApplications.length} of {filteredByType.length} {activeFilter === "admits" ? "admits" : activeFilter === "applications" ? "applications" : "records"}
                 </div>
               </>
             )}
