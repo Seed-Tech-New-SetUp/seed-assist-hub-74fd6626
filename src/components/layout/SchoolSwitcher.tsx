@@ -54,12 +54,19 @@ export function SchoolSwitcher() {
     }
   };
 
-  // Single school or loading state - no dropdown needed
-  // Show card if we have either currentSchool (from SchoolContext) or selectedSchool (from AuthContext)
+  // Show card if we have school data from either context
+  // On reload, selectedSchool (from AuthContext/cookies) may be available before 
+  // currentSchool (from SchoolContext) is populated
   const hasSchoolData = currentSchool || selectedSchool;
   
-  if (!hasSchoolData || schools.length <= 1) {
-    return hasSchoolData ? (
+  // If no school data at all, don't render anything
+  if (!hasSchoolData) {
+    return null;
+  }
+  
+  // Single school or still loading schools list - show card without dropdown
+  if (schools.length <= 1) {
+    return (
       <div className="mx-2 md:mx-3 my-2 md:my-3 p-3 md:p-4 bg-card rounded-lg shadow-sm border border-border">
         {schoolLogo && (
           <div className="flex justify-center mb-2 md:mb-3">
@@ -80,7 +87,7 @@ export function SchoolSwitcher() {
           <p className="text-[10px] text-muted-foreground text-center mt-1 capitalize">{designation}</p>
         )}
       </div>
-    ) : null;
+    );
   }
 
   // Multi-school - show dropdown
