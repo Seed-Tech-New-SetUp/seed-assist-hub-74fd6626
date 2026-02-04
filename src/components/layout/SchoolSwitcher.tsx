@@ -121,7 +121,7 @@ export function SchoolSwitcher() {
         align="end" 
         side="right"
         sideOffset={8}
-        className="w-72 bg-popover border border-border shadow-lg z-50"
+        className="w-72 max-h-80 overflow-y-auto bg-popover border border-border shadow-lg z-50"
       >
         <DropdownMenuLabel className="text-xs text-muted-foreground font-normal px-3">
           Switch School
