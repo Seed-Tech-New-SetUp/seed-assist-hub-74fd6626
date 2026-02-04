@@ -145,7 +145,7 @@ export function TilesDashboard() {
       ],
     },
     {
-      title: "Scholarship Program",
+      title: "Scholarships Fund",
       icon: GraduationCap,
       description: "Manage and evaluate scholarship applications from qualified candidates",
       permissionKey: "scholarshipPortal",

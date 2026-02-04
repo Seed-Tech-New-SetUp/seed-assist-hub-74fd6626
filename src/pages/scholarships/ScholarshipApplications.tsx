@@ -355,47 +355,39 @@ export default function ScholarshipApplications() {
           </Button>
         </div>
 
-        {/* Status Cards - Hidden for now */}
-        {/* <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          <Card
-            className={`cursor-pointer transition-all ${statusFilter === "SEED_RECOMMENDED" ? "ring-2 ring-primary" : "hover:bg-muted/50"}`}
-            onClick={() => setStatusFilter(statusFilter === "SEED_RECOMMENDED" ? "all" : "SEED_RECOMMENDED")}
-          >
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-yellow-500/10">
-                  <Star className="h-4 w-4 text-yellow-600" />
-                </div>
-                <div>
-                  <p className="text-xl font-bold">{seedRecommendedCount}</p>
-                  <p className="text-[10px] text-muted-foreground leading-tight">SEED Recommended</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          {(["pending", "shortlisted", "onhold", "rejected", "winner"] as WorkflowStatus[]).map((status) => {
-            const config = statusConfig[status];
-            return (
-              <Card
-                key={status}
-                className={`cursor-pointer transition-all ${statusFilter === status ? "ring-2 ring-primary" : "hover:bg-muted/50"}`}
-                onClick={() => setStatusFilter(statusFilter === status ? "all" : status)}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${config.color.split(" ")[0]}`}>
-                      <config.icon className={`h-4 w-4 ${config.color.split(" ")[1]}`} />
-                    </div>
-                    <div>
-                      <p className="text-xl font-bold">{statusCounts[status] || 0}</p>
-                      <p className="text-[10px] text-muted-foreground leading-tight">{config.label}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div> */}
+        {/* Status Legend */}
+        <div className="flex flex-wrap items-center gap-4 md:gap-6">
+          <div className="flex items-center gap-2">
+            <div className="h-10 w-10 rounded-lg bg-green-500/10 flex items-center justify-center">
+              <Check className="h-5 w-5 text-green-600" />
+            </div>
+            <span className="text-sm font-medium text-muted-foreground">- SEED Recommended</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="h-10 w-10 rounded-lg bg-yellow-500/10 flex items-center justify-center">
+              <Star className="h-5 w-5 text-yellow-500" />
+            </div>
+            <span className="text-sm font-medium text-muted-foreground">- Shortlisted</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="h-10 w-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
+              <Pause className="h-5 w-5 text-orange-500" />
+            </div>
+            <span className="text-sm font-medium text-muted-foreground">- On Hold</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="h-10 w-10 rounded-lg bg-red-500/10 flex items-center justify-center">
+              <X className="h-5 w-5 text-red-500" />
+            </div>
+            <span className="text-sm font-medium text-muted-foreground">- Rejected</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="h-10 w-10 rounded-lg bg-cyan-500/10 flex items-center justify-center">
+              <Trophy className="h-5 w-5 text-cyan-500" />
+            </div>
+            <span className="text-sm font-medium text-muted-foreground">- Winner</span>
+          </div>
+        </div>
 
         {/* Search & Filters */}
         <Card>
