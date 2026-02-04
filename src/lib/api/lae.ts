@@ -19,6 +19,7 @@ export interface LAEAssignment {
   cycle: string | null;
   start_date: string | null;
   status: "pending" | "active" | "in_progress" | "completed";
+  total_records?: number;
 }
 
 export interface AnalyticsColumnInfo {
@@ -156,6 +157,7 @@ export async function fetchLAEAssignments(): Promise<LAEAssignment[]> {
     cycle: a.cycle || null,
     start_date: a.start_date || a.created_at || null,
     status: a.status || 'pending',
+    total_records: typeof a.total_records === 'number' ? a.total_records : undefined,
   }));
 }
 

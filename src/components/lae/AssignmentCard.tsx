@@ -1,7 +1,8 @@
-import { BarChart3, Calendar, RefreshCw, Users } from "lucide-react";
+import { useState, useEffect } from "react";
+import { BarChart3, Calendar, RefreshCw, Users, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { LAEAssignment } from "@/lib/api/lae";
+import { LAEAssignment, fetchAnalyticsData } from "@/lib/api/lae";
 import { format } from "date-fns";
 
 interface AssignmentCardProps {
@@ -32,6 +33,25 @@ function getStatusBadge(status: string) {
 
 export function AssignmentCard({ assignment, onViewAnalytics, onViewContacts }: AssignmentCardProps) {
   const statusBadge = getStatusBadge(assignment.status);
+  const [recordCount, setRecordCount] = useState<number | null>(assignment.total_records ?? null);
+  const [isLoadingCount, setIsLoadingCount] = useState(false);
+
+  // Fetch record count if not provided
+  useEffect(() => {
+    if (recordCount === null && assignment.assignment_id) {
+      setIsLoadingCount(true);
+      fetchAnalyticsData(assignment.assignment_id)
+        .then((data) => {
+          setRecordCount(data.total_records);
+        })
+        .catch(() => {
+          // Silently fail - count will just not show
+        })
+        .finally(() => {
+          setIsLoadingCount(false);
+        });
+    }
+  }, [assignment.assignment_id, recordCount]);
 
   return (
     <div className="p-4 rounded-lg border bg-card hover:shadow-sm transition-shadow">
@@ -67,6 +87,13 @@ export function AssignmentCard({ assignment, onViewAnalytics, onViewContacts }: 
           >
             <Users className="h-4 w-4 mr-2" />
             View Applications Generated
+            {isLoadingCount ? (
+              <Loader2 className="h-3.5 w-3.5 ml-2 animate-spin" />
+            ) : recordCount !== null ? (
+              <Badge variant="secondary" className="ml-2 bg-primary/10 text-primary">
+                {recordCount.toLocaleString()}
+              </Badge>
+            ) : null}
           </Button>
           <Button
             onClick={() => onViewAnalytics(assignment.assignment_id, assignment.assignment_type)}
