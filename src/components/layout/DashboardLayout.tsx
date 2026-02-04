@@ -26,7 +26,7 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, signOut } = useAuth();
-  const { schools } = useSchool();
+  const { schools, currentSchool } = useSchool();
   const { collapsed, isMobile, mobileOpen, setMobileOpen } = useSidebarState();
   const navigate = useNavigate();
   const location = useLocation();
@@ -55,6 +55,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const getDisplayName = () => {
     return user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User";
+  };
+
+  const getDesignation = () => {
+    return currentSchool?.designation || "";
   };
 
   return (
@@ -113,7 +117,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 bg-popover">
-                  <DropdownMenuLabel>{getDisplayName()}</DropdownMenuLabel>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{getDisplayName()}</p>
+                      {getDesignation() && (
+                        <p className="text-xs text-muted-foreground capitalize">{getDesignation()}</p>
+                      )}
+                    </div>
+                  </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem className="text-destructive" onClick={handleSignOut}>
                     <LogOut className="mr-2 h-4 w-4" />Log out
