@@ -51,6 +51,7 @@ import {
   type EmailTemplateData,
 } from "@/components/scholarships/EmailPreviewModal";
 import { useSchool } from "@/contexts/SchoolContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 function normalizeExternalUrl(url: string): string {
   const trimmed = url.trim();
@@ -139,6 +140,7 @@ export default function StudentProfile() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { currentSchool } = useSchool();
+  const { user, selectedSchool } = useAuth();
 
   const [showEmailPreview, setShowEmailPreview] = useState(false);
 
@@ -345,9 +347,13 @@ export default function StudentProfile() {
 
   const emailTemplateData: EmailTemplateData = {
     studentName: profile?.name || "[Student Name]",
-    scholarshipName: "Scholarships Fund",
-    schoolName: currentSchool?.name || "University",
-    clientName: "SEED Global Education",
+    scholarshipName: selectedSchool?.school_name 
+      ? `${selectedSchool.school_name} Scholarships`
+      : currentSchool?.name 
+        ? `${currentSchool.name} Scholarships`
+        : "Scholarship Program",
+    schoolName: selectedSchool?.school_name || currentSchool?.name || "University",
+    clientName: (user && 'full_name' in user && user.full_name) || "SEED Global Education",
     awardName: getWinnerAwardName(),
   };
 

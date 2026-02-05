@@ -57,6 +57,7 @@ import {
    EmailStatus 
  } from "@/components/scholarships/EmailPreviewModal";
  import { useSchool } from "@/contexts/SchoolContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 
@@ -96,6 +97,7 @@ export default function ScholarshipApplications() {
     genders: [],
   });
    const { currentSchool } = useSchool();
+  const { user, selectedSchool } = useAuth();
   const { toast } = useToast();
 
   // Fetch applicants from API
@@ -300,9 +302,13 @@ export default function ScholarshipApplications() {
    // Prepare email template data
    const emailTemplateData: EmailTemplateData = {
      studentName: "[Student Name]",
-     scholarshipName: "Scholarship Program",
-     schoolName: currentSchool?.name || "University",
-     clientName: "SEED Global Education",
+     scholarshipName: selectedSchool?.school_name 
+       ? `${selectedSchool.school_name} Scholarships`
+       : currentSchool?.name 
+         ? `${currentSchool.name} Scholarships`
+         : "Scholarship Program",
+     schoolName: selectedSchool?.school_name || currentSchool?.name || "University",
+     clientName: (user && 'full_name' in user && user.full_name) || "SEED Global Education",
      awardName: "[Award Name]",
    };
 
