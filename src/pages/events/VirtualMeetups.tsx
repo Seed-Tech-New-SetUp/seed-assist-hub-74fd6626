@@ -362,8 +362,8 @@ export default function VirtualMeetups() {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">1:1 Profile Evaluation</h1>
-          <p className="text-muted-foreground mt-1">All meetup events - upcoming, ongoing, and past</p>
+          <h1 className="text-2xl font-display font-bold text-foreground">Meetups</h1>
+          <p className="text-muted-foreground mt-1">Connect with prospective candidates in a focused small group meeting and evaluate for upcoming intakes</p>
         </div>
 
 
