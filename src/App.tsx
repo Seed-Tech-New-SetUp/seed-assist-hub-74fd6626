@@ -110,6 +110,7 @@ const App = () => (
 
                 {/* Public Routes - Secure Report Downloads */}
                 <Route path="/mreports/:hashId" element={<SecureReportDownload reportType="virtual" />} />
+                <Route path="/meetup_reports/:hashId" element={<SecureReportDownload reportType="meetup" />} />
                 <Route path="/reports/:hashId" element={<SecureReportDownload reportType="in-person" />} />
                 
                 {/* Legacy Report Detail */}

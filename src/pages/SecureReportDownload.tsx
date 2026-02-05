@@ -67,7 +67,7 @@ interface VirtualReportApiResponse {
 type ReportApiResponse = InPersonReportApiResponse | VirtualReportApiResponse;
 
 interface SecureReportDownloadProps {
-  reportType: "virtual" | "in-person";
+  reportType: "virtual" | "in-person" | "meetup";
 }
 
 const API_BASE = "https://seedglobaleducation.com/api/assist";
@@ -83,9 +83,13 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
   const [loadingInfo, setLoadingInfo] = useState(true);
 
   const getInfoEndpointUrl = () => {
-    return reportType === "in-person"
-      ? `${API_BASE}/in-person-event/report_info.php`
-      : `${API_BASE}/virtual-event/report_info.php`;
+    if (reportType === "in-person") {
+      return `${API_BASE}/in-person-event/report_info.php`;
+    }
+    if (reportType === "meetup") {
+      return `${API_BASE}/virtual-event/meetup_report_info.php`;
+    }
+    return `${API_BASE}/virtual-event/report_info.php`;
   };
 
   useEffect(() => {
@@ -115,6 +119,9 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
   const getDownloadEndpointUrl = () => {
     if (reportType === "in-person") {
       return `${API_BASE}/in-person-event/report_download.php`;
+    }
+    if (reportType === "meetup") {
+      return `${API_BASE}/virtual-event/meetup_report_download.php`;
     }
     return `${API_BASE}/virtual-event/report_download.php`;
   };
@@ -217,9 +224,9 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
     );
   }
 
-  // Helper to check if this is a virtual event response
+  // Helper to check if this is a virtual event response (includes meetup)
   const isVirtualEvent = (data: ReportApiResponse | null): data is VirtualReportApiResponse => {
-    return data !== null && reportType === "virtual";
+    return data !== null && (reportType === "virtual" || reportType === "meetup");
   };
 
   // Extract data based on report type
