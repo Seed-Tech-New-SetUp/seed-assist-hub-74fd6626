@@ -83,9 +83,12 @@ interface VirtualReportApiResponse {
 }
 
 interface MeetupReportApiResponse {
-  meetup: MeetupEventData;
-  last_download?: DownloadInfo;
-  school_logos?: MeetupSchoolLogo[];
+  success: boolean;
+  data: {
+    meetup: MeetupEventData;
+    last_download?: DownloadInfo;
+    school_logos?: MeetupSchoolLogo[];
+  };
 }
 
 type ReportApiResponse = InPersonReportApiResponse | VirtualReportApiResponse | MeetupReportApiResponse;
@@ -269,16 +272,18 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
     if (!reportData) return null;
 
     if (isMeetupEvent(reportData)) {
-      // Meetup-specific response structure
-      const meetupData = reportData.meetup;
+      // Meetup-specific response structure - data is nested under 'data'
+      const meetupData = reportData.data?.meetup;
+      const schoolLogos = reportData.data?.school_logos || [];
+      const lastDownload = reportData.data?.last_download || null;
       return {
         name: meetupData?.header || '',
         date: meetupData?.date || '',
         bannerUrl: null, // Meetups don't have banners
         youtubeUrl: null,
-        schools: (reportData.school_logos || []).map(s => ({ school_logo: s.school_logo })),
-        meetupSchools: reportData.school_logos || [],
-        downloadInfo: reportData.last_download || null,
+        schools: schoolLogos.map(s => ({ school_logo: s.school_logo })),
+        meetupSchools: schoolLogos,
+        downloadInfo: lastDownload,
         academicSeason: meetupData?.academic_season || null,
         venue: null,
         eventType: 'meetup',
