@@ -181,7 +181,7 @@ export function GlobalSearch() {
     <>
       <Button
         variant="outline"
-        className="relative h-9 w-full justify-start rounded-lg bg-muted/50 text-sm text-muted-foreground sm:w-64 md:w-80"
+        className="relative h-9 w-full justify-start rounded-lg bg-muted/50 text-sm text-muted-foreground sm:w-64 md:w-80 hover:bg-muted transition-colors"
         onClick={() => setOpen(true)}
       >
         <Search className="mr-2 h-4 w-4" />
@@ -193,26 +193,39 @@ export function GlobalSearch() {
       </Button>
 
       <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput placeholder="Search pages, features, settings..." />
-        <CommandList>
-          <CommandEmpty>No results found.</CommandEmpty>
+        <div className="flex items-center border-b border-border px-4 py-3">
+          <Search className="mr-3 h-5 w-5 text-muted-foreground" />
+          <CommandInput 
+            placeholder="Search pages, features, settings..." 
+            className="border-0 focus:ring-0 h-auto py-0"
+          />
+        </div>
+        <CommandList className="max-h-[400px] py-2">
+          <CommandEmpty className="py-8 text-center">
+            <div className="flex flex-col items-center gap-2">
+              <Search className="h-10 w-10 text-muted-foreground/40" />
+              <p className="text-sm text-muted-foreground">No results found</p>
+            </div>
+          </CommandEmpty>
           
           {Object.entries(groupedItems).map(([category, items], index) => (
             <div key={category}>
-              {index > 0 && <CommandSeparator />}
+              {index > 0 && <CommandSeparator className="my-2" />}
               <CommandGroup heading={category}>
                 {items.map((item) => (
                   <CommandItem
                     key={item.id}
                     value={`${item.label} ${item.keywords?.join(" ") || ""}`}
                     onSelect={() => handleSelect(item.href)}
-                    className="cursor-pointer"
+                    className="cursor-pointer rounded-lg mx-2 px-3 py-2.5 gap-3 data-[selected=true]:bg-primary data-[selected=true]:text-primary-foreground group transition-colors"
                   >
-                    <item.icon className="mr-3 h-4 w-4 text-muted-foreground" />
-                    <div className="flex flex-col">
-                      <span className="font-medium">{item.label}</span>
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted group-data-[selected=true]:bg-primary-foreground/10">
+                      <item.icon className="h-4 w-4 text-foreground/70 group-data-[selected=true]:text-primary-foreground" />
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="font-medium text-sm">{item.label}</span>
                       {item.description && (
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs text-muted-foreground group-data-[selected=true]:text-primary-foreground/70">
                           {item.description}
                         </span>
                       )}
@@ -223,6 +236,22 @@ export function GlobalSearch() {
             </div>
           ))}
         </CommandList>
+        <div className="flex items-center justify-between border-t border-border px-4 py-2.5 text-xs text-muted-foreground bg-muted/30">
+          <div className="flex items-center gap-4">
+            <span className="flex items-center gap-1.5">
+              <kbd className="px-1.5 py-0.5 rounded bg-muted font-mono text-[10px]">↑↓</kbd>
+              Navigate
+            </span>
+            <span className="flex items-center gap-1.5">
+              <kbd className="px-1.5 py-0.5 rounded bg-muted font-mono text-[10px]">↵</kbd>
+              Select
+            </span>
+          </div>
+          <span className="flex items-center gap-1.5">
+            <kbd className="px-1.5 py-0.5 rounded bg-muted font-mono text-[10px]">esc</kbd>
+            Close
+          </span>
+        </div>
       </CommandDialog>
     </>
   );
