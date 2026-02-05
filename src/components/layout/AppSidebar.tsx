@@ -144,12 +144,13 @@ const baseNavigation: NavItem[] = [
     icon: BarChart3,
     permissionKey: "leadAndApplicationEngagement",
   },
-  {
-    title: "AI Visa Tutor",
-    href: "/visa-prep",
-    icon: Plane,
-    permissionKey: "visaPrep",
-  },
+  // TODO: Re-enable AI Visa Tutor when ready
+  // {
+  //   title: "AI Visa Tutor",
+  //   href: "/visa-prep",
+  //   icon: Plane,
+  //   permissionKey: "visaPrep",
+  // },
   // TODO: Re-enable Team Management when ready
   // {
   //   title: "Team Management",
