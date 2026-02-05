@@ -1,5 +1,6 @@
 import { getCookie, AUTH_COOKIES } from "@/lib/utils/cookies";
 import { handleUnauthorized, isUnauthorizedError } from "@/lib/utils/auth-handler";
+import { decodeObjectStrings } from "@/lib/utils/decode-utf8";
 import * as XLSX from "xlsx";
 
 export interface UniversityApplication {
@@ -83,7 +84,8 @@ export async function fetchApplications(params?: {
     throw new Error(errorData.error || "Failed to fetch applications");
   }
 
-  return response.json();
+  const data = await response.json();
+  return decodeObjectStrings(data);
 }
 
 export function getApplicationsExportUrl(): string {
