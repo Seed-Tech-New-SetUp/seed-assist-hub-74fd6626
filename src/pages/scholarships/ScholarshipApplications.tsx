@@ -303,7 +303,9 @@ export default function ScholarshipApplications() {
    const emailTemplateData: EmailTemplateData = {
      studentName: "[Student Name]",
      scholarshipName: selectedSchool?.school_name 
-       ? `${selectedSchool.school_name} Scholarships`
+       ? selectedSchool?.university 
+         ? `${selectedSchool.university} - ${selectedSchool.school_name} Scholarships`
+         : `${selectedSchool.school_name} Scholarships`
        : currentSchool?.name 
          ? `${currentSchool.name} Scholarships`
          : "Scholarship Program",

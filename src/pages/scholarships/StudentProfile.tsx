@@ -348,7 +348,9 @@ export default function StudentProfile() {
   const emailTemplateData: EmailTemplateData = {
     studentName: profile?.name || "[Student Name]",
     scholarshipName: selectedSchool?.school_name 
-      ? `${selectedSchool.school_name} Scholarships`
+      ? selectedSchool?.university 
+        ? `${selectedSchool.university} - ${selectedSchool.school_name} Scholarships`
+        : `${selectedSchool.school_name} Scholarships`
       : currentSchool?.name 
         ? `${currentSchool.name} Scholarships`
         : "Scholarship Program",
