@@ -407,11 +407,14 @@ export default function ScholarshipApplications() {
             onClick={() => setStatusFilter(statusFilter === "SEED_RECOMMENDED" ? "all" : "SEED_RECOMMENDED")}
           >
             <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0">
-                  <Check className="h-5 w-5 text-green-600" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0">
+                    <Check className="h-5 w-5 text-green-600" />
+                  </div>
+                  <span className="text-sm font-medium whitespace-normal leading-tight">SEED Recommended</span>
                 </div>
-                <span className="text-sm font-medium">SEED Recommended</span>
+                <span className="text-lg font-bold text-foreground">{meta?.status_counts?.recommended ?? 0}</span>
               </div>
             </CardContent>
           </Card>
@@ -422,11 +425,14 @@ export default function ScholarshipApplications() {
             onClick={() => setStatusFilter(statusFilter === "shortlisted" ? "all" : "shortlisted")}
           >
             <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-yellow-500/10 flex items-center justify-center flex-shrink-0">
-                  <Star className="h-5 w-5 text-yellow-500" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-yellow-500/10 flex items-center justify-center flex-shrink-0">
+                    <Star className="h-5 w-5 text-yellow-500" />
+                  </div>
+                  <span className="text-sm font-medium">Shortlisted</span>
                 </div>
-                <span className="text-sm font-medium">Shortlisted</span>
+                <span className="text-lg font-bold text-foreground">{meta?.status_counts?.shortlisted ?? 0}</span>
               </div>
             </CardContent>
           </Card>
@@ -437,11 +443,14 @@ export default function ScholarshipApplications() {
             onClick={() => setStatusFilter(statusFilter === "onhold" ? "all" : "onhold")}
           >
             <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-orange-500/10 flex items-center justify-center flex-shrink-0">
-                  <Pause className="h-5 w-5 text-orange-500" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-orange-500/10 flex items-center justify-center flex-shrink-0">
+                    <Pause className="h-5 w-5 text-orange-500" />
+                  </div>
+                  <span className="text-sm font-medium">On Hold</span>
                 </div>
-                <span className="text-sm font-medium">On Hold</span>
+                <span className="text-lg font-bold text-foreground">{meta?.status_counts?.onhold ?? 0}</span>
               </div>
             </CardContent>
           </Card>
@@ -452,11 +461,14 @@ export default function ScholarshipApplications() {
             onClick={() => setStatusFilter(statusFilter === "rejected" ? "all" : "rejected")}
           >
             <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-red-500/10 flex items-center justify-center flex-shrink-0">
-                  <X className="h-5 w-5 text-red-500" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-red-500/10 flex items-center justify-center flex-shrink-0">
+                    <X className="h-5 w-5 text-red-500" />
+                  </div>
+                  <span className="text-sm font-medium">Rejected</span>
                 </div>
-                <span className="text-sm font-medium">Rejected</span>
+                <span className="text-lg font-bold text-foreground">{meta?.status_counts?.rejected ?? 0}</span>
               </div>
             </CardContent>
           </Card>
@@ -467,11 +479,14 @@ export default function ScholarshipApplications() {
             onClick={() => setStatusFilter(statusFilter === "winner" ? "all" : "winner")}
           >
             <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-cyan-500/10 flex items-center justify-center flex-shrink-0">
-                  <Trophy className="h-5 w-5 text-cyan-500" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-cyan-500/10 flex items-center justify-center flex-shrink-0">
+                    <Trophy className="h-5 w-5 text-cyan-500" />
+                  </div>
+                  <span className="text-sm font-medium">Winner</span>
                 </div>
-                <span className="text-sm font-medium">Winner</span>
+                <span className="text-lg font-bold text-foreground">{meta?.status_counts?.winners ?? 0}</span>
               </div>
             </CardContent>
           </Card>
