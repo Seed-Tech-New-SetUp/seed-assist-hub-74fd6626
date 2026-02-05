@@ -42,6 +42,7 @@ import UserManagement from "./pages/UserManagement";
 import ReportDetail from "./pages/ReportDetail";
 import SecureReportDownload from "./pages/SecureReportDownload";
 import InCountryReports from "./pages/InCountryReports";
+import AddICRReport from "./pages/icr/AddICRReport";
 import LeadAnalytics from "./pages/lae/LeadAnalytics";
 import ProfileLeads from "./pages/ProfileLeads";
 import VisaPrep from "./pages/VisaPrep";
@@ -93,6 +94,7 @@ const App = () => (
 
                 {/* In-Country Representation */}
                 <Route path="/in-country-reports" element={<ProtectedRoute><InCountryReports /></ProtectedRoute>} />
+                <Route path="/in-country-reports/add" element={<ProtectedRoute><AddICRReport /></ProtectedRoute>} />
 
                 {/* Lead Analytics Engine */}
                 <Route path="/lead-analytics" element={<ProtectedRoute><LeadAnalytics /></ProtectedRoute>} />
