@@ -329,7 +329,7 @@ const CampusTourReports = () => {
     },
     {
       key: "campus",
-      header: "Campus",
+      header: "City/Campus",
       render: (event: CampusTourEvent) => (
         <span className="text-sm">{event.campusName || event.city}</span>
       ),
