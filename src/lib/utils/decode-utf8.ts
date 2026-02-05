@@ -5,12 +5,19 @@
 function decodeHTMLEntities(str: string): string {
   if (!str) return str;
   
-  // Common HTML entities
+  // Common HTML entities (case variations)
   const entities: Record<string, string> = {
     '&amp;': '&',
+    '&Amp;': '&',
+    '&AMP;': '&',
     '&lt;': '<',
+    '&Lt;': '<',
+    '&LT;': '<',
     '&gt;': '>',
+    '&Gt;': '>',
+    '&GT;': '>',
     '&quot;': '"',
+    '&Quot;': '"',
     '&#039;': "'",
     '&#39;': "'",
     '&apos;': "'",

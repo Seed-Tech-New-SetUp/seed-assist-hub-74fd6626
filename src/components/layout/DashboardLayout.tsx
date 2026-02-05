@@ -19,6 +19,7 @@ import { useSidebarState } from "@/contexts/SidebarContext";
 import { cn } from "@/lib/utils";
 import { MobileSidebar } from "./MobileSidebar";
 import { useEffect } from "react";
+import { decodeUTF8 } from "@/lib/utils/decode-utf8";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -58,7 +59,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   const getDesignation = () => {
-    return currentSchool?.designation || "";
+    return decodeUTF8(currentSchool?.designation || "");
   };
 
   return (

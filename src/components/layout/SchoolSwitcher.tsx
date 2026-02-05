@@ -33,7 +33,7 @@ export function SchoolSwitcher() {
   const schoolLogo = selectedSchool?.school_logo 
     ? `https://admin.seedglobaleducation.com/assets/img/school_logos/${selectedSchool.school_logo}`
     : currentSchool?.logo_url;
-  const designation = currentSchool?.designation || "";
+  const designation = decodeUTF8(currentSchool?.designation || "");
 
   const handleSchoolChange = async (school: typeof schools[0]) => {
     if (currentSchool?.id === school.id) {
@@ -167,7 +167,7 @@ export function SchoolSwitcher() {
                 </p>
                 {school.designation && (
                   <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
-                    {school.designation}
+                    {decodeUTF8(school.designation)}
                   </p>
                 )}
               </div>
