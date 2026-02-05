@@ -329,7 +329,7 @@ export default function ScholarshipApplications() {
         <div className="space-y-6">
           <div>
             <h1 className="text-2xl font-display font-bold text-foreground">Scholarship Applications</h1>
-            <p className="text-muted-foreground mt-1">Review and manage scholarship applications</p>
+            <p className="text-muted-foreground mt-1">Manage and evaluate scholarship applications from qualified candidates</p>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             {[...Array(6)].map((_, i) => (
@@ -362,7 +362,7 @@ export default function ScholarshipApplications() {
         <div className="space-y-6">
           <div>
             <h1 className="text-2xl font-display font-bold text-foreground">Scholarship Applications</h1>
-            <p className="text-muted-foreground mt-1">Review and manage scholarship applications</p>
+            <p className="text-muted-foreground mt-1">Manage and evaluate scholarship applications from qualified candidates</p>
           </div>
           <Card>
             <CardContent className="p-8 text-center">
@@ -388,7 +388,7 @@ export default function ScholarshipApplications() {
           <div>
             <h1 className="text-2xl font-display font-bold text-foreground">Scholarship Applications</h1>
             <p className="text-muted-foreground mt-1">
-              Review and manage scholarship applications
+              Manage and evaluate scholarship applications from qualified candidates
               {meta && ` • ${meta.total_applicants} total applicants`}
             </p>
           </div>
