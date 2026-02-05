@@ -456,52 +456,7 @@ const CampusTourReports = () => {
           </Card>
         </div> */}
 
-        {/* Live Events */}
-        {liveEvents.length > 0 && (
-          <Card className="border-red-500/30 bg-gradient-to-br from-red-500/5 to-transparent">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg font-display">
-                <span className="relative flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-                </span>
-                Live Now
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {liveEvents.map((event) => (
-                <Card key={event.id} className="bg-card/50 border-border/50">
-                  <CardContent className="p-4">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <Badge variant="destructive" className="animate-pulse">
-                            <Radio className="h-3 w-3 mr-1" /> Live
-                          </Badge>
-                          <span className="font-semibold text-foreground">{event.eventName}</span>
-                        </div>
-                        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                          <span className="flex items-center gap-1"><MapPin className="h-4 w-4" /> {event.location}</span>
-                          <span className="flex items-center gap-1"><Calendar className="h-4 w-4" /> {formatDate(event.date)}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="text-right">
-                          <p className="text-lg font-bold text-foreground">{event.registrants}</p>
-                          <p className="text-xs text-muted-foreground">Registrants</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-lg font-bold text-foreground">{event.attended}</p>
-                          <p className="text-xs text-muted-foreground">Attended</p>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </CardContent>
-          </Card>
-        )}
+        {/* Live Events section removed per user request */}
 
         {/* Upcoming Events */}
         {upcomingEvents.length > 0 && (
