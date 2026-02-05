@@ -2,15 +2,16 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSchool } from "@/contexts/SchoolContext";
 import { TilesDashboard } from "@/components/dashboard/TilesDashboard";
+import { decodeUTF8 } from "@/lib/utils/decode-utf8";
 
 export default function Dashboard() {
   const { user, selectedSchool } = useAuth();
   const { currentSchool } = useSchool();
 
   const displayName = (user as any)?.full_name || (user as any)?.user_metadata?.full_name || "User";
-  const designation = currentSchool?.designation || (user as any)?.designation || "";
-  const universityName = selectedSchool?.university || "";
-  const schoolName = selectedSchool?.school_name || currentSchool?.name || "";
+  const designation = decodeUTF8(currentSchool?.designation || (user as any)?.designation || "");
+  const universityName = decodeUTF8(selectedSchool?.university || "");
+  const schoolName = decodeUTF8(selectedSchool?.school_name || currentSchool?.name || "");
 
   return (
     <DashboardLayout>
