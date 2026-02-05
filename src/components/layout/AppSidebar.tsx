@@ -132,8 +132,8 @@ const baseNavigation: NavItem[] = [
       {
         title: "",
         items: [
-          { title: "View Analytics", href: "/in-country-reports" },
-          { title: "Add Report", href: "/in-country-reports/add" },
+          { title: "View Analytics", href: "/in-country-reports", permissionKey: "viewAnalytics" },
+          { title: "Add Report", href: "/in-country-reports/add", permissionKey: "addReport", alwaysShow: true },
         ],
       },
     ],
