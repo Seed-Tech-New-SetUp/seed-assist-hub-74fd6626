@@ -339,6 +339,18 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0f2744] via-[#1e3a5f] to-[#0f2744] flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Dynamic banner background (Meetup uses banner_url) */}
+      {eventDetails?.bannerUrl && (
+        <div className="absolute inset-0">
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: `url(${eventDetails.bannerUrl})` }}
+          />
+          {/* Darken for readability */}
+          <div className="absolute inset-0 bg-black/45" />
+        </div>
+      )}
+
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Floating orbs */}
