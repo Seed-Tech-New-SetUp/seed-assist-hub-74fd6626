@@ -308,7 +308,7 @@ export default function ScholarshipApplications() {
          ? `${currentSchool.name} Scholarships`
          : "Scholarship Program",
      schoolName: selectedSchool?.school_name || currentSchool?.name || "University",
-     clientName: (user && 'full_name' in user && user.full_name) || "SEED Global Education",
+     clientName: (user as { full_name?: string })?.full_name || "SEED Global Education",
      awardName: "[Award Name]",
    };
 
