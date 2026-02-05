@@ -95,9 +95,9 @@ export function TilesDashboard() {
       ],
     },
     {
-      title: "1:1 Profile Evaluation",
+      title: "Meetups",
       icon: Sparkles,
-      description: "Provide personalized feedback to prospective students in virtual meetings",
+      description: "Connect with prospective candidates in a focused small group meeting and evaluate for upcoming intakes",
       parentKey: "engagement",
       gradient: "from-pink-500/20 via-pink-500/5 to-transparent",
       iconBg: "bg-pink-500 text-white",
