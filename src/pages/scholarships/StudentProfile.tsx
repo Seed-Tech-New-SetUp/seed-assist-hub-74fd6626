@@ -45,6 +45,12 @@ import {
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { fetchApplicantProfile, updateApplicantStatus, ApplicantProfile, WorkflowStatus } from "@/lib/api/scholarship";
+import {
+  EmailPreviewModal,
+  mapWorkflowToEmailStatus,
+  type EmailTemplateData,
+} from "@/components/scholarships/EmailPreviewModal";
+import { useSchool } from "@/contexts/SchoolContext";
 
 function normalizeExternalUrl(url: string): string {
   const trimmed = url.trim();
@@ -132,6 +138,9 @@ export default function StudentProfile() {
   const { studentId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { currentSchool } = useSchool();
+
+  const [showEmailPreview, setShowEmailPreview] = useState(false);
 
   const [profile, setProfile] = useState<ApplicantProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -243,7 +252,11 @@ export default function StudentProfile() {
     setShowNotificationModal(true);
   };
 
-  const handleNotificationChoice = async (sendNotification: boolean) => {
+  const handleNotificationChoice = async (
+    sendNotification: boolean,
+    emailSubject?: string,
+    emailBody?: string
+  ) => {
     if (!profile || !pendingStatusData) return;
 
     setIsUpdatingStatus(true);
@@ -265,10 +278,14 @@ export default function StudentProfile() {
         award_id?: string;
         custom_currency?: string;
         custom_amount?: string;
+         email_subject?: string;
+         email_body?: string;
       } = {
         contact_ids: [profile.id],
         status: statusMap[pendingStatusData.status] || pendingStatusData.status,
         send_email: sendNotification,
+         email_subject: emailSubject,
+         email_body: emailBody,
       };
 
       // Add award details for winner status
@@ -306,10 +323,32 @@ export default function StudentProfile() {
     } finally {
       setIsUpdatingStatus(false);
       setShowNotificationModal(false);
+      setShowEmailPreview(false);
       setPendingStatusData(null);
       setSelectedAwards([]);
       setCustomAwards([]);
     }
+  };
+
+  const getWinnerAwardName = (): string => {
+    if (!profile || !pendingStatusData || pendingStatusData.status !== "WINNER") return "[Award Name]";
+
+    const selectedUniversityAward = pendingStatusData.selectedAwardId
+      ? profile.awards.available.find((a) => a.id === pendingStatusData.selectedAwardId)
+      : undefined;
+    if (selectedUniversityAward?.name) return selectedUniversityAward.name;
+
+    // Fallback to first custom award name (if any)
+    const firstCustom = customAwards[0]?.name?.trim();
+    return firstCustom || "[Award Name]";
+  };
+
+  const emailTemplateData: EmailTemplateData = {
+    studentName: profile?.name || "[Student Name]",
+    scholarshipName: "Scholarships Fund",
+    schoolName: currentSchool?.name || "University",
+    clientName: "SEED Global Education",
+    awardName: getWinnerAwardName(),
   };
 
   const navigateToPrev = () => {
@@ -1016,7 +1055,11 @@ export default function StudentProfile() {
                 )}
               </Button>
               <Button
-                onClick={() => handleNotificationChoice(true)}
+                onClick={() => {
+                  // Open email preview (rich text) before sending
+                  setShowNotificationModal(false);
+                  setShowEmailPreview(true);
+                }}
                 className="flex-1"
                 disabled={isUpdatingStatus}
               >
@@ -1030,6 +1073,18 @@ export default function StudentProfile() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Email Preview Modal */}
+        <EmailPreviewModal
+          open={showEmailPreview}
+          onOpenChange={setShowEmailPreview}
+          status={pendingStatusData ? mapWorkflowToEmailStatus(pendingStatusData.status) : null}
+          selectedCount={1}
+          templateData={emailTemplateData}
+          isLoading={isUpdatingStatus}
+          onConfirmSend={(subject, body) => handleNotificationChoice(true, subject, body)}
+          onSkipEmail={() => handleNotificationChoice(false)}
+        />
       </div>
     </DashboardLayout>
   );
