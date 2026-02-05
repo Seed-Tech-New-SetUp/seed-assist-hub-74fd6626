@@ -247,7 +247,7 @@ export default function ScholarshipApplications() {
      }
   };
 
-   const handleStatusUpdate = async (sendEmail: boolean) => {
+   const handleStatusUpdate = async (sendEmail: boolean, emailSubject?: string, emailBody?: string) => {
     if (!newStatus) return;
     
     setIsUpdatingStatus(true);
@@ -266,6 +266,8 @@ export default function ScholarshipApplications() {
         contact_ids: selectedApplicants,
         status: statusMap[newStatus] || newStatus.toUpperCase(),
          send_email: sendEmail,
+         email_subject: emailSubject,
+         email_body: emailBody,
       });
 
       // Update the applicants state with new status
@@ -712,7 +714,7 @@ export default function ScholarshipApplications() {
            selectedCount={selectedApplicants.length}
            templateData={emailTemplateData}
            isLoading={isUpdatingStatus}
-           onConfirmSend={() => handleStatusUpdate(true)}
+           onConfirmSend={(subject, body) => handleStatusUpdate(true, subject, body)}
            onSkipEmail={() => handleStatusUpdate(false)}
          />
       </div>

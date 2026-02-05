@@ -455,6 +455,8 @@ export interface StatusAssignmentRequest {
   custom_currency?: string;
   custom_amount?: string;
   send_email?: boolean;
+   email_subject?: string;
+   email_body?: string;
 }
 
 export interface StatusAssignmentResponse {
