@@ -63,11 +63,10 @@ export function TilesDashboard() {
     {
       title: "Business School Festivals",
       icon: Calendar,
-      description: "Connect with prospective students at premium in-person events across major cities",
+      description: "Connect with prospective students at recruitment fairs at major cities across the globe",
       parentKey: "engagement",
       gradient: "from-blue-500/20 via-blue-500/5 to-transparent",
       iconBg: "bg-blue-500 text-white",
-      tag: "Events",
       buttons: [
         { label: "View Reports", href: "/events/in-person/bsf", locked: !isSubModuleEnabled("engagement", "bsf") },
       ],
@@ -75,11 +74,10 @@ export function TilesDashboard() {
     {
       title: "Campus Tours",
       icon: Building2,
-      description: "Showcase your campus and facilities to interested candidates through guided tours",
+      description: "Connect with prospective students at campus events in top tier institutions globally",
       parentKey: "engagement",
       gradient: "from-indigo-500/20 via-indigo-500/5 to-transparent",
       iconBg: "bg-indigo-500 text-white",
-      tag: "Events",
       buttons: [
         { label: "View Tours", href: "/events/in-person/campus-tours", locked: !isSubModuleEnabled("engagement", "campusTours") },
       ],
