@@ -255,7 +255,11 @@ export default function Programs() {
                   </SelectContent>
                 </Select>
               )}
-              {selectedProgramData && <Badge variant="secondary">{selectedProgramData.university}</Badge>}
+              {selectedProgramData && (
+                <Badge variant="secondary">
+                  {selectedProgramData.school_name} - {selectedProgramData.university}
+                </Badge>
+              )}
             </div>
           </CardContent>
         </Card>

@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { getPortalToken } from "@/lib/utils/cookies";
 import { handleUnauthorized, isUnauthorizedError } from "@/lib/utils/auth-handler";
+import { decodeObjectStrings } from "@/lib/utils/decode-utf8";
 
 // ============ Types ============
 
@@ -182,7 +183,8 @@ async function callProgramsProxy<T>(
 
 export async function fetchPrograms(): Promise<Program[]> {
   const result = await callProgramsProxy<{ success: boolean; data?: { programs: Program[]; count?: number } }>("list");
-  return result.data?.programs || [];
+  const programs = result.data?.programs || [];
+  return decodeObjectStrings(programs);
 }
 
 // ============ Request New Program ============
@@ -212,10 +214,11 @@ export async function fetchProgramInfo(programId: string): Promise<ProgramInfo |
     { program_id: programId }
   );
   if (result.data?.program) {
-    return {
+    const programInfo = {
       ...result.data.program,
       diversity: result.data.diversity || [],
     };
+    return decodeObjectStrings(programInfo);
   }
   return null;
 }
@@ -258,7 +261,8 @@ export async function fetchProgramFeatures(programId: string): Promise<ProgramFe
     "GET",
     { program_id: programId }
   );
-  return result.data?.features || [];
+  const features = result.data?.features || [];
+  return decodeObjectStrings(features);
 }
 
 export async function saveProgramFeature(programId: string, feature: ProgramFeature): Promise<boolean> {
@@ -369,10 +373,11 @@ export async function fetchProgramMembers(
     "GET",
     { program_id: programId, category }
   );
-  return (result.data?.members || []).map((m) => ({
+  const members = (result.data?.members || []).map((m) => ({
     ...m,
     orgnaisation: m.orgnaisation || "",
   }));
+  return decodeObjectStrings(members);
 }
 
 export async function saveProgramMember(
@@ -528,7 +533,7 @@ export async function fetchProgramRankingsWithOrganizations(programId: string): 
     name: org.org_name,
   }));
   
-  return { rankings, organizations };
+  return { rankings: decodeObjectStrings(rankings), organizations: decodeObjectStrings(organizations) };
 }
 
 export async function saveProgramRanking(programId: string, ranking: ProgramRanking): Promise<boolean> {
@@ -583,7 +588,8 @@ export async function fetchProgramRecruiters(programId: string): Promise<Program
     "GET",
     { program_id: programId }
   );
-  return result.data?.recruiters || [];
+  const recruiters = result.data?.recruiters || [];
+  return decodeObjectStrings(recruiters);
 }
 
 // Save all recruiters at once (replaces existing)
@@ -605,7 +611,8 @@ export async function fetchProgramJobRoles(programId: string): Promise<string[]>
     "GET",
     { program_id: programId }
   );
-  return result.data?.job_roles || [];
+  const jobRoles = result.data?.job_roles || [];
+  return decodeObjectStrings(jobRoles);
 }
 
 // Save all job roles at once (replaces existing)
@@ -627,7 +634,8 @@ export async function fetchProgramFAQs(programId: string): Promise<ProgramFAQ[]>
     "GET",
     { program_id: programId }
   );
-  return result.data?.faqs || [];
+  const faqs = result.data?.faqs || [];
+  return decodeObjectStrings(faqs);
 }
 
 // Save all FAQs at once (batch update - replaces existing, creates new)
@@ -650,7 +658,8 @@ export async function fetchProgramPOC(programId: string): Promise<ProgramPOC | n
     "GET",
     { program_id: programId }
   );
-  return result.data?.poc || null;
+  const poc = result.data?.poc || null;
+  return poc ? decodeObjectStrings(poc) : null;
 }
 
 export async function saveProgramPOC(programId: string, poc: ProgramPOC): Promise<boolean> {

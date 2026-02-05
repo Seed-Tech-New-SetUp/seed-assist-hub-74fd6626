@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { getCookie, AUTH_COOKIES } from "@/lib/utils/cookies";
 import { handleUnauthorized, isUnauthorizedError } from "@/lib/utils/auth-handler";
+import { decodeObjectStrings } from "@/lib/utils/decode-utf8";
 
 // Types
 export interface LAEFile {
@@ -151,7 +152,7 @@ export async function fetchLAEAssignments(): Promise<LAEAssignment[]> {
   if (!data?.success) throw new Error(data?.error || "Failed to fetch assignments");
 
   // Map API response to our interface
-  return (data.assignments || []).map((a: Record<string, unknown>) => ({
+  const assignments = (data.assignments || []).map((a: Record<string, unknown>) => ({
     assignment_id: a.assignment_id || a.id,
     assignment_type: a.assignment_type || a.type || 'Lead Analytics',
     cycle: a.cycle || null,
@@ -159,6 +160,7 @@ export async function fetchLAEAssignments(): Promise<LAEAssignment[]> {
     status: a.status || 'pending',
     total_records: typeof a.total_records === 'number' ? a.total_records : undefined,
   }));
+  return decodeObjectStrings(assignments);
 }
 
 export async function fetchAnalyticsData(
@@ -183,7 +185,7 @@ export async function fetchAnalyticsData(
   if (error) throw new Error(error.message);
   if (!data?.success) throw new Error(data?.error || "Failed to fetch analytics");
 
-  return data;
+  return decodeObjectStrings(data);
 }
 
 export async function fetchDetailData(
@@ -211,7 +213,7 @@ export async function fetchDetailData(
   if (error) throw new Error(error.message);
   if (!data?.success) throw new Error(data?.error || "Failed to fetch detail data");
 
-  return data;
+  return decodeObjectStrings(data);
 }
 
 export async function fetchAllRecords(
@@ -232,7 +234,7 @@ export async function fetchAllRecords(
   if (error) throw new Error(error.message);
   if (!data?.success) throw new Error(data?.error || "Failed to fetch all records");
 
-  return data;
+  return decodeObjectStrings(data);
 }
 
 export function getDetailExportUrl(
