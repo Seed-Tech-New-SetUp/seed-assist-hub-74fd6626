@@ -13,6 +13,7 @@ import {
   Plane,
   ArrowRight,
   Sparkles,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -140,6 +141,19 @@ export function TilesDashboard() {
       tag: "Analytics",
       buttons: [
         { label: "View Reports", href: "/in-country-reports" },
+      ],
+    },
+    {
+      title: "Applicant Tracking",
+      icon: FileText,
+      description: "Track and manage student applications and admits submitted via SEED",
+      permissionKey: "admissions",
+      gradient: "from-cyan-500/20 via-cyan-500/5 to-transparent",
+      iconBg: "bg-cyan-500 text-white",
+      tag: "Pipeline",
+      buttons: [
+        { label: "View Applications", href: "/university-applications/all", locked: !isSubModuleEnabled("admissions", "applicationPipeline") },
+        { label: "View Admits", href: "/university-applications/all?filter=admits", locked: !isSubModuleEnabled("admissions", "applicationPipeline") },
       ],
     },
     {
