@@ -650,7 +650,9 @@ function ActivityCard({
               <Input
                 type="number"
                 min={0}
-                value={leads}
+                value={leads === 0 ? "" : leads}
+                placeholder="0"
+                onFocus={(e) => e.target.select()}
                 onChange={(e) => onLeadsChange(parseInt(e.target.value) || 0)}
                 className="mt-1"
               />
@@ -686,8 +688,10 @@ function FunnelItem({ label, value, readOnly, onChange }: FunnelItemProps) {
       <Input
         type="number"
         min={0}
-        value={value}
+        value={readOnly ? value : (value === 0 ? "" : value)}
+        placeholder="0"
         readOnly={readOnly}
+        onFocus={(e) => !readOnly && e.target.select()}
         onChange={(e) => onChange?.(parseInt(e.target.value) || 0)}
         className={cn(
           "mt-2 text-center text-2xl font-bold h-12",
