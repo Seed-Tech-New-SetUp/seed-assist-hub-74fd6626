@@ -311,14 +311,6 @@ export default function VirtualMeetups() {
       ),
     },
     {
-      key: "connections",
-      header: "Connections",
-      className: "text-center",
-      render: (event: MeetupEvent) => (
-        <span className="font-medium">{event.connections?.toLocaleString() || 0}</span>
-      ),
-    },
-    {
       key: "download",
       header: "Report",
       className: "text-right",
