@@ -36,9 +36,27 @@ interface SchoolLogo {
   school_logo: string;
 }
 
+interface MeetupSchoolLogo {
+  school_id: string;
+  school_logo: string;
+  school_name: string;
+}
+
 interface DownloadInfo {
   client_name: string;
   timestamp: string;
+}
+
+interface MeetupEventData {
+  id: number;
+  header: string;
+  slug: string;
+  date: string;
+  time: string;
+  timezone: string;
+  hs_event_record_id: string;
+  reports_published: boolean;
+  academic_season: string;
 }
 
 interface InPersonReportApiResponse {
@@ -64,7 +82,13 @@ interface VirtualReportApiResponse {
   download_info?: DownloadInfo;
 }
 
-type ReportApiResponse = InPersonReportApiResponse | VirtualReportApiResponse;
+interface MeetupReportApiResponse {
+  meetup: MeetupEventData;
+  last_download?: DownloadInfo;
+  school_logos?: MeetupSchoolLogo[];
+}
+
+type ReportApiResponse = InPersonReportApiResponse | VirtualReportApiResponse | MeetupReportApiResponse;
 
 interface SecureReportDownloadProps {
   reportType: "virtual" | "in-person" | "meetup";
@@ -169,6 +193,12 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
         let fallbackFilename = "report.xlsx";
         if (reportType === "virtual" && eventDetails?.date) {
           fallbackFilename = buildMasterclassFallbackFilename(eventDetails.date);
+        } else if (reportType === "meetup" && eventDetails?.date && eventDetails?.name) {
+          const date = new Date(eventDetails.date);
+          const month = date.toLocaleString("en-US", { month: "long" });
+          const day = date.getDate();
+          const year = date.getFullYear();
+          fallbackFilename = `SEED_Meetup_${month}_${day}_${year}.xlsx`;
         } else if (reportType === "in-person" && eventDetails?.date && eventDetails?.name) {
           const date = new Date(eventDetails.date);
           const formattedDate = `${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}`;
@@ -224,14 +254,36 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
     );
   }
 
-  // Helper to check if this is a virtual event response (includes meetup)
+  // Helper to check if this is a virtual event response (masterclass)
   const isVirtualEvent = (data: ReportApiResponse | null): data is VirtualReportApiResponse => {
-    return data !== null && (reportType === "virtual" || reportType === "meetup");
+    return data !== null && reportType === "virtual";
+  };
+
+  // Helper to check if this is a meetup event response
+  const isMeetupEvent = (data: ReportApiResponse | null): data is MeetupReportApiResponse => {
+    return data !== null && reportType === "meetup";
   };
 
   // Extract data based on report type
   const getEventDetails = () => {
     if (!reportData) return null;
+
+    if (isMeetupEvent(reportData)) {
+      // Meetup-specific response structure
+      const meetupData = reportData.meetup;
+      return {
+        name: meetupData?.header || '',
+        date: meetupData?.date || '',
+        bannerUrl: null, // Meetups don't have banners
+        youtubeUrl: null,
+        schools: (reportData.school_logos || []).map(s => ({ school_logo: s.school_logo })),
+        meetupSchools: reportData.school_logos || [],
+        downloadInfo: reportData.last_download || null,
+        academicSeason: meetupData?.academic_season || null,
+        venue: null,
+        eventType: 'meetup',
+      };
+    }
 
     if (isVirtualEvent(reportData)) {
       const eventData = reportData.data?.[0] as VirtualEventData;
@@ -249,8 +301,8 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
         eventType: eventData?.type || null,
       };
     } else {
-      const eventData = reportData.data?.[0];
-      const assets = reportData.data?.assets;
+      const eventData = (reportData as InPersonReportApiResponse).data?.[0];
+      const assets = (reportData as InPersonReportApiResponse).data?.assets;
       return {
         name: eventData?.name || '',
         date: eventData?.date || '',
@@ -259,7 +311,7 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
         schools: [],
         downloadInfo: null,
         venue: eventData?.venue_name || null,
-        academicSeason: reportData.data?.academic_season || null,
+        academicSeason: (reportData as InPersonReportApiResponse).data?.academic_season || null,
         locationDisplay: eventData?.campus_event === 1 && eventData?.campus_name 
           ? eventData.campus_name 
           : eventData?.city,
@@ -348,7 +400,7 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
 
           {/* Content */}
           <div className="p-6">
-            {/* Banner Image with elegant frame */}
+            {/* Banner Image with elegant frame (for virtual/in-person) */}
             {eventDetails?.bannerUrl && (
               <div className="mb-6 relative group">
                 <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500/30 to-blue-500/30 rounded-xl blur opacity-50 group-hover:opacity-75 transition-opacity" />
@@ -382,6 +434,27 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
                       ))}
                     </div>
                   )}
+                </div>
+              </div>
+            )}
+
+            {/* School Logos for Meetups (displayed standalone without banner) */}
+            {reportType === "meetup" && eventDetails?.meetupSchools && eventDetails.meetupSchools.length > 0 && (
+              <div className="mb-6 flex justify-center">
+                <div className="flex flex-wrap justify-center gap-4">
+                  {eventDetails.meetupSchools.map((school, index) => (
+                    <div 
+                      key={index} 
+                      className="bg-slate-50 border border-slate-200 p-4 rounded-xl shadow-sm"
+                      style={{ width: eventDetails.meetupSchools.length > 1 ? '140px' : '180px' }}
+                    >
+                      <img 
+                        src={`https://admin.seedglobaleducation.com/assets/img/school_logos/${school.school_logo}`}
+                        alt={school.school_name || "School Logo"}
+                        className="w-full h-auto"
+                      />
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
