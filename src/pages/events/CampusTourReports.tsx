@@ -39,6 +39,25 @@ const formatDate = (dateStr: string) => {
   return `${month} ${day}, ${year}`;
 };
 
+// Helper to get clean event name without city duplication
+const getCleanEventName = (eventName: string, city: string): string => {
+  if (!eventName) return "";
+  if (!city) return eventName;
+  
+  // Check if eventName ends with the city name (case insensitive)
+  const trimmedCity = city.trim();
+  const eventNameTrimmed = eventName.trim();
+  
+  if (eventNameTrimmed.toLowerCase().endsWith(trimmedCity.toLowerCase())) {
+    // Remove the city from the end of the event name
+    const cleanName = eventNameTrimmed.slice(0, -trimmedCity.length).trim();
+    // Remove trailing dash or hyphen if present
+    return cleanName.replace(/[-–—]\s*$/, "").trim();
+  }
+  
+  return eventName;
+};
+
 const formatDateTime = (dateTimeStr: string) => {
   const safe = dateTimeStr.replace(" ", "T");
   const date = new Date(safe);
@@ -306,7 +325,7 @@ const CampusTourReports = () => {
           </div>
           <div>
             <p className="font-medium">
-              {event.subProductName || event.eventName} - {event.campusName || event.city}
+              {getCleanEventName(event.eventName, event.city)} - {event.campusName || event.city}
             </p>
             <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
               <MapPin className="h-3 w-3" />
