@@ -539,7 +539,7 @@ export function AppSidebar() {
       </ScrollArea>
 
       {/* Footer */}
-      <div className="absolute bottom-0 left-0 right-0 p-2 border-t border-sidebar-border space-y-2">
+      <div className="absolute bottom-0 left-0 right-0 p-2 border-t border-sidebar-border space-y-2 bg-sidebar z-10">
         {/* Legal Links */}
         {!collapsed && (
           <div className="flex flex-wrap justify-center gap-x-2 gap-y-0.5 px-1">
