@@ -155,10 +155,10 @@ export default function LeadAnalytics() {
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-foreground">
-            Welcome, {(user as any)?.full_name || (user as any)?.client_name || (user as any)?.user_metadata?.full_name || "User"}
+            Lead & Application Engagement
           </h1>
           <p className="text-muted-foreground">
-            Lead Analytics Engine
+            View Analytics for ongoing assignments
           </p>
         </div>
 
