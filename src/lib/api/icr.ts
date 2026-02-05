@@ -144,8 +144,12 @@ export async function fetchICRReports(
     }
 
     const data = response.data as ICRReportsResponse;
-    if (!data.success && data.error && isUnauthorizedError(401, { error: data.error })) {
-      handleUnauthorized(data.error);
+    
+    // Check for unauthorized in response data (handles { success: false, error: { code: "UNAUTHORIZED" } })
+    if (!data.success && data.error) {
+      if (isUnauthorizedError(0, { error: data.error })) {
+        handleUnauthorized(data.error);
+      }
     }
 
     return data;
@@ -182,7 +186,16 @@ export async function createICRReport(payload: ICRCreatePayload): Promise<ICRMut
       return { success: false, error: response.error.message };
     }
 
-    return response.data as ICRMutationResponse;
+    const data = response.data as ICRMutationResponse;
+    
+    // Check for unauthorized in response data
+    if (!data.success && data.error) {
+      if (isUnauthorizedError(0, { error: data.error })) {
+        handleUnauthorized(data.error);
+      }
+    }
+
+    return data;
   } catch (error) {
     console.error("ICR create error:", error);
     return { success: false, error: "Failed to create ICR report" };
@@ -216,7 +229,16 @@ export async function updateICRReport(payload: ICRUpdatePayload): Promise<ICRMut
       return { success: false, error: response.error.message };
     }
 
-    return response.data as ICRMutationResponse;
+    const data = response.data as ICRMutationResponse;
+    
+    // Check for unauthorized in response data
+    if (!data.success && data.error) {
+      if (isUnauthorizedError(0, { error: data.error })) {
+        handleUnauthorized(data.error);
+      }
+    }
+
+    return data;
   } catch (error) {
     console.error("ICR update error:", error);
     return { success: false, error: "Failed to update ICR report" };
@@ -250,7 +272,16 @@ export async function deleteICRReport(reportId: number): Promise<ICRMutationResp
       return { success: false, error: response.error.message };
     }
 
-    return response.data as ICRMutationResponse;
+    const data = response.data as ICRMutationResponse;
+    
+    // Check for unauthorized in response data
+    if (!data.success && data.error) {
+      if (isUnauthorizedError(0, { error: data.error })) {
+        handleUnauthorized(data.error);
+      }
+    }
+
+    return data;
   } catch (error) {
     console.error("ICR delete error:", error);
     return { success: false, error: "Failed to delete ICR report" };
