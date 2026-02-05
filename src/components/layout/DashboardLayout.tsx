@@ -1,5 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { AppSidebar } from "./AppSidebar";
+import { GlobalSearch } from "./GlobalSearch";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -11,8 +12,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { LogOut, ChevronDown, Menu, X } from "lucide-react";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { LogOut, ChevronDown, Menu } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSchool } from "@/contexts/SchoolContext";
 import { useSidebarState } from "@/contexts/SidebarContext";
@@ -94,8 +95,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </Button>
             )}
 
-            {/* Spacer for desktop */}
-            {!isMobile && <div />}
+            {/* Global Search Bar */}
+            <div className="flex-1 flex justify-center max-w-2xl mx-4">
+              <GlobalSearch />
+            </div>
 
             <div className="flex items-center gap-2">
               <ThemeToggle />
