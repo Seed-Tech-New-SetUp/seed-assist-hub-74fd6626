@@ -4,18 +4,26 @@ import { ICRReportForm } from "@/components/icr/ICRReportForm";
 import { PreviousReportsModal } from "@/components/icr/PreviousReportsModal";
 import { Button } from "@/components/ui/button";
 import { History } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 import type { ICRReport } from "@/lib/api/icr";
 
 const AddICRReport = () => {
   const [showPreviousReports, setShowPreviousReports] = useState(false);
+  const [editReport, setEditReport] = useState<ICRReport | null>(null);
+  const queryClient = useQueryClient();
 
   const handleEditReport = (report: ICRReport) => {
-    // TODO: Implement edit mode in form
-    toast({
-      title: "Edit Mode",
-      description: `Editing ${report.report_month} report. Feature coming soon!`,
-    });
+    setEditReport(report);
+  };
+
+  const handleCancelEdit = () => {
+    setEditReport(null);
+  };
+
+  const handleSuccess = () => {
+    setEditReport(null);
+    queryClient.invalidateQueries({ queryKey: ["icr-reports"] });
+    queryClient.invalidateQueries({ queryKey: ["icr-reports-modal"] });
   };
 
   return (
@@ -23,9 +31,14 @@ const AddICRReport = () => {
       <div className="space-y-6">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Add Monthly Report</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">
+              {editReport ? "Edit Monthly Report" : "Add Monthly Report"}
+            </h1>
             <p className="text-muted-foreground mt-1">
-              Submit your in-country representation monthly performance data
+              {editReport 
+                ? "Update your in-country representation monthly performance data"
+                : "Submit your in-country representation monthly performance data"
+              }
             </p>
           </div>
           <Button
@@ -38,7 +51,11 @@ const AddICRReport = () => {
           </Button>
         </div>
 
-        <ICRReportForm />
+        <ICRReportForm 
+          editReport={editReport}
+          onCancelEdit={handleCancelEdit}
+          onSuccess={handleSuccess}
+        />
 
         <PreviousReportsModal
           open={showPreviousReports}
