@@ -130,7 +130,7 @@ export default function UniversityApplications() {
               Applications & Admits Pipeline
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              All student applications submitted via SEED
+              Track and manage student applications and admits submitted via SEED
             </p>
           </div>
           <div className="flex gap-2">
