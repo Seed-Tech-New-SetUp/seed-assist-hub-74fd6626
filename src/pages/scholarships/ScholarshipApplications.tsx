@@ -299,26 +299,28 @@ export default function ScholarshipApplications() {
     }
   };
 
-   // Get selected applicant name for single selection
-   const selectedApplicantName = selectedApplicants.length === 1 
-     ? applicants.find(a => a.id === selectedApplicants[0])?.name || "[Student Name]"
-     : "[Student Name]";
-
-   // Prepare email template data
-   const emailTemplateData: EmailTemplateData = {
-     studentName: selectedApplicantName,
-     scholarshipName: selectedSchool?.school_name 
-       ? selectedSchool?.university 
-         ? `${selectedSchool.university} - ${selectedSchool.school_name} Scholarships`
-         : `${selectedSchool.school_name} Scholarships`
-       : currentSchool?.name 
-         ? `${currentSchool.name} Scholarships`
-         : "Scholarship Program",
-     schoolName: selectedSchool?.school_name || currentSchool?.name || "University",
-     clientName: (user as { full_name?: string })?.full_name || "SEED Global Education",
-     awardName: "[Award Name]",
-     universityName: selectedSchool?.university,
-   };
+   // Prepare email template data - memoized to ensure it updates when selection changes
+   const emailTemplateData: EmailTemplateData = useMemo(() => {
+     // Get selected applicant name for single selection
+     const selectedApplicantName = selectedApplicants.length === 1 
+       ? applicants.find(a => a.id === selectedApplicants[0])?.name || "[Student Name]"
+       : "[Student Name]";
+     
+     return {
+       studentName: selectedApplicantName,
+       scholarshipName: selectedSchool?.school_name 
+         ? selectedSchool?.university 
+           ? `${selectedSchool.university} - ${selectedSchool.school_name} Scholarships`
+           : `${selectedSchool.school_name} Scholarships`
+         : currentSchool?.name 
+           ? `${currentSchool.name} Scholarships`
+           : "Scholarship Program",
+       schoolName: selectedSchool?.school_name || currentSchool?.name || "University",
+       clientName: (user as { full_name?: string })?.full_name || "SEED Global Education",
+       awardName: "[Award Name]",
+       universityName: selectedSchool?.university,
+     };
+   }, [selectedApplicants, applicants, selectedSchool, currentSchool, user]);
 
   // Loading state
   if (isLoading) {
