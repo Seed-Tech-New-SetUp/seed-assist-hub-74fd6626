@@ -38,7 +38,7 @@ import {
   PaginationPrevious,
   PaginationEllipsis,
 } from "@/components/ui/pagination";
-import { Star, Check, Pause, X, Trophy, Search, Eye, AlertCircle, RefreshCw } from "lucide-react";
+ import { Star, Check, Pause, X, Trophy, Search, Eye, AlertCircle, RefreshCw, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { ApplicationFilters, FilterState } from "@/components/scholarships/ApplicationFilters";
@@ -50,6 +50,13 @@ import {
   ApiMeta, 
   ApiFilterOptions 
 } from "@/lib/api/scholarship";
+ import { 
+   EmailPreviewModal, 
+   mapWorkflowToEmailStatus,
+   EmailTemplateData,
+   EmailStatus 
+ } from "@/components/scholarships/EmailPreviewModal";
+ import { useSchool } from "@/contexts/SchoolContext";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 
@@ -74,7 +81,7 @@ export default function ScholarshipApplications() {
   const [selectedApplicants, setSelectedApplicants] = useState<string[]>([]);
   const [showStatusDialog, setShowStatusDialog] = useState(false);
   const [newStatus, setNewStatus] = useState<WorkflowStatus | null>(null);
-  const [showNotifyDialog, setShowNotifyDialog] = useState(false);
+   const [showEmailPreview, setShowEmailPreview] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
@@ -88,6 +95,7 @@ export default function ScholarshipApplications() {
     nationalities: [],
     genders: [],
   });
+   const { currentSchool } = useSchool();
   const { toast } = useToast();
 
   // Fetch applicants from API
@@ -229,10 +237,17 @@ export default function ScholarshipApplications() {
 
   const confirmStatusChange = () => {
     setShowStatusDialog(false);
-    setShowNotifyDialog(true);
+     // Check if this status has an email template
+     const emailStatus = newStatus ? mapWorkflowToEmailStatus(newStatus) : null;
+     if (emailStatus) {
+       setShowEmailPreview(true);
+     } else {
+       // No email template for this status, proceed without email
+       handleStatusUpdate(false);
+     }
   };
 
-  const handleNotifyDecision = async (notify: boolean) => {
+   const handleStatusUpdate = async (sendEmail: boolean) => {
     if (!newStatus) return;
     
     setIsUpdatingStatus(true);
@@ -250,7 +265,7 @@ export default function ScholarshipApplications() {
       await updateApplicantStatus({
         contact_ids: selectedApplicants,
         status: statusMap[newStatus] || newStatus.toUpperCase(),
-        send_email: notify,
+         send_email: sendEmail,
       });
 
       // Update the applicants state with new status
@@ -262,7 +277,7 @@ export default function ScholarshipApplications() {
 
       toast({
         title: "Status Updated",
-        description: `${selectedApplicants.length} applicant(s) updated to ${statusConfig[newStatus]?.label || newStatus}${notify ? ". Notifications sent." : "."}`,
+         description: `${selectedApplicants.length} applicant(s) updated to ${statusConfig[newStatus]?.label || newStatus}${sendEmail ? ". Notifications sent." : "."}`,
       });
     } catch (err) {
       console.error("Error updating status:", err);
@@ -273,11 +288,20 @@ export default function ScholarshipApplications() {
       });
     } finally {
       setIsUpdatingStatus(false);
-      setShowNotifyDialog(false);
+       setShowEmailPreview(false);
       setSelectedApplicants([]);
       setNewStatus(null);
     }
   };
+
+   // Prepare email template data
+   const emailTemplateData: EmailTemplateData = {
+     studentName: "[Student Name]",
+     scholarshipName: "Scholarship Program",
+     schoolName: currentSchool?.name || "University",
+     clientName: "SEED Global Education",
+     awardName: "[Award Name]",
+   };
 
   // Loading state
   if (isLoading) {
@@ -680,25 +704,17 @@ export default function ScholarshipApplications() {
           </DialogContent>
         </Dialog>
 
-        {/* Notify Dialog */}
-        <Dialog open={showNotifyDialog} onOpenChange={(open) => !isUpdatingStatus && setShowNotifyDialog(open)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Send Notification?</DialogTitle>
-              <DialogDescription>
-                Would you like to notify the applicants about this status change via email?
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => handleNotifyDecision(false)} disabled={isUpdatingStatus}>
-                {isUpdatingStatus ? "Updating..." : "No"}
-              </Button>
-              <Button onClick={() => handleNotifyDecision(true)} disabled={isUpdatingStatus}>
-                {isUpdatingStatus ? "Sending..." : "Yes, Send Email"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+         {/* Email Preview Modal */}
+         <EmailPreviewModal
+           open={showEmailPreview}
+           onOpenChange={setShowEmailPreview}
+           status={newStatus ? mapWorkflowToEmailStatus(newStatus) : null}
+           selectedCount={selectedApplicants.length}
+           templateData={emailTemplateData}
+           isLoading={isUpdatingStatus}
+           onConfirmSend={() => handleStatusUpdate(true)}
+           onSkipEmail={() => handleStatusUpdate(false)}
+         />
       </div>
     </DashboardLayout>
   );
