@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { AUTH_COOKIES, getCookie } from "@/lib/utils/cookies";
+import { decodeObjectStrings } from "@/lib/utils/decode-utf8";
 
 const getAuthToken = (): string | null => {
   return getCookie(AUTH_COOKIES.TOKEN) || getCookie("auth_token");
@@ -148,12 +149,6 @@ export async function fetchVisaLicenses(options: FetchOptions = {}): Promise<Vis
   params.append("limit", String(options.limit || 100));
   params.append("offset", String(options.offset || 0));
 
-  const { data, error } = await supabase.functions.invoke("visa-tutor-proxy", {
-    headers: { Authorization: `Bearer ${token}` },
-    body: null,
-    method: "GET",
-  });
-
   // Supabase functions.invoke doesn't support query params directly, so we use fetch
   const response = await fetch(
     `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/visa-tutor-proxy?${params.toString()}`,
@@ -171,7 +166,8 @@ export async function fetchVisaLicenses(options: FetchOptions = {}): Promise<Vis
     return { success: false, error: errorData.error || "Failed to fetch licenses" };
   }
 
-  return response.json();
+  const data = await response.json();
+  return decodeObjectStrings(data);
 }
 
 export async function fetchLicenseDetails(licenseNumber: string): Promise<LicenseDetailsResponse> {
@@ -201,7 +197,8 @@ export async function fetchLicenseDetails(licenseNumber: string): Promise<Licens
     return { success: false, error: errorData.error || "Failed to fetch license details" };
   }
 
-  return response.json();
+  const data = await response.json();
+  return decodeObjectStrings(data);
 }
 
 export async function fetchSessionDetails(
@@ -235,7 +232,8 @@ export async function fetchSessionDetails(
     return { success: false, error: errorData.error || "Failed to fetch session details" };
   }
 
-  return response.json();
+  const data = await response.json();
+  return decodeObjectStrings(data);
 }
 
 export async function reassignLicense(payload: ReassignPayload): Promise<ReassignResponse> {

@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { AUTH_COOKIES, getCookie } from "@/lib/utils/cookies";
 import { handleUnauthorized, isUnauthorizedError } from "@/lib/utils/auth-handler";
+import { decodeObjectStrings } from "@/lib/utils/decode-utf8";
 
 // ===========================================
 // ICR (In-Country Representation) API
@@ -193,7 +194,7 @@ export async function fetchICRReports(
       }
     }
 
-    return data;
+    return decodeObjectStrings(data);
   } catch (error) {
     console.error("ICR fetch error:", error);
     return { success: false, error: "Failed to fetch ICR reports" };
@@ -232,7 +233,7 @@ export async function fetchPreviousICRReports(): Promise<ICRPreviousReportsRespo
       }
     }
 
-    return data;
+    return decodeObjectStrings(data);
   } catch (error) {
     console.error("ICR previous reports fetch error:", error);
     return { success: false, error: "Failed to fetch previous ICR reports" };
