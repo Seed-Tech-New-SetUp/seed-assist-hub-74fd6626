@@ -1,4 +1,5 @@
  import { useState } from "react";
+ import { useEffect } from "react";
  import {
    Dialog,
    DialogContent,
@@ -8,9 +9,11 @@
    DialogTitle,
  } from "@/components/ui/dialog";
  import { Button } from "@/components/ui/button";
- import { ScrollArea } from "@/components/ui/scroll-area";
+ import { Input } from "@/components/ui/input";
+ import { Label } from "@/components/ui/label";
  import { Badge } from "@/components/ui/badge";
- import { Mail, Send, X } from "lucide-react";
+ import { Mail, Send, X, RotateCcw } from "lucide-react";
+ import { RichTextEditor } from "@/components/ui/rich-text-editor";
  
  export type EmailStatus = "shortlisted" | "rejected" | "onHold" | "selected";
  
@@ -123,7 +126,28 @@
      },
    };
  
-   return templates[status] || null;
+   return templates[status] ?? null;
+ }
+
+ // Convert plain text to HTML for the rich text editor
+ function textToHtml(text: string): string {
+   return text
+     .split("\n\n")
+     .map((paragraph) => {
+       // Check if it's a bullet point section
+       if (paragraph.includes("• ")) {
+         const lines = paragraph.split("\n");
+         const listItems = lines
+           .filter((line) => line.startsWith("• "))
+           .map((line) => `<li>${line.replace("• ", "")}</li>`)
+           .join("");
+         const nonListLines = lines.filter((line) => !line.startsWith("• "));
+         const prefix = nonListLines.length > 0 ? `<p>${nonListLines.join("<br>")}</p>` : "";
+         return `${prefix}<ul>${listItems}</ul>`;
+       }
+       return `<p>${paragraph.replace(/\n/g, "<br>")}</p>`;
+     })
+     .join("");
  }
  
  // Map workflow status to email status
@@ -158,7 +182,7 @@
    selectedCount: number;
    templateData: EmailTemplateData;
    isLoading?: boolean;
-   onConfirmSend: () => void;
+   onConfirmSend: (subject: string, body: string) => void;
    onSkipEmail: () => void;
  }
  
@@ -172,22 +196,44 @@
    onConfirmSend,
    onSkipEmail,
  }: EmailPreviewModalProps) {
+   const [subject, setSubject] = useState("");
+   const [bodyHtml, setBodyHtml] = useState("");
+   const [originalSubject, setOriginalSubject] = useState("");
+   const [originalBodyHtml, setOriginalBodyHtml] = useState("");
+
+   // Initialize email content when modal opens or status changes
+   useEffect(() => {
+     if (open && status) {
+       const template = getEmailTemplate(status, templateData);
+       if (template) {
+         const htmlBody = textToHtml(template.body);
+         setSubject(template.subject);
+         setBodyHtml(htmlBody);
+         setOriginalSubject(template.subject);
+         setOriginalBodyHtml(htmlBody);
+       }
+     }
+   }, [open, status, templateData]);
+
+   const handleReset = () => {
+     setSubject(originalSubject);
+     setBodyHtml(originalBodyHtml);
+   };
+
+   const hasChanges = subject !== originalSubject || bodyHtml !== originalBodyHtml;
+
    if (!status) return null;
- 
-   const template = getEmailTemplate(status, templateData);
- 
-   if (!template) return null;
  
    return (
      <Dialog open={open} onOpenChange={(open) => !isLoading && onOpenChange(open)}>
-       <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+       <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
          <DialogHeader className="flex-shrink-0">
            <DialogTitle className="flex items-center gap-2">
              <Mail className="h-5 w-5 text-primary" />
-             Email Preview
+             Compose Email
            </DialogTitle>
            <DialogDescription className="flex items-center gap-2">
-             Review the email that will be sent to{" "}
+             Edit and send email to{" "}
              <span className="font-semibold">{selectedCount} applicant(s)</span>
              <Badge variant="outline" className={statusColors[status]}>
                {statusLabels[status]}
@@ -196,39 +242,54 @@
          </DialogHeader>
  
          <div className="flex-1 overflow-hidden">
-           <div className="space-y-4">
+           <div className="space-y-4 overflow-y-auto max-h-[calc(90vh-200px)] pr-1">
              {/* Subject Line */}
-             <div className="rounded-lg border bg-muted/30 p-4">
-               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
-                 Subject
-               </p>
-               <p className="font-medium text-foreground">{template.subject}</p>
+             <div className="space-y-2">
+               <Label htmlFor="email-subject" className="text-sm font-medium">
+                 Subject Line
+               </Label>
+               <Input
+                 id="email-subject"
+                 value={subject}
+                 onChange={(e) => setSubject(e.target.value)}
+                 placeholder="Enter email subject..."
+                 className="font-medium"
+               />
              </div>
  
              {/* Email Body */}
-             <div className="rounded-lg border bg-muted/30">
-               <div className="p-3 border-b bg-muted/50">
-                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                   Email Body
-                 </p>
-               </div>
-               <ScrollArea className="h-[300px]">
-                 <div className="p-4">
-                   <pre className="whitespace-pre-wrap font-sans text-sm text-foreground leading-relaxed">
-                     {template.body}
-                   </pre>
-                 </div>
-               </ScrollArea>
+             <div className="space-y-2">
+               <Label className="text-sm font-medium">Email Body</Label>
+               <RichTextEditor
+                 value={bodyHtml}
+                 onChange={setBodyHtml}
+                 className="min-h-[280px] [&_.ProseMirror]:min-h-[240px]"
+               />
              </div>
  
              {/* Note */}
-             <p className="text-xs text-muted-foreground text-center">
-               Student names and details will be personalized for each recipient.
-             </p>
+             <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
+               <p className="font-medium mb-1">Personalization Note:</p>
+               <p>
+                 [Student Name], [Award Name], and other placeholders will be automatically
+                 replaced with each recipient's actual details when the email is sent.
+               </p>
+             </div>
            </div>
          </div>
  
          <DialogFooter className="flex-shrink-0 gap-2 sm:gap-0">
+           {hasChanges && (
+             <Button
+               variant="ghost"
+               onClick={handleReset}
+               disabled={isLoading}
+               className="mr-auto"
+             >
+               <RotateCcw className="h-4 w-4 mr-2" />
+               Reset
+             </Button>
+           )}
            <Button
              variant="outline"
              onClick={onSkipEmail}
@@ -237,7 +298,10 @@
              <X className="h-4 w-4 mr-2" />
              Don't Send Email
            </Button>
-           <Button onClick={onConfirmSend} disabled={isLoading}>
+           <Button
+             onClick={() => onConfirmSend(subject, bodyHtml)}
+             disabled={isLoading || !subject.trim()}
+           >
              <Send className="h-4 w-4 mr-2" />
              {isLoading ? "Sending..." : "Send Email"}
            </Button>
