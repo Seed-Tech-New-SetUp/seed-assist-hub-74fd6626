@@ -240,9 +240,10 @@ export default function ScholarshipApplications() {
      // Check if this status has an email template
      const emailStatus = newStatus ? mapWorkflowToEmailStatus(newStatus) : null;
      if (emailStatus) {
+       // Show email preview for statuses with templates
        setShowEmailPreview(true);
      } else {
-       // No email template for this status, proceed without email
+       // No email template for this status (e.g., pending, recommended), proceed without email
        handleStatusUpdate(false);
      }
   };
