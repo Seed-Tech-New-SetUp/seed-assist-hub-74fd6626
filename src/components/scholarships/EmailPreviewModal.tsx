@@ -244,13 +244,13 @@
  
    return (
      <Dialog open={open} onOpenChange={(open) => !isLoading && onOpenChange(open)}>
-       <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
-         <DialogHeader className="flex-shrink-0">
+      <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col p-0">
+        <DialogHeader className="flex-shrink-0 px-6 pt-6 pb-4 border-b">
            <DialogTitle className="flex items-center gap-2">
              <Mail className="h-5 w-5 text-primary" />
              Compose Email
            </DialogTitle>
-           <DialogDescription className="flex items-center gap-2">
+          <DialogDescription className="flex items-center gap-2 mt-1">
              Edit and send email to{" "}
              <span className="font-semibold">{selectedCount} applicant(s)</span>
              <Badge variant="outline" className={statusColors[status]}>
@@ -259,10 +259,10 @@
            </DialogDescription>
          </DialogHeader>
  
-         <div className="flex-1 overflow-hidden">
-           <div className="space-y-4 overflow-y-auto max-h-[calc(90vh-200px)] pr-1">
+        <div className="flex-1 overflow-hidden px-6 py-5">
+          <div className="space-y-5 overflow-y-auto max-h-[calc(90vh-220px)] pr-1">
              {/* Subject Line */}
-             <div className="space-y-2">
+            <div className="space-y-2.5">
                <Label htmlFor="email-subject" className="text-sm font-medium">
                  Subject Line
                </Label>
@@ -271,22 +271,22 @@
                  value={subject}
                  onChange={(e) => setSubject(e.target.value)}
                  placeholder="Enter email subject..."
-                 className="font-medium"
+                className="font-medium h-11"
                />
              </div>
  
              {/* Email Body */}
-             <div className="space-y-2">
+            <div className="space-y-2.5">
                <Label className="text-sm font-medium">Email Body</Label>
                <RichTextEditor
                  value={bodyHtml}
                  onChange={setBodyHtml}
-                 className="min-h-[280px] [&_.ProseMirror]:min-h-[240px]"
+                className="min-h-[320px] [&_.ProseMirror]:min-h-[280px] [&_.ProseMirror]:p-4"
                />
              </div>
  
              {/* Note */}
-             <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
+            <div className="rounded-lg bg-muted/50 p-4 text-xs text-muted-foreground">
                <p className="font-medium mb-1">Personalization Note:</p>
                <p>
                  [Student Name], [Award Name], and other placeholders will be automatically
@@ -296,7 +296,7 @@
            </div>
          </div>
  
-         <DialogFooter className="flex-shrink-0 gap-2 sm:gap-0">
+        <DialogFooter className="flex-shrink-0 gap-2 sm:gap-2 px-6 py-4 border-t bg-muted/30">
            {hasChanges && (
              <Button
                variant="ghost"
