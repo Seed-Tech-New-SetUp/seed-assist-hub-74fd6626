@@ -141,7 +141,7 @@ export default function InCountryReports() {
             In-Country <span className="text-primary">Representation</span>
           </h1>
           <p className="text-muted-foreground">
-            {school ? `${school.school_name} - ${school.university}` : "Manage monthly activity reports from your regional representatives."}
+            {school ? `${school.school_name} - ${school.university}` : "Monitor regional engagement and performance across different markets"}
           </p>
         </div>
       </div>
