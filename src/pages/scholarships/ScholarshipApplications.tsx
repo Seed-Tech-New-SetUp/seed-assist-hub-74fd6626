@@ -299,9 +299,14 @@ export default function ScholarshipApplications() {
     }
   };
 
+   // Get selected applicant name for single selection
+   const selectedApplicantName = selectedApplicants.length === 1 
+     ? applicants.find(a => a.id === selectedApplicants[0])?.name || "[Student Name]"
+     : "[Student Name]";
+
    // Prepare email template data
    const emailTemplateData: EmailTemplateData = {
-     studentName: "[Student Name]",
+     studentName: selectedApplicantName,
      scholarshipName: selectedSchool?.school_name 
        ? selectedSchool?.university 
          ? `${selectedSchool.university} - ${selectedSchool.school_name} Scholarships`
