@@ -7,7 +7,6 @@ import { FileUploadZone } from "@/components/lae/FileUploadZone";
 import { FilesList } from "@/components/lae/FilesList";
 import { AssignmentCard } from "@/components/lae/AssignmentCard";
 import { AnalyticsModal } from "@/components/lae/AnalyticsModal";
-import { AllRecordsModal } from "@/components/lae/AllRecordsModal";
 import {
   LAEFile,
   LAEAssignment,
@@ -39,10 +38,6 @@ export default function LeadAnalytics() {
   const [selectedAssignmentId, setSelectedAssignmentId] = useState<string | null>(null);
   const [selectedAssignmentName, setSelectedAssignmentName] = useState("");
 
-  // Contacts modal state (all applications)
-  const [contactsModalOpen, setContactsModalOpen] = useState(false);
-  const [contactsAssignmentId, setContactsAssignmentId] = useState<string | null>(null);
-  const [contactsAssignmentName, setContactsAssignmentName] = useState("");
 
   // Load files
   const loadFiles = useCallback(async () => {
@@ -153,12 +148,6 @@ export default function LeadAnalytics() {
     setAnalyticsModalOpen(true);
   };
 
-  // Handle view contacts (all applications)
-  const handleViewContacts = (assignmentId: string, assignmentName: string) => {
-    setContactsAssignmentId(assignmentId);
-    setContactsAssignmentName(assignmentName);
-    setContactsModalOpen(true);
-  };
 
   return (
     <DashboardLayout>
@@ -238,7 +227,6 @@ export default function LeadAnalytics() {
                     key={assignment.assignment_id}
                     assignment={assignment}
                     onViewAnalytics={handleViewAnalytics}
-                    onViewContacts={handleViewContacts}
                   />
                 ))}
               </div>
@@ -255,13 +243,6 @@ export default function LeadAnalytics() {
         assignmentName={selectedAssignmentName}
       />
 
-      {/* All Records Modal (All Applications) */}
-      <AllRecordsModal
-        open={contactsModalOpen}
-        onOpenChange={setContactsModalOpen}
-        assignmentId={contactsAssignmentId}
-        assignmentName={contactsAssignmentName}
-      />
     </DashboardLayout>
   );
 }
