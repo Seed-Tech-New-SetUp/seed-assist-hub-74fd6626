@@ -57,6 +57,7 @@ interface MeetupEventData {
   hs_event_record_id: string;
   reports_published: boolean;
   academic_season: string;
+  banner_url?: string;
 }
 
 interface InPersonReportApiResponse {
@@ -279,7 +280,9 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
       return {
         name: meetupData?.header || '',
         date: meetupData?.date || '',
-        bannerUrl: null, // Meetups don't have banners
+        bannerUrl: meetupData?.banner_url 
+          ? `https://admin.seedglobaleducation.com/assets/assets/meetup-images/banners/${meetupData.banner_url}`
+          : null,
         youtubeUrl: null,
         schools: schoolLogos.map(s => ({ school_logo: s.school_logo })),
         meetupSchools: schoolLogos,
