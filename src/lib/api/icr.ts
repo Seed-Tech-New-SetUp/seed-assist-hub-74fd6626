@@ -76,12 +76,51 @@ export interface ICRReportsResponse {
   error?: string;
 }
 
+// Payload types for create/update
+export interface ICRLeadGenerationInput {
+  activity_type: string;
+  qualified_leads: number;
+  description: string;
+}
+
+export interface ICRLeadEngagementInput {
+  activity_type: string;
+  leads_engaged: number;
+  description: string;
+}
+
+export interface ICRApplicationFunnelInput {
+  leadsEngaged: number;
+  notInterested: number;
+  interested2026: number;
+  applicationsSubmitted: number;
+  admitted: number;
+  offersAccepted: number;
+  enrolled: number;
+}
+
+export interface ICRCreatePayload {
+  reportMonth: string;
+  leadGeneration: ICRLeadGenerationInput[];
+  leadEngagement: ICRLeadEngagementInput[];
+  applicationFunnel: ICRApplicationFunnelInput;
+}
+
+export interface ICRUpdatePayload extends ICRCreatePayload {
+  report_id: number;
+}
+
+export interface ICRMutationResponse {
+  success: boolean;
+  message?: string;
+  report_id?: number;
+  error?: string;
+}
+
 export async function fetchICRReports(
   year?: string,
   month?: string
 ): Promise<ICRReportsResponse> {
-  // Token is stored in secure cookies by the portal auth flow
-  // (legacy fallback to "auth_token" kept for backward compatibility)
   const token = getCookie(AUTH_COOKIES.TOKEN) ?? getCookie("auth_token");
 
   if (!token) {
@@ -89,29 +128,21 @@ export async function fetchICRReports(
   }
 
   try {
-    // Build query parameters for the edge function
-    const params = new URLSearchParams();
-    if (year) params.append('year', year);
-    if (month) params.append('month', month);
-    
-    // Pass filters in request body since supabase.functions.invoke doesn't support query params
     const response = await supabase.functions.invoke('icr-proxy', {
       headers: {
         Authorization: `Bearer ${token}`,
       },
-      body: { year, month },
+      body: { action: 'list', year, month },
     });
 
     if (response.error) {
       console.error("ICR API Error:", response.error);
-      // Check for auth errors
       if (isUnauthorizedError((response.error as { status?: number }).status || 0, { error: response.error.message })) {
         handleUnauthorized(response.error.message);
       }
       return { success: false, error: response.error.message };
     }
 
-    // Check response data for auth errors
     const data = response.data as ICRReportsResponse;
     if (!data.success && data.error && isUnauthorizedError(401, { error: data.error })) {
       handleUnauthorized(data.error);
@@ -121,6 +152,108 @@ export async function fetchICRReports(
   } catch (error) {
     console.error("ICR fetch error:", error);
     return { success: false, error: "Failed to fetch ICR reports" };
+  }
+}
+
+export async function createICRReport(payload: ICRCreatePayload): Promise<ICRMutationResponse> {
+  const token = getCookie(AUTH_COOKIES.TOKEN) ?? getCookie("auth_token");
+
+  if (!token) {
+    handleUnauthorized("Not authenticated");
+    return { success: false, error: "Not authenticated" };
+  }
+
+  try {
+    const response = await supabase.functions.invoke('icr-proxy', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: {
+        action: 'create',
+        ...payload,
+      },
+    });
+
+    if (response.error) {
+      console.error("ICR Create Error:", response.error);
+      if (isUnauthorizedError((response.error as { status?: number }).status || 0, { error: response.error.message })) {
+        handleUnauthorized(response.error.message);
+      }
+      return { success: false, error: response.error.message };
+    }
+
+    return response.data as ICRMutationResponse;
+  } catch (error) {
+    console.error("ICR create error:", error);
+    return { success: false, error: "Failed to create ICR report" };
+  }
+}
+
+export async function updateICRReport(payload: ICRUpdatePayload): Promise<ICRMutationResponse> {
+  const token = getCookie(AUTH_COOKIES.TOKEN) ?? getCookie("auth_token");
+
+  if (!token) {
+    handleUnauthorized("Not authenticated");
+    return { success: false, error: "Not authenticated" };
+  }
+
+  try {
+    const response = await supabase.functions.invoke('icr-proxy', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: {
+        action: 'update',
+        ...payload,
+      },
+    });
+
+    if (response.error) {
+      console.error("ICR Update Error:", response.error);
+      if (isUnauthorizedError((response.error as { status?: number }).status || 0, { error: response.error.message })) {
+        handleUnauthorized(response.error.message);
+      }
+      return { success: false, error: response.error.message };
+    }
+
+    return response.data as ICRMutationResponse;
+  } catch (error) {
+    console.error("ICR update error:", error);
+    return { success: false, error: "Failed to update ICR report" };
+  }
+}
+
+export async function deleteICRReport(reportId: number): Promise<ICRMutationResponse> {
+  const token = getCookie(AUTH_COOKIES.TOKEN) ?? getCookie("auth_token");
+
+  if (!token) {
+    handleUnauthorized("Not authenticated");
+    return { success: false, error: "Not authenticated" };
+  }
+
+  try {
+    const response = await supabase.functions.invoke('icr-proxy', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: {
+        action: 'delete',
+        report_id: reportId,
+      },
+    });
+
+    if (response.error) {
+      console.error("ICR Delete Error:", response.error);
+      if (isUnauthorizedError((response.error as { status?: number }).status || 0, { error: response.error.message })) {
+        handleUnauthorized(response.error.message);
+      }
+      return { success: false, error: response.error.message };
+    }
+
+    return response.data as ICRMutationResponse;
+  } catch (error) {
+    console.error("ICR delete error:", error);
+    return { success: false, error: "Failed to delete ICR report" };
   }
 }
 

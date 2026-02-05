@@ -25,6 +25,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { createICRReport, ICRCreatePayload } from "@/lib/api/icr";
 
 // Types
 interface ActivityData {
@@ -218,8 +219,8 @@ export function ICRReportForm({ onSuccess, submittedMonths = [] }: ICRReportForm
     setIsSubmitting(true);
 
     try {
-      // Build submission payload
-      const payload = {
+      // Build submission payload matching API structure
+      const payload: ICRCreatePayload = {
         reportMonth: formData.reportMonth,
         leadGeneration: Object.entries(formData.leadGeneration)
           .filter(([, data]) => data.selected && data.leads > 0)
@@ -246,11 +247,11 @@ export function ICRReportForm({ onSuccess, submittedMonths = [] }: ICRReportForm
         },
       };
 
-      // TODO: Replace with actual API call
-      console.log("Submitting ICR Report:", payload);
-      
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const result = await createICRReport(payload);
+
+      if (!result.success) {
+        throw new Error(result.error || "Failed to submit report");
+      }
 
       toast({
         title: "Report Submitted Successfully",
@@ -265,7 +266,7 @@ export function ICRReportForm({ onSuccess, submittedMonths = [] }: ICRReportForm
       console.error("Failed to submit report:", error);
       toast({
         title: "Submission Failed",
-        description: "Failed to submit the report. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to submit the report. Please try again.",
         variant: "destructive",
       });
     } finally {
