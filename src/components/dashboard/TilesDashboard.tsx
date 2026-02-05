@@ -206,15 +206,10 @@ export function TilesDashboard() {
           
           <div className="relative p-5 md:p-6">
             {/* Header */}
-            <div className="flex items-start justify-between mb-4">
+            <div className="flex items-start mb-4">
               <div className={cn("p-3 rounded-xl", module.iconBg)}>
                 <module.icon className="h-5 w-5" />
               </div>
-              {module.tag && (
-                <Badge variant="secondary" className="text-[10px] font-medium">
-                  {module.tag}
-                </Badge>
-              )}
             </div>
 
             {/* Content */}
