@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,9 +23,10 @@ import {
   Filter,
   FileCheck,
   Loader2,
+  X,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { createICRReport, ICRCreatePayload } from "@/lib/api/icr";
+import { createICRReport, updateICRReport, ICRCreatePayload, ICRUpdatePayload, type ICRReport } from "@/lib/api/icr";
 
 // Types
 interface ActivityData {
@@ -112,15 +113,66 @@ function getInitialFormData(): FormData {
   };
 }
 
+// Convert ICRReport to FormData for editing
+function convertReportToFormData(report: ICRReport): FormData {
+  const leadGeneration: Record<string, ActivityData> = {};
+  LEAD_GENERATION_ACTIVITIES.forEach(({ key }) => {
+    const activity = report.lead_generation.find((lg) => lg.activity_type === key);
+    leadGeneration[key] = activity
+      ? { selected: true, leads: activity.qualified_leads, description: activity.description || "" }
+      : { selected: false, leads: 0, description: "" };
+  });
+
+  const leadEngagement: Record<string, ActivityData> = {};
+  LEAD_ENGAGEMENT_ACTIVITIES.forEach(({ key }) => {
+    const activity = report.lead_engagement.find((le) => le.activity_type === key);
+    leadEngagement[key] = activity
+      ? { selected: true, leads: activity.leads_engaged, description: activity.description || "" }
+      : { selected: false, leads: 0, description: "" };
+  });
+
+  const funnel = report.application_funnel;
+
+  return {
+    reportMonth: report.report_month,
+    leadGeneration,
+    leadEngagement,
+    applicationFunnel: {
+      leadsEngaged: funnel?.leads_engaged ?? 0,
+      notInterested: funnel?.not_interested ?? 0,
+      interested2026: funnel?.interested_2026 ?? 0,
+      applicationsSubmitted: funnel?.applications_submitted ?? 0,
+      admitted: funnel?.admitted ?? 0,
+      offersAccepted: funnel?.offers_accepted ?? 0,
+      enrolled: funnel?.enrolled ?? 0,
+    },
+  };
+}
+
 interface ICRReportFormProps {
   onSuccess?: () => void;
   submittedMonths?: string[];
+  editReport?: ICRReport | null;
+  onCancelEdit?: () => void;
 }
 
-export function ICRReportForm({ onSuccess, submittedMonths = [] }: ICRReportFormProps) {
+export function ICRReportForm({ onSuccess, submittedMonths = [], editReport, onCancelEdit }: ICRReportFormProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<FormData>(getInitialFormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const isEditMode = !!editReport;
+
+  // Load edit data when editReport changes
+  useEffect(() => {
+    if (editReport) {
+      setFormData(convertReportToFormData(editReport));
+      setCurrentStep(1);
+    } else {
+      setFormData(getInitialFormData());
+      setCurrentStep(1);
+    }
+  }, [editReport]);
 
   const availableMonths = useMemo(() => generateAvailableMonths(), []);
 
@@ -220,7 +272,7 @@ export function ICRReportForm({ onSuccess, submittedMonths = [] }: ICRReportForm
 
     try {
       // Build submission payload matching API structure
-      const payload: ICRCreatePayload = {
+      const basePayload = {
         reportMonth: formData.reportMonth,
         leadGeneration: Object.entries(formData.leadGeneration)
           .filter(([, data]) => data.selected && data.leads > 0)
@@ -247,15 +299,24 @@ export function ICRReportForm({ onSuccess, submittedMonths = [] }: ICRReportForm
         },
       };
 
-      const result = await createICRReport(payload);
+      let result;
+      if (isEditMode && editReport) {
+        const updatePayload: ICRUpdatePayload = {
+          ...basePayload,
+          report_id: editReport.report_id,
+        };
+        result = await updateICRReport(updatePayload);
+      } else {
+        result = await createICRReport(basePayload as ICRCreatePayload);
+      }
 
       if (!result.success) {
-        throw new Error(result.error || "Failed to submit report");
+        throw new Error(result.error || `Failed to ${isEditMode ? "update" : "submit"} report`);
       }
 
       toast({
-        title: "Report Submitted Successfully",
-        description: `Your ${availableMonths.find((m) => m.value === formData.reportMonth)?.label} report has been submitted.`,
+        title: isEditMode ? "Report Updated Successfully" : "Report Submitted Successfully",
+        description: `Your ${availableMonths.find((m) => m.value === formData.reportMonth)?.label} report has been ${isEditMode ? "updated" : "submitted"}.`,
       });
 
       // Reset form
@@ -263,10 +324,10 @@ export function ICRReportForm({ onSuccess, submittedMonths = [] }: ICRReportForm
       setCurrentStep(1);
       onSuccess?.();
     } catch (error) {
-      console.error("Failed to submit report:", error);
+      console.error(`Failed to ${isEditMode ? "update" : "submit"} report:`, error);
       toast({
-        title: "Submission Failed",
-        description: error instanceof Error ? error.message : "Failed to submit the report. Please try again.",
+        title: isEditMode ? "Update Failed" : "Submission Failed",
+        description: error instanceof Error ? error.message : `Failed to ${isEditMode ? "update" : "submit"} the report. Please try again.`,
         variant: "destructive",
       });
     } finally {
@@ -345,14 +406,21 @@ export function ICRReportForm({ onSuccess, submittedMonths = [] }: ICRReportForm
 
       {/* Form Card */}
       <Card variant="elevated">
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>
+            {isEditMode && <Badge variant="secondary" className="mr-2">Editing</Badge>}
             {currentStep === 1 && "Select Reporting Month"}
             {currentStep === 2 && "Lead Generation Activities"}
             {currentStep === 3 && "Lead Engagement Activities"}
             {currentStep === 4 && "Application Funnel"}
-            {currentStep === 5 && "Review & Submit"}
+            {currentStep === 5 && (isEditMode ? "Review & Update" : "Review & Submit")}
           </CardTitle>
+          {isEditMode && onCancelEdit && (
+            <Button variant="ghost" size="sm" onClick={onCancelEdit}>
+              <X className="h-4 w-4 mr-1" />
+              Cancel Edit
+            </Button>
+          )}
         </CardHeader>
         <CardContent className="min-h-[400px]">
           {/* Step 1: Month Selection */}
@@ -582,10 +650,10 @@ export function ICRReportForm({ onSuccess, submittedMonths = [] }: ICRReportForm
                 {isSubmitting ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Submitting...
+                    {isEditMode ? "Updating..." : "Submitting..."}
                   </>
                 ) : (
-                  "Submit Report"
+                  isEditMode ? "Update Report" : "Submit Report"
                 )}
               </Button>
             )}
