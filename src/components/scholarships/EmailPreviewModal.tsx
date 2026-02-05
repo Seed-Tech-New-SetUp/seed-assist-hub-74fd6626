@@ -32,8 +32,8 @@
  }
  
  function getEmailTemplate(status: EmailStatus, data: EmailTemplateData): EmailTemplate | null {
-  const fullSchoolName = data.universityName 
-    ? `${data.universityName} - ${data.schoolName}` 
+  const fullSchoolName = data.universityName
+    ? `${data.universityName} - ${data.schoolName}`
     : data.schoolName;
 
    const templates: Record<EmailStatus, EmailTemplate> = {
@@ -42,24 +42,22 @@
        body: `Dear ${data.studentName},
  
 Congratulations! We're pleased to inform you that you have been shortlisted for the ${data.scholarshipName} offered by ${fullSchoolName}.
- 
+
 **What's Next?**
- 
 • Submit Your Application: Please apply to ${fullSchoolName} before the application deadline. Ensure you use the same email address as your scholarship application.
- 
- • Already Applied? If you have already submitted your application, please get in touch with your Dedicated SEED Relationship Manager and share your program application details.
- 
+• Already Applied? If you have already submitted your application, please get in touch with your Dedicated SEED Relationship Manager and share your program application details.
+
 **Award Announcement:**
 Scholarship recipients will be announced by ${fullSchoolName} after all applications have been evaluated.
- 
+
 **Important Note:**
 Being shortlisted is an important milestone, but it does not guarantee a final award. The final decision rests solely with ${fullSchoolName}.
- 
- All scholarship amounts will be directly deducted from your tuition fee by the university.
- 
- Congratulations once again! If you have any questions, please contact us at scholarships@seedglobaleducation.com
- 
- Best regards,
+
+All scholarship amounts will be directly deducted from your tuition fee by the university.
+
+Congratulations once again! If you have any questions, please contact us at scholarships@seedglobaleducation.com
+
+Best regards,
 **${data.clientName}**
 **${fullSchoolName}**`,
      },
@@ -68,18 +66,18 @@ Being shortlisted is an important milestone, but it does not guarantee a final a
        body: `Dear ${data.studentName},
  
 Thank you for applying for the ${data.scholarshipName} offered by ${fullSchoolName}. We truly appreciate the time and effort you invested in your application.
- 
- After a thorough review, we regret to inform you that you have not been selected for a scholarship award in this cycle.
- 
+
+After a thorough review, we regret to inform you that you have not been selected for a scholarship award in this cycle.
+
 While this news may be disappointing, please know that your interest in ${fullSchoolName} is highly valued, and we encourage you to continue exploring future opportunities.
- 
+
 **Important Note:** If you've already received an admission offer and/or a scholarship directly from the university, those awards are separate from the SEED scholarship and shall remain unchanged.
- 
- If you have any questions, please contact us at scholarships@seedglobaleducation.com.
- 
+
+If you have any questions, please contact us at scholarships@seedglobaleducation.com.
+
 Thank you once again for your interest in ${fullSchoolName}. We wish you the very best in your academic journey.
- 
- Best regards,
+
+Best regards,
 **${data.clientName}**
 **${fullSchoolName}**`,
      },
@@ -88,22 +86,20 @@ Thank you once again for your interest in ${fullSchoolName}. We wish you the ver
        body: `Dear ${data.studentName},
  
 Thank you for applying for the ${data.scholarshipName} offered by ${fullSchoolName}.
- 
- Your application is being carefully reviewed, and we are pleased to inform you that your profile remains under consideration.
- 
+
+Your application is being carefully reviewed, and we are pleased to inform you that your profile remains under consideration.
+
 **Here's what this means for you:**
- 
- • You do not need to reapply or take any additional action at this time.
- 
- • Final decisions will be communicated once the next round is completed.
- 
+• You do not need to reapply or take any additional action at this time.
+• Final decisions will be communicated once the next round is completed.
+
 We appreciate your patience during this process and your continued interest in ${fullSchoolName}.
- 
- If you have any questions, please reach out to us at scholarships@seedglobaleducation.com.
- 
- Thank you, and best of luck!
- 
- Best regards,
+
+If you have any questions, please reach out to us at scholarships@seedglobaleducation.com.
+
+Thank you, and best of luck!
+
+Best regards,
 **${data.clientName}**
 **${fullSchoolName}**`,
      },
@@ -111,21 +107,18 @@ We appreciate your patience during this process and your continued interest in $
        subject: `Congratulations on Winning the ${data.awardName || "Scholarship Award"}`,
        body: `Dear ${data.studentName},
  
- Congratulations! We're delighted to inform you that you have been awarded the ${data.awardName || "Scholarship Award"}.
- 
- Your achievement marks an important step toward your academic journey, and we're thrilled to see the impact you will create.
- 
+Congratulations! We're delighted to inform you that you have been awarded the ${data.awardName || "Scholarship Award"}.
+
+Your achievement marks an important step toward your academic journey, and we're thrilled to see the impact you will create.
+
 **Important Notes:**
- 
 • This award has been granted by ${fullSchoolName}.
- 
- • The scholarship amount will be directly deducted from your tuition fees by the university.
- 
+• The scholarship amount will be directly deducted from your tuition fees by the university.
 • ${fullSchoolName} will reach out to you with further details.
- 
- Congratulations once again on this well-deserved recognition!
- 
- Best regards,
+
+Congratulations once again on this well-deserved recognition!
+
+Best regards,
 **${data.clientName}**
 **${fullSchoolName}**`,
      },
