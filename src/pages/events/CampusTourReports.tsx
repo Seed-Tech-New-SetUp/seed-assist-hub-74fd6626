@@ -390,8 +390,8 @@ const CampusTourReports = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-display font-bold text-foreground">Campus Tour Reports</h1>
-            <p className="text-muted-foreground mt-1">View and download reports from Campus Tour events</p>
+            <h1 className="text-2xl font-display font-bold text-foreground">Campus Tours</h1>
+            <p className="text-muted-foreground mt-1">Connect with prospective students at campus events in top tier institutions globally</p>
           </div>
         </div>
 

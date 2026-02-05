@@ -381,7 +381,7 @@ const BSFReports = () => {
         {/* Header */}
         <div>
           <h1 className="text-2xl font-display font-bold text-foreground">Business School Festivals</h1>
-          <p className="text-muted-foreground mt-1">All Business School Festival events - upcoming, ongoing, and past</p>
+          <p className="text-muted-foreground mt-1">Connect with prospective students at recruitment fairs at major cities across the globe</p>
         </div>
 
         {/* Summary Stats - commented out per user request */}

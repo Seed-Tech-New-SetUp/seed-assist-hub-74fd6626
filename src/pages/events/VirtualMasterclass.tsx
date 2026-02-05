@@ -347,7 +347,7 @@ export default function VirtualMasterclass() {
         {/* Header */}
         <div>
           <h1 className="text-2xl font-display font-bold text-foreground">Virtual Masterclass</h1>
-          <p className="text-muted-foreground mt-1">All masterclass events - upcoming, ongoing, and past</p>
+          <p className="text-muted-foreground mt-1">Engage students globally through interactive online sessions and webinars</p>
         </div>
 
         {/* Live Events */}
