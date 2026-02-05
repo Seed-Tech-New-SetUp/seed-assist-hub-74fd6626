@@ -297,7 +297,7 @@ const CampusTourReports = () => {
   const columns = [
     {
       key: "event",
-      header: "Event",
+      header: "Event - City/Campus",
       sortKey: (event: CampusTourEvent) => event.eventName,
       render: (event: CampusTourEvent) => (
         <div className="flex items-center gap-3">
