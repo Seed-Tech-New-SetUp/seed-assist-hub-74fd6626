@@ -152,13 +152,31 @@
  
  // Map workflow status to email status
  export function mapWorkflowToEmailStatus(workflowStatus: string): EmailStatus | null {
-   const statusMap: Record<string, EmailStatus> = {
-     shortlisted: "shortlisted",
-     rejected: "rejected",
-     onhold: "onHold",
-     winner: "selected",
-   };
-   return statusMap[workflowStatus.toLowerCase()] || null;
+  // Normalize the status by removing spaces, underscores, and converting to lowercase
+  const normalized = workflowStatus.toLowerCase().replace(/[_\s-]/g, "");
+  
+  // Map all possible variations to email template statuses
+  const statusMap: Record<string, EmailStatus> = {
+    // Shortlisted variations
+    shortlisted: "shortlisted",
+    shortlist: "shortlisted",
+    
+    // Rejected variations
+    rejected: "rejected",
+    reject: "rejected",
+    
+    // On Hold variations
+    onhold: "onHold",
+    hold: "onHold",
+    
+    // Winner/Selected variations
+    winner: "selected",
+    selected: "selected",
+    awarded: "selected",
+    award: "selected",
+  };
+  
+  return statusMap[normalized] || null;
  }
  
  const statusColors: Record<EmailStatus, string> = {
