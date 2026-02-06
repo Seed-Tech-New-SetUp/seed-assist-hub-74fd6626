@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Building2, ChevronRight, LogOut, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { decodeUTF8 } from "@/lib/utils/decode-utf8";
 import seedAssistLogoBlue from "@/assets/seed-assist-logo-blue.png";
 import seedAssistLogoWhite from "@/assets/seed-assist-logo-white.png";
 
@@ -122,10 +123,10 @@ export default function SchoolSelector() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-sm">{school.name}</h3>
+                      <h3 className="font-medium text-sm">{decodeUTF8(school.name)}</h3>
                       {school.designation && (
                         <p className="text-xs text-muted-foreground truncate mt-0.5">
-                          {school.designation}
+                          {decodeUTF8(school.designation)}
                         </p>
                       )}
                       <span className="text-xs text-primary mt-1 inline-block capitalize">
