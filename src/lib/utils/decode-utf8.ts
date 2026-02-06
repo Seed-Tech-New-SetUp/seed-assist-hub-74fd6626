@@ -148,21 +148,42 @@ export function decodeUTF8(str: string): string {
 }
 
 /**
+ * Keys whose string values should NOT be decoded (URLs, file paths, etc.)
+ */
+const SKIP_DECODE_KEYS = new Set([
+  'url', 'banner_url', 'desktop_banner_url', 'youtube_url',
+  'school_logo', 'logo_url', 'image_url', 'avatar_url',
+  'filename', 'slug', 'share_token', 'hash_id',
+  'logo_white', 'logo_dark', 'banner',
+]);
+
+/**
+ * Check if a string looks like a URL or file path that shouldn't be decoded
+ */
+function isUrlLike(value: string): boolean {
+  return /^https?:\/\//.test(value) || /^\/[a-zA-Z]/.test(value) || /\.[a-z]{2,4}$/.test(value);
+}
+
+/**
  * Recursively decode all string values in an object
  */
-export function decodeObjectStrings<T>(obj: T): T {
+export function decodeObjectStrings<T>(obj: T, parentKey?: string): T {
   if (typeof obj === 'string') {
+    // Skip decoding for URL-like values or values under URL-related keys
+    if ((parentKey && SKIP_DECODE_KEYS.has(parentKey)) || isUrlLike(obj)) {
+      return obj;
+    }
     return decodeUTF8(obj) as T;
   }
   
   if (Array.isArray(obj)) {
-    return obj.map(item => decodeObjectStrings(item)) as T;
+    return obj.map(item => decodeObjectStrings(item, parentKey)) as T;
   }
   
   if (obj !== null && typeof obj === 'object') {
     const decoded: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(obj)) {
-      decoded[key] = decodeObjectStrings(value);
+      decoded[key] = decodeObjectStrings(value, key);
     }
     return decoded as T;
   }
