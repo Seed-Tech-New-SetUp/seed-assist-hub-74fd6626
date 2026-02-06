@@ -232,14 +232,9 @@ export default function VisaPrep() {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold text-foreground">AI Visa Tutor</h1>
-            <p className="text-muted-foreground mt-1">Manage license allocations and track student performance</p>
-          </div>
-          <Button onClick={() => { setAssignPrefill(undefined); setShowAssignModal(true); }}>
-            <UserPlus className="h-4 w-4 mr-2" /> Assign License
-          </Button>
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground">AI Visa Tutor</h1>
+          <p className="text-muted-foreground mt-1">Manage license allocations and track student performance</p>
         </div>
 
         {/* Stat Cards */}
@@ -316,7 +311,10 @@ export default function VisaPrep() {
                   <Table className="w-max min-w-full">
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="sticky left-0 bg-background z-10 min-w-[200px]">
+                        <TableHead className="sticky left-0 bg-background z-20 min-w-[170px] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
+                          License No.
+                        </TableHead>
+                        <TableHead className="min-w-[200px]">
                           <button className="flex items-center" onClick={() => handleSort("allotted")}>
                             Allotted To <SortIcon col="allotted" />
                           </button>
@@ -369,8 +367,12 @@ export default function VisaPrep() {
                     <TableBody>
                       {paginatedLicenses.map((lic) => (
                         <TableRow key={lic.license_number}>
+                          {/* License Number - sticky */}
+                          <TableCell className="sticky left-0 bg-background z-20 min-w-[170px] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
+                            <span className="font-mono text-xs">{lic.license_number}</span>
+                          </TableCell>
                           {/* Allotted To */}
-                          <TableCell className="sticky left-0 bg-background z-10 min-w-[200px]">
+                          <TableCell className="min-w-[200px]">
                             {lic.allocName ? (
                               <div>
                                 <p className="font-medium text-sm">{lic.allocName}</p>

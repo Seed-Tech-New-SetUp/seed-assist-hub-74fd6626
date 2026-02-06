@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import {
   Dialog,
@@ -85,12 +85,11 @@ export function AssignLicenseModal({ open, onClose, onSuccess, prefillLicenseNo 
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  // Sync prefillLicenseNo when it changes
-  useState(() => {
+  useEffect(() => {
     if (prefillLicenseNo) {
       setForm((prev) => ({ ...prev, license_no: prefillLicenseNo }));
     }
-  });
+  }, [prefillLicenseNo]);
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
