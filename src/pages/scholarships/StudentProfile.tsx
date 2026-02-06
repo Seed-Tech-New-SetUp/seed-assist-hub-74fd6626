@@ -473,22 +473,6 @@ export default function StudentProfile() {
               Back to All Applicants
             </Link>
           </Button>
-          <div className="flex gap-2">
-            {(["SHORTLISTED", "ON_HOLD", "REJECTED", "WINNER"] as UIWorkflowStatus[]).map((status) => {
-              const config = statusConfig[status];
-              return (
-                <Button
-                  key={status}
-                  size="sm"
-                  className={`${config.buttonColor} text-white`}
-                  onClick={() => handleStatusChange(status)}
-                >
-                  <config.icon className="h-3.5 w-3.5 mr-1" />
-                  {config.label}
-                </Button>
-              );
-            })}
-          </div>
         </div>
 
         {/* Header Section - Sticky */}
@@ -512,25 +496,49 @@ export default function StudentProfile() {
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                {/* Wireframe Action Buttons */}
-                <div className="flex items-center gap-1">
-                  <Button 
-                    variant="ghost" 
-                    size="icon-sm" 
-                    className="border border-transparent hover:border-primary hover:text-primary hover:bg-primary/5"
-                    title="Edit Application"
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon-sm" 
-                    className="border border-transparent hover:border-primary hover:text-primary hover:bg-primary/5"
-                    title="Send Email"
-                    onClick={() => window.open(`mailto:${profile.email}`, '_blank')}
-                  >
-                    <Mail className="h-4 w-4" />
-                  </Button>
+                {/* Wireframe Status Action Buttons */}
+                <div className="flex items-center gap-2">
+                  {(["SHORTLISTED", "ON_HOLD", "REJECTED", "WINNER"] as UIWorkflowStatus[]).map((status) => {
+                    const config = statusConfig[status];
+                    const isActive = uiStatus === status;
+                    return (
+                      <Button
+                        key={status}
+                        size="sm"
+                        variant="ghost"
+                        className={`border transition-all duration-200 ${
+                          isActive 
+                            ? `${config.buttonColor} text-white border-transparent` 
+                            : `border-current text-muted-foreground hover:text-white hover:border-transparent`
+                        }`}
+                        style={!isActive ? { 
+                          '--hover-bg': config.buttonColor.replace('bg-', ''),
+                        } as React.CSSProperties : undefined}
+                        onClick={() => handleStatusChange(status)}
+                        onMouseEnter={(e) => {
+                          if (!isActive) {
+                            const colorMap: Record<string, string> = {
+                              'SHORTLISTED': '#22c55e',
+                              'ON_HOLD': '#f97316', 
+                              'REJECTED': '#ef4444',
+                              'WINNER': '#a855f7'
+                            };
+                            e.currentTarget.style.backgroundColor = colorMap[status];
+                            e.currentTarget.style.borderColor = colorMap[status];
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isActive) {
+                            e.currentTarget.style.backgroundColor = '';
+                            e.currentTarget.style.borderColor = '';
+                          }
+                        }}
+                      >
+                        <config.icon className="h-3.5 w-3.5 mr-1" />
+                        {config.label}
+                      </Button>
+                    );
+                  })}
                 </div>
                 
                 {/* Navigation Buttons */}
