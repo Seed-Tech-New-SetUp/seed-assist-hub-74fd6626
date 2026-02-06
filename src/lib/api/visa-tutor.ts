@@ -194,6 +194,7 @@ export interface VisaLicense {
   email: string | null;
   target_degree: string | null;
   visa_app_type: string | null;
+  visa_slot_date: string | null;
   activation_status: string;
   usage_status: string;
   test_attempted: number;
