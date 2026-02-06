@@ -67,22 +67,24 @@ export function SchoolSwitcher() {
   // Single school or still loading schools list - show card without dropdown
   if (schools.length <= 1) {
     return (
-      <div className="mx-2 md:mx-3 my-2 p-2.5 md:p-3 bg-card rounded-lg shadow-sm border border-border">
-        {schoolLogo && (
-          <div className="flex justify-center mb-1.5">
+      <div className="mx-2 md:mx-3 my-2 p-2.5 bg-card rounded-lg shadow-sm border border-border">
+        <div className="flex items-center gap-3">
+          {schoolLogo && (
             <img
               src={schoolLogo}
               alt={fullSchoolName}
-              className="h-8 md:h-10 object-contain"
+              className="h-9 w-9 object-contain flex-shrink-0"
             />
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-semibold text-foreground leading-snug line-clamp-2">
+              {fullSchoolName}
+            </p>
+            {schoolCountry && (
+              <p className="text-[10px] text-primary font-medium mt-0.5">{schoolCountry}</p>
+            )}
           </div>
-        )}
-        <p className="text-xs md:text-sm font-semibold text-foreground text-center leading-snug">
-          {fullSchoolName}
-        </p>
-        {schoolCountry && (
-          <p className="text-[10px] md:text-xs text-primary text-center mt-0.5 font-medium">{schoolCountry}</p>
-        )}
+        </div>
       </div>
     );
   }
@@ -93,32 +95,29 @@ export function SchoolSwitcher() {
       <DropdownMenuTrigger asChild>
         <button
           className={cn(
-            "mx-2 md:mx-3 my-2 p-2.5 md:p-3 bg-card rounded-lg shadow-sm border border-border w-[calc(100%-1rem)] md:w-[calc(100%-1.5rem)] text-left",
+            "mx-2 md:mx-3 my-2 p-2.5 bg-card rounded-lg shadow-sm border border-border w-[calc(100%-1rem)] md:w-[calc(100%-1.5rem)] text-left",
             "hover:shadow-md hover:border-primary/30 transition-all cursor-pointer",
             "focus:outline-none focus:ring-2 focus:ring-primary/20"
           )}
         >
-          {schoolLogo && (
-            <div className="flex justify-center mb-1.5">
+          <div className="flex items-center gap-3">
+            {schoolLogo && (
               <img
                 src={schoolLogo}
                 alt={fullSchoolName}
-                className="h-8 md:h-10 object-contain"
+                className="h-9 w-9 object-contain flex-shrink-0"
               />
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold text-foreground leading-snug line-clamp-2">
+                {fullSchoolName}
+              </p>
+              {schoolCountry && (
+                <p className="text-[10px] text-primary font-medium mt-0.5">{schoolCountry}</p>
+              )}
             </div>
-          )}
-          <p className="text-xs md:text-sm font-semibold text-foreground text-center leading-snug">
-            {fullSchoolName}
-          </p>
-          {schoolCountry && (
-            <p className="text-[10px] md:text-xs text-primary text-center mt-0.5 font-medium">{schoolCountry}</p>
-          )}
-          
-          {/* Switch School indicator */}
-          <div className="flex items-center justify-center gap-1.5 mt-2 pt-2 border-t border-border">
-            <span className="text-[11px] text-muted-foreground font-medium">Switch School</span>
             <ChevronDown className={cn(
-              "h-3 w-3 text-muted-foreground transition-transform",
+              "h-4 w-4 text-muted-foreground transition-transform flex-shrink-0",
               open && "rotate-180"
             )} />
           </div>
