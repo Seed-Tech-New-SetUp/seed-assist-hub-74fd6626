@@ -533,7 +533,8 @@ export default function SecureReportDownload({ reportType }: SecureReportDownloa
               <Button 
                 onClick={() => setShowModal(true)}
                 size="lg"
-                className="flex-1 h-12 text-sm font-semibold bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-500/25 transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/30 hover:-translate-y-0.5"
+                variant="outline"
+                className="flex-1 h-12 text-sm font-semibold border-2 border-emerald-500 text-emerald-600 bg-transparent rounded-xl transition-all duration-300 hover:bg-emerald-500 hover:text-white hover:shadow-lg hover:shadow-emerald-500/25 hover:-translate-y-0.5"
               >
                 <Download className="h-4 w-4 mr-2" />
                 Download Report
