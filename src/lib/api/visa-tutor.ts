@@ -190,14 +190,24 @@ export interface VisaLicense {
   sub_partner_id: string;
   puid: string;
   student_name: string | null;
+  first_name: string | null;
+  last_name: string | null;
   mobile: string | null;
   email: string | null;
   target_degree: string | null;
   visa_app_type: string | null;
   visa_slot_date: string | null;
+  visa_status: string | null;
+  visa_interview_date: string | null;
+  visa_interview_status: string | null;
   activation_status: string;
+  activation_date: string | null;
   usage_status: string;
+  usage_start_date: string | null;
+  sessions_completed: number | null;
   test_attempted: number;
+  avg_overall_score: number | null;
+  best_overall_score: number | null;
 }
 
 export interface LicensesListResponse {
