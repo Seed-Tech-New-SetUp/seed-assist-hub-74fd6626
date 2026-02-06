@@ -262,19 +262,6 @@ export default function UniversityApplications() {
           </Card>
         </div>
 
-        {/* Conversion Rate Bar */}
-        <div className="flex items-center gap-3 px-1">
-          <span className="text-xs text-muted-foreground whitespace-nowrap">Conversion Rate</span>
-          <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 rounded-full transition-all"
-              style={{ width: `${stats.total > 0 ? (stats.admitted / stats.total) * 100 : 0}%` }}
-            />
-          </div>
-          <span className="text-sm font-semibold text-foreground">
-            {stats.total > 0 ? Math.round((stats.admitted / stats.total) * 100) : 0}%
-          </span>
-        </div>
 
         {/* Table Card */}
         <Card>
