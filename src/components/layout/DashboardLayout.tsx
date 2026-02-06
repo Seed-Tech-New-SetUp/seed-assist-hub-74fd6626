@@ -79,7 +79,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       
       <div className={cn(
         "transition-all duration-200",
-        isMobile ? "pl-0" : (collapsed ? "pl-16" : "pl-64")
+        isMobile ? "pl-0" : (collapsed ? "pl-16" : "pl-72")
       )}>
         <header className="sticky top-0 z-30 h-14 md:h-16 bg-card/80 backdrop-blur-sm border-b border-border">
           <div className="flex items-center justify-between h-full px-4 md:px-6">
