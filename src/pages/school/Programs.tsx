@@ -234,34 +234,45 @@ export default function Programs() {
           </DialogContent>
         </Dialog>
 
-        {/* Program Selector */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-4">
-              <Label className="whitespace-nowrap">Select Program:</Label>
-              {programsLoading ? (
-                <Skeleton className="h-10 w-[300px]" />
-              ) : (
-                <Select value={selectedProgram} onValueChange={setSelectedProgram}>
-                  <SelectTrigger className="w-[300px]">
-                    <SelectValue placeholder="Select a program" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {programs.map((program) => (
-                      <SelectItem key={program.id} value={program.id}>
-                        {program.program_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-              {selectedProgramData && (
-                <Badge variant="secondary">
-                  {selectedProgramData.school_name} - {selectedProgramData.university}
-                </Badge>
-              )}
+        {/* Program Selector - Prominent Hero Section */}
+        <Card className="overflow-hidden border-2 border-primary/20 shadow-lg">
+          <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-accent/10 p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-primary/15 rounded-xl">
+                  <GraduationCap className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Academic Program</p>
+                  <Label className="text-lg font-semibold">Select Program to Edit</Label>
+                </div>
+              </div>
+              <div className="flex-1 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                {programsLoading ? (
+                  <Skeleton className="h-12 w-full sm:w-[350px]" />
+                ) : (
+                  <Select value={selectedProgram} onValueChange={setSelectedProgram}>
+                    <SelectTrigger className="w-full sm:w-[350px] h-12 text-base font-medium bg-background border-2 border-primary/30 hover:border-primary/50 transition-colors">
+                      <SelectValue placeholder="Choose a program..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover">
+                      {programs.map((program) => (
+                        <SelectItem key={program.id} value={program.id} className="py-3">
+                          {program.program_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                {selectedProgramData && (
+                  <Badge variant="outline" className="bg-background border-primary/30 text-foreground px-4 py-2 text-sm font-medium whitespace-nowrap">
+                    <Building2 className="h-4 w-4 mr-2 text-primary" />
+                    {selectedProgramData.university}
+                  </Badge>
+                )}
+              </div>
             </div>
-          </CardContent>
+          </div>
         </Card>
 
         {selectedProgram && (
