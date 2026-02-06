@@ -8,15 +8,12 @@ const corsHeaders = {
 const BASE_URL = 'https://seedglobaleducation.com/api/assist/visa-tutor';
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Get the authorization token from the request
     const authHeader = req.headers.get('Authorization');
-    
     if (!authHeader) {
       return new Response(
         JSON.stringify({ success: false, error: 'Authorization header required' }),
@@ -28,31 +25,24 @@ serve(async (req) => {
     const action = url.searchParams.get('action') || 'list';
 
     let apiUrl: string;
-    let method = 'GET';
+    let method = req.method === 'OPTIONS' ? 'GET' : req.method;
     let body: BodyInit | null = null;
     const headers: Record<string, string> = {
       'Authorization': authHeader,
     };
 
     switch (action) {
+      // ─── License Endpoints (read-only) ───
       case 'list': {
-        // List all licenses with optional filters
         const params = new URLSearchParams();
         const search = url.searchParams.get('search');
-        const activationStatus = url.searchParams.get('activation_status');
-        const usageStatus = url.searchParams.get('usage_status');
-        const visaStatus = url.searchParams.get('visa_status');
-        const limit = url.searchParams.get('limit') || '100';
-        const offset = url.searchParams.get('offset') || '0';
-
+        const limit = url.searchParams.get('limit') || '20';
+        const page = url.searchParams.get('page') || '1';
         if (search) params.append('search', search);
-        if (activationStatus) params.append('activation_status', activationStatus);
-        if (usageStatus) params.append('usage_status', usageStatus);
-        if (visaStatus) params.append('visa_status', visaStatus);
         params.append('limit', limit);
-        params.append('offset', offset);
-
+        params.append('page', page);
         apiUrl = `${BASE_URL}/?${params.toString()}`;
+        method = 'GET';
         break;
       }
 
@@ -65,12 +55,12 @@ serve(async (req) => {
           );
         }
         apiUrl = `${BASE_URL}/license_details.php?license_number=${encodeURIComponent(licenseNumber)}`;
+        method = 'GET';
         break;
       }
 
       case 'session_details': {
         const licenseNumber = url.searchParams.get('license_number');
-        const sessionId = url.searchParams.get('session_id');
         if (!licenseNumber) {
           return new Response(
             JSON.stringify({ success: false, error: 'license_number is required' }),
@@ -78,40 +68,88 @@ serve(async (req) => {
           );
         }
         const params = new URLSearchParams({ license_number: licenseNumber });
+        const sessionId = url.searchParams.get('session_id');
         if (sessionId) params.append('session_id', sessionId);
         apiUrl = `${BASE_URL}/session_details.php?${params.toString()}`;
+        method = 'GET';
         break;
       }
 
-      case 'reassign': {
-        if (req.method !== 'POST') {
+      // ─── Allocation Endpoints ───
+      case 'allocations': {
+        if (method === 'GET') {
+          // List allocations
+          const params = new URLSearchParams();
+          const search = url.searchParams.get('search');
+          const consent = url.searchParams.get('consent');
+          const puid = url.searchParams.get('puid');
+          const limit = url.searchParams.get('limit') || '100';
+          const offset = url.searchParams.get('offset') || '0';
+          if (search) params.append('search', search);
+          if (consent) params.append('consent', consent);
+          if (puid) params.append('puid', puid);
+          params.append('limit', limit);
+          params.append('offset', offset);
+          apiUrl = `${BASE_URL}/allocations.php?${params.toString()}`;
+        } else if (method === 'POST') {
+          // Create allocation
+          apiUrl = `${BASE_URL}/allocations.php`;
+          headers['Content-Type'] = 'application/json';
+          body = await req.text();
+        } else {
           return new Response(
-            JSON.stringify({ success: false, error: 'POST method required for reassign' }),
+            JSON.stringify({ success: false, error: `Method ${method} not allowed for allocations` }),
             { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
-        apiUrl = `${BASE_URL}/reassign.php`;
-        method = 'POST';
+        break;
+      }
+
+      case 'allocation': {
+        if (method === 'GET') {
+          // Get allocation detail
+          const licenseNo = url.searchParams.get('license_no');
+          if (!licenseNo) {
+            return new Response(
+              JSON.stringify({ success: false, error: 'license_no is required' }),
+              { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+          apiUrl = `${BASE_URL}/allocation.php?license_no=${encodeURIComponent(licenseNo)}`;
+        } else if (method === 'PUT') {
+          // Update allocation
+          apiUrl = `${BASE_URL}/allocation.php`;
+          headers['Content-Type'] = 'application/json';
+          body = await req.text();
+        } else {
+          return new Response(
+            JSON.stringify({ success: false, error: `Method ${method} not allowed for allocation` }),
+            { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        break;
+      }
+
+      case 'allocations_bulk': {
+        if (method !== 'POST') {
+          return new Response(
+            JSON.stringify({ success: false, error: 'POST method required for bulk allocations' }),
+            { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        apiUrl = `${BASE_URL}/allocations_bulk.php`;
         headers['Content-Type'] = 'application/json';
         body = await req.text();
         break;
       }
 
-      case 'bulk_upload': {
-        if (req.method !== 'POST') {
-          return new Response(
-            JSON.stringify({ success: false, error: 'POST method required for bulk_upload' }),
-            { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-        apiUrl = `${BASE_URL}/bulk_upload.php`;
-        method = 'POST';
-        // Forward the multipart form data as-is
-        const contentType = req.headers.get('content-type');
-        if (contentType) {
-          headers['Content-Type'] = contentType;
-        }
-        body = await req.arrayBuffer();
+      // ─── Stats Dashboard ───
+      case 'stats': {
+        const params = new URLSearchParams();
+        const puid = url.searchParams.get('puid');
+        if (puid) params.append('puid', puid);
+        apiUrl = `${BASE_URL}/stats.php${params.toString() ? '?' + params.toString() : ''}`;
+        method = 'GET';
         break;
       }
 
@@ -122,16 +160,15 @@ serve(async (req) => {
         );
     }
 
-    // Forward the request to the backend API
     const response = await fetch(apiUrl, {
       method,
       headers,
       body,
     });
 
-    // Handle binary responses (e.g., file downloads)
+    // Handle binary responses
     const contentType = response.headers.get('content-type') || '';
-    if (contentType.includes('application/vnd.openxmlformats') || 
+    if (contentType.includes('application/vnd.openxmlformats') ||
         contentType.includes('application/octet-stream')) {
       const blob = await response.blob();
       return new Response(blob, {
@@ -152,22 +189,13 @@ serve(async (req) => {
     } catch {
       const snippet = rawText.slice(0, 600);
       console.error('Visa Tutor Proxy Upstream Non-JSON Response', {
-        apiUrl,
-        status: response.status,
-        contentType,
-        snippet,
+        apiUrl, status: response.status, contentType, snippet,
       });
-
       return new Response(
         JSON.stringify({
           success: false,
           error: 'Upstream returned non-JSON response',
-          upstream: {
-            url: apiUrl,
-            status: response.status,
-            contentType,
-            body_snippet: snippet,
-          },
+          upstream: { url: apiUrl, status: response.status, contentType, body_snippet: snippet },
         }),
         { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
