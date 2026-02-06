@@ -576,7 +576,7 @@ export default function ScholarshipApplications() {
           </CardHeader>
           <CardContent>
             <Table>
-              <TableHeader>
+              <TableHeader className="sticky top-0 bg-background z-10">
                 <TableRow>
                   <TableHead className="w-[50px]">
                     <Checkbox
@@ -591,7 +591,6 @@ export default function ScholarshipApplications() {
                   <TableHead>UG GPA</TableHead>
                   <TableHead>Work Exp.</TableHead>
                   <TableHead>Round</TableHead>
-                  <TableHead className="w-[100px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -613,15 +612,38 @@ export default function ScholarshipApplications() {
                           />
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2">
-                            <img
-                              src={`https://flagcdn.com/w40/${applicant.countryCode.toLowerCase()}.png`}
-                              alt={applicant.country}
-                              className="h-8 w-8 rounded-full object-cover flex-shrink-0"
-                            />
-                            <div>
-                              <p className="font-medium">{applicant.name}</p>
-                              <p className="text-xs text-muted-foreground">{applicant.country}</p>
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-2">
+                              <img
+                                src={`https://flagcdn.com/w40/${applicant.countryCode.toLowerCase()}.png`}
+                                alt={applicant.country}
+                                className="h-8 w-8 rounded-full object-cover flex-shrink-0"
+                              />
+                              <div>
+                                <p className="font-medium">{applicant.name}</p>
+                                <p className="text-xs text-muted-foreground">{applicant.country}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Button 
+                                variant="ghost" 
+                                size="icon-sm" 
+                                className="border border-transparent hover:border-primary hover:text-primary hover:bg-primary/5"
+                                title="View Profile"
+                                asChild
+                              >
+                                <Link to={`/scholarships/applications/${applicant.id}`}>
+                                  <Eye className="h-4 w-4" />
+                                </Link>
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon-sm" 
+                                className="border border-transparent hover:border-primary hover:text-primary hover:bg-primary/5"
+                                title="Send Email"
+                              >
+                                <Mail className="h-4 w-4" />
+                              </Button>
                             </div>
                           </div>
                         </TableCell>
@@ -664,14 +686,6 @@ export default function ScholarshipApplications() {
                         <TableCell>{applicant.workExperience} years</TableCell>
                         <TableCell>
                           <Badge variant="secondary">R{applicant.round}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Button variant="default" size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground" asChild>
-                            <Link to={`/scholarships/applications/${applicant.id}`}>
-                              <Eye className="h-4 w-4 mr-1" />
-                              View
-                            </Link>
-                          </Button>
                         </TableCell>
                       </TableRow>
                     );
