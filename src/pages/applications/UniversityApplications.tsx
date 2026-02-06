@@ -12,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Download, Search, FileSpreadsheet, Users, GraduationCap, Clock, RefreshCw, Loader2, CheckCircle } from "lucide-react";
+import { Download, Search, FileSpreadsheet, GraduationCap, Clock, RefreshCw, Loader2, CheckCircle, ArrowRight, ArrowDown } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
   UniversityApplication,
@@ -22,21 +22,21 @@ import {
 import { cn } from "@/lib/utils";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
-  Applied: { label: "Applied", className: "bg-blue-500/10 text-blue-600 border-blue-500/20" },
+  Applied: { label: "Applied", className: "bg-amber-500/10 text-amber-600 border-amber-500/20" },
   Admitted: { label: "Admitted", className: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" },
   Rejected: { label: "Rejected", className: "bg-red-500/10 text-red-600 border-red-500/20" },
   Waitlisted: { label: "Waitlisted", className: "bg-purple-500/10 text-purple-600 border-purple-500/20" },
-  "Under Review": { label: "Under Review", className: "bg-amber-500/10 text-amber-600 border-amber-500/20" },
+  "Under Review": { label: "Under Review", className: "bg-blue-500/10 text-blue-600 border-blue-500/20" },
 };
 
-type FilterType = "all" | "applications" | "admits";
+type FilterType = "applications" | "admits";
 
 export default function UniversityApplications() {
   const [applications, setApplications] = useState<UniversityApplication[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeFilter, setActiveFilter] = useState<FilterType>("all");
+  const [activeFilter, setActiveFilter] = useState<FilterType>("applications");
   const [stats, setStats] = useState({
     total: 0,
     admitted: 0,
@@ -114,12 +114,6 @@ export default function UniversityApplications() {
     }
   };
 
-  const filterCards: { id: FilterType; label: string; icon: React.ElementType; count: number; description: string }[] = [
-    { id: "all", label: "All Applications & Admits", icon: Users, count: stats.total, description: "View all records" },
-    { id: "applications", label: "All Applications", icon: Clock, count: stats.applied, description: "Pending decisions" },
-    { id: "admits", label: "All Admits", icon: GraduationCap, count: stats.admitted, description: "Admitted students" },
-  ];
-
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -149,69 +143,109 @@ export default function UniversityApplications() {
           </div>
         </div>
 
-        {/* Funnel Pipeline */}
-        <Card className="overflow-hidden">
-          <CardContent className="p-0">
-            <div className="grid grid-cols-1 md:grid-cols-3">
-              {filterCards.map((card, index) => {
-                const Icon = card.icon;
-                const isActive = activeFilter === card.id;
-                const isLast = index === filterCards.length - 1;
-                
-                return (
-                  <div
-                    key={card.id}
-                    className={cn(
-                      "relative cursor-pointer transition-all p-5",
-                      "border-b md:border-b-0 md:border-r last:border-b-0 last:border-r-0",
-                      isActive 
-                        ? "bg-primary/10" 
-                        : "hover:bg-muted/50"
-                    )}
-                    onClick={() => setActiveFilter(card.id)}
-                  >
-                    {/* Funnel Arrow Indicator */}
-                    {!isLast && (
-                      <div className="hidden md:block absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-10">
-                        <div className={cn(
-                          "w-8 h-8 rotate-45 border-t-2 border-r-2 rounded-tr-sm",
-                          isActive ? "bg-primary/10 border-primary/30" : "bg-background border-border"
-                        )} />
-                      </div>
-                    )}
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className={cn(
-                          "p-3 rounded-xl transition-colors",
-                          isActive ? "bg-primary/20" : "bg-muted"
-                        )}>
-                          <Icon className={cn(
-                            "h-5 w-5",
-                            isActive ? "text-primary" : "text-muted-foreground"
-                          )} />
-                        </div>
-                        <div>
-                          <p className={cn(
-                            "text-sm font-medium mb-0.5",
-                            isActive ? "text-primary" : "text-muted-foreground"
-                          )}>
-                            {card.label}
-                          </p>
-                          <p className="text-3xl font-bold text-foreground">{card.count}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">{card.description}</p>
-                        </div>
-                      </div>
-                      {isActive && (
-                        <CheckCircle className="h-5 w-5 text-primary" />
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+        {/* Funnel Pipeline - Two Stage Flow */}
+        <div className="flex flex-col md:flex-row items-stretch gap-0">
+          {/* Applications Card */}
+          <Card 
+            className={cn(
+              "flex-1 cursor-pointer transition-all border-2 md:rounded-r-none",
+              activeFilter === "applications" 
+                ? "border-amber-500 bg-amber-500/5 shadow-lg" 
+                : "border-border hover:border-amber-500/50 hover:bg-muted/30"
+            )}
+            onClick={() => setActiveFilter("applications")}
+          >
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className={cn(
+                  "p-4 rounded-xl",
+                  activeFilter === "applications" ? "bg-amber-500/20" : "bg-muted"
+                )}>
+                  <Clock className={cn(
+                    "h-6 w-6",
+                    activeFilter === "applications" ? "text-amber-600" : "text-muted-foreground"
+                  )} />
+                </div>
+                <div className="flex-1">
+                  <p className={cn(
+                    "text-sm font-medium",
+                    activeFilter === "applications" ? "text-amber-600" : "text-muted-foreground"
+                  )}>
+                    Applications
+                  </p>
+                  <p className="text-4xl font-bold text-foreground">{stats.applied}</p>
+                  <p className="text-xs text-muted-foreground">Pending decisions</p>
+                </div>
+                {activeFilter === "applications" && (
+                  <CheckCircle className="h-5 w-5 text-amber-600" />
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Funnel Arrow Connector */}
+          <div className="hidden md:flex items-center justify-center bg-gradient-to-r from-amber-500/20 to-emerald-500/20 px-4 border-y-2 border-border">
+            <div className="flex flex-col items-center gap-1">
+              <ArrowRight className="h-6 w-6 text-primary" />
+              <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Flow</span>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+          <div className="flex md:hidden items-center justify-center py-3 bg-gradient-to-b from-amber-500/10 to-emerald-500/10">
+            <ArrowDown className="h-5 w-5 text-primary" />
+          </div>
+
+          {/* Admits Card */}
+          <Card 
+            className={cn(
+              "flex-1 cursor-pointer transition-all border-2 md:rounded-l-none",
+              activeFilter === "admits" 
+                ? "border-emerald-500 bg-emerald-500/5 shadow-lg" 
+                : "border-border hover:border-emerald-500/50 hover:bg-muted/30"
+            )}
+            onClick={() => setActiveFilter("admits")}
+          >
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className={cn(
+                  "p-4 rounded-xl",
+                  activeFilter === "admits" ? "bg-emerald-500/20" : "bg-muted"
+                )}>
+                  <GraduationCap className={cn(
+                    "h-6 w-6",
+                    activeFilter === "admits" ? "text-emerald-600" : "text-muted-foreground"
+                  )} />
+                </div>
+                <div className="flex-1">
+                  <p className={cn(
+                    "text-sm font-medium",
+                    activeFilter === "admits" ? "text-emerald-600" : "text-muted-foreground"
+                  )}>
+                    Admits
+                  </p>
+                  <p className="text-4xl font-bold text-foreground">{stats.admitted}</p>
+                  <p className="text-xs text-muted-foreground">Admitted students</p>
+                </div>
+                {activeFilter === "admits" && (
+                  <CheckCircle className="h-5 w-5 text-emerald-600" />
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Conversion Rate Bar */}
+        <div className="flex items-center gap-3 px-1">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">Conversion Rate</span>
+          <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 rounded-full transition-all"
+              style={{ width: `${stats.total > 0 ? (stats.admitted / stats.total) * 100 : 0}%` }}
+            />
+          </div>
+          <span className="text-sm font-semibold text-foreground">
+            {stats.total > 0 ? Math.round((stats.admitted / stats.total) * 100) : 0}%
+          </span>
+        </div>
 
         {/* Table Card */}
         <Card>
@@ -219,14 +253,13 @@ export default function UniversityApplications() {
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <CardTitle className="text-lg font-semibold flex items-center gap-2">
                 <FileSpreadsheet className="h-5 w-5 text-muted-foreground" />
-                {activeFilter === "all" && "All Applications & Admits"}
                 {activeFilter === "applications" && "Applications"}
                 {activeFilter === "admits" && "Admits"}
               </CardTitle>
               <div className="relative w-full sm:w-72">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search applications..."
+                  placeholder="Search..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9"
@@ -238,7 +271,7 @@ export default function UniversityApplications() {
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
-                <p className="text-sm text-muted-foreground">Loading applications...</p>
+                <p className="text-sm text-muted-foreground">Loading...</p>
               </div>
             ) : (
               <>
@@ -259,7 +292,7 @@ export default function UniversityApplications() {
                       {filteredApplications.length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
-                            No {activeFilter === "admits" ? "admits" : activeFilter === "applications" ? "applications" : "records"} found
+                            No {activeFilter === "admits" ? "admits" : "applications"} found
                           </TableCell>
                         </TableRow>
                       ) : (
@@ -272,9 +305,21 @@ export default function UniversityApplications() {
                             <TableCell>{app.program_name}</TableCell>
                             <TableCell>{app.intake}</TableCell>
                             <TableCell>
-                              <Badge variant="outline" className={statusConfig[app.status]?.className || "bg-gray-500/10 text-gray-600 border-gray-500/20"}>
-                                {statusConfig[app.status]?.label || app.status}
-                              </Badge>
+                              {app.status === "Admitted" ? (
+                                <div className="flex items-center gap-1.5">
+                                  <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20 text-xs px-2">
+                                    Applied
+                                  </Badge>
+                                  <ArrowRight className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                                  <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 text-xs px-2">
+                                    Admitted
+                                  </Badge>
+                                </div>
+                              ) : (
+                                <Badge variant="outline" className={statusConfig[app.status]?.className || "bg-gray-500/10 text-gray-600 border-gray-500/20"}>
+                                  {statusConfig[app.status]?.label || app.status}
+                                </Badge>
+                              )}
                             </TableCell>
                           </TableRow>
                         ))
@@ -283,7 +328,7 @@ export default function UniversityApplications() {
                   </Table>
                 </div>
                 <div className="mt-4 text-sm text-muted-foreground">
-                  Showing {filteredApplications.length} of {filteredByType.length} {activeFilter === "admits" ? "admits" : activeFilter === "applications" ? "applications" : "records"}
+                  Showing {filteredApplications.length} of {filteredByType.length} {activeFilter === "admits" ? "admits" : "applications"}
                 </div>
               </>
             )}
