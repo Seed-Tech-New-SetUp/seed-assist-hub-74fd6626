@@ -327,10 +327,6 @@ const CampusTourReports = () => {
             <p className="font-medium">
               {getCleanEventName(event.eventName, event.city)} - {event.campusName || event.city}
             </p>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-              <MapPin className="h-3 w-3" />
-              {event.location || event.city}
-            </div>
             {event.report_downloaded && (
               <p className="text-xs text-muted-foreground mt-0.5">
                 Downloaded by {event.lastDownloadedBy}
@@ -350,11 +346,11 @@ const CampusTourReports = () => {
       ),
     },
     {
-      key: "campus",
-      header: "City/Campus",
-      sortKey: (event: CampusTourEvent) => event.campusName || event.city,
+      key: "city",
+      header: "City",
+      sortKey: (event: CampusTourEvent) => event.city,
       render: (event: CampusTourEvent) => (
-        <span className="text-sm">{event.campusName || event.city}</span>
+        <span className="text-sm">{event.city}</span>
       ),
     },
     {
