@@ -149,50 +149,69 @@ export default function UniversityApplications() {
           </div>
         </div>
 
-        {/* Filter Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {filterCards.map((card) => {
-            const Icon = card.icon;
-            const isActive = activeFilter === card.id;
-            return (
-              <Card
-                key={card.id}
-                className={cn(
-                  "cursor-pointer transition-all hover:shadow-md",
-                  isActive 
-                    ? "ring-2 ring-primary border-primary bg-primary/5" 
-                    : "hover:border-primary/50"
-                )}
-                onClick={() => setActiveFilter(card.id)}
-              >
-                <CardContent className="flex items-center gap-4 p-4">
-                  <div className={cn(
-                    "p-3 rounded-lg",
-                    isActive ? "bg-primary/20" : "bg-muted"
-                  )}>
-                    <Icon className={cn(
-                      "h-5 w-5",
-                      isActive ? "text-primary" : "text-muted-foreground"
-                    )} />
+        {/* Funnel Pipeline */}
+        <Card className="overflow-hidden">
+          <CardContent className="p-0">
+            <div className="grid grid-cols-1 md:grid-cols-3">
+              {filterCards.map((card, index) => {
+                const Icon = card.icon;
+                const isActive = activeFilter === card.id;
+                const isLast = index === filterCards.length - 1;
+                
+                return (
+                  <div
+                    key={card.id}
+                    className={cn(
+                      "relative cursor-pointer transition-all p-5",
+                      "border-b md:border-b-0 md:border-r last:border-b-0 last:border-r-0",
+                      isActive 
+                        ? "bg-primary/10" 
+                        : "hover:bg-muted/50"
+                    )}
+                    onClick={() => setActiveFilter(card.id)}
+                  >
+                    {/* Funnel Arrow Indicator */}
+                    {!isLast && (
+                      <div className="hidden md:block absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-10">
+                        <div className={cn(
+                          "w-8 h-8 rotate-45 border-t-2 border-r-2 rounded-tr-sm",
+                          isActive ? "bg-primary/10 border-primary/30" : "bg-background border-border"
+                        )} />
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className={cn(
+                          "p-3 rounded-xl transition-colors",
+                          isActive ? "bg-primary/20" : "bg-muted"
+                        )}>
+                          <Icon className={cn(
+                            "h-5 w-5",
+                            isActive ? "text-primary" : "text-muted-foreground"
+                          )} />
+                        </div>
+                        <div>
+                          <p className={cn(
+                            "text-sm font-medium mb-0.5",
+                            isActive ? "text-primary" : "text-muted-foreground"
+                          )}>
+                            {card.label}
+                          </p>
+                          <p className="text-3xl font-bold text-foreground">{card.count}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{card.description}</p>
+                        </div>
+                      </div>
+                      {isActive && (
+                        <CheckCircle className="h-5 w-5 text-primary" />
+                      )}
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <p className={cn(
-                      "text-sm font-medium",
-                      isActive ? "text-primary" : "text-muted-foreground"
-                    )}>
-                      {card.label}
-                    </p>
-                    <p className="text-2xl font-bold text-foreground">{card.count}</p>
-                    <p className="text-xs text-muted-foreground">{card.description}</p>
-                  </div>
-                  {isActive && (
-                    <CheckCircle className="h-5 w-5 text-primary" />
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Table Card */}
         <Card>
