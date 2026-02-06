@@ -12,18 +12,21 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import {
   Search, RefreshCw, Eye, UserPlus, BarChart3, Users, Key, Activity,
+  ChevronLeft, ChevronRight,
 } from "lucide-react";
 import {
-  fetchAllocations, fetchStats,
-  type Allocation, type StatsResponse,
+  fetchLicenses, fetchStats,
+  type VisaLicense, type StatsResponse,
 } from "@/lib/api/visa-tutor";
 import { LicenseDetailModal } from "@/components/visa/LicenseDetailModal";
 import { AssignLicenseModal } from "@/components/visa/AssignLicenseModal";
 
 export default function VisaPrep() {
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const [selectedLicense, setSelectedLicense] = useState<string | null>(null);
   const [showAssignModal, setShowAssignModal] = useState(false);
+  const [assignPrefill, setAssignPrefill] = useState<string | undefined>();
 
   // Stats
   const { data: statsData, isLoading: statsLoading } = useQuery({
@@ -31,17 +34,17 @@ export default function VisaPrep() {
     queryFn: fetchStats,
   });
 
-  // Allocations
-  const { data: allocData, isLoading: allocLoading, refetch, isFetching } = useQuery({
-    queryKey: ["visa-allocations", search],
-    queryFn: () => fetchAllocations({ search: search || undefined }),
+  // Licenses (master list)
+  const { data: licensesData, isLoading: licensesLoading, refetch, isFetching } = useQuery({
+    queryKey: ["visa-licenses", search, page],
+    queryFn: () => fetchLicenses({ search: search || undefined, page, limit: 20 }),
   });
 
   const stats = statsData?.data;
-  const allocations = allocData?.data?.allocations || [];
-  const pagination = allocData?.pagination;
+  const licenses = licensesData?.data?.licenses || [];
+  const pagination = licensesData?.data?.pagination;
 
-  const getStatusBadge = (status: string, type: "activation" | "usage") => {
+  const getStatusBadge = (status: string) => {
     const colorMap: Record<string, string> = {
       started: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
       not_started: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
@@ -52,6 +55,11 @@ export default function VisaPrep() {
         {status?.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) || "—"}
       </Badge>
     );
+  };
+
+  const openAssignForLicense = (licenseNo: string) => {
+    setAssignPrefill(licenseNo);
+    setShowAssignModal(true);
   };
 
   return (
@@ -65,7 +73,7 @@ export default function VisaPrep() {
               Manage license allocations and track student performance
             </p>
           </div>
-          <Button onClick={() => setShowAssignModal(true)}>
+          <Button onClick={() => { setAssignPrefill(undefined); setShowAssignModal(true); }}>
             <UserPlus className="h-4 w-4 mr-2" />
             Assign License
           </Button>
@@ -74,18 +82,14 @@ export default function VisaPrep() {
         {/* Stats Dashboard */}
         {statsLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-28 w-full" />
-            ))}
+            {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-28 w-full" />)}
           </div>
         ) : stats ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
               <CardContent className="pt-6">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <Key className="h-5 w-5 text-primary" />
-                  </div>
+                  <div className="p-2 rounded-lg bg-primary/10"><Key className="h-5 w-5 text-primary" /></div>
                   <div>
                     <p className="text-sm text-muted-foreground">Total Licenses</p>
                     <p className="text-2xl font-bold">{stats.licenses.total}</p>
@@ -98,13 +102,10 @@ export default function VisaPrep() {
                 </div>
               </CardContent>
             </Card>
-
             <Card>
               <CardContent className="pt-6">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-blue-500/10">
-                    <Users className="h-5 w-5 text-blue-500" />
-                  </div>
+                  <div className="p-2 rounded-lg bg-blue-500/10"><Users className="h-5 w-5 text-blue-500" /></div>
                   <div>
                     <p className="text-sm text-muted-foreground">Allocations</p>
                     <p className="text-2xl font-bold">{stats.allocations.total}</p>
@@ -119,53 +120,39 @@ export default function VisaPrep() {
                 </div>
               </CardContent>
             </Card>
-
             <Card>
               <CardContent className="pt-6">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-orange-500/10">
-                    <Activity className="h-5 w-5 text-orange-500" />
-                  </div>
+                  <div className="p-2 rounded-lg bg-orange-500/10"><Activity className="h-5 w-5 text-orange-500" /></div>
                   <div>
                     <p className="text-sm text-muted-foreground">Mock Sessions</p>
                     <p className="text-2xl font-bold">{stats.sessions.total_sessions}</p>
                   </div>
                 </div>
-                <div className="mt-3 flex gap-2 text-xs">
-                  <span className="text-muted-foreground">{stats.sessions.licenses_with_tests} students tested</span>
-                </div>
+                <div className="mt-3 text-xs text-muted-foreground">{stats.sessions.licenses_with_tests} students tested</div>
               </CardContent>
             </Card>
-
             <Card>
               <CardContent className="pt-6">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-purple-500/10">
-                    <BarChart3 className="h-5 w-5 text-purple-500" />
-                  </div>
+                  <div className="p-2 rounded-lg bg-purple-500/10"><BarChart3 className="h-5 w-5 text-purple-500" /></div>
                   <div>
                     <p className="text-sm text-muted-foreground">Avg. Score</p>
-                    <p className="text-2xl font-bold">
-                      {stats.sessions.avg_overall != null ? stats.sessions.avg_overall.toFixed(1) : "—"}
-                    </p>
+                    <p className="text-2xl font-bold">{stats.sessions.avg_overall != null ? stats.sessions.avg_overall.toFixed(1) : "—"}</p>
                   </div>
                 </div>
-                <div className="mt-3 flex gap-2 text-xs">
-                  <span className="text-muted-foreground">
-                    Best: {stats.sessions.best_overall ?? "—"}
-                  </span>
-                </div>
+                <div className="mt-3 text-xs text-muted-foreground">Best: {stats.sessions.best_overall ?? "—"}</div>
               </CardContent>
             </Card>
           </div>
         ) : null}
 
-        {/* Allocations Table */}
+        {/* Licenses Table */}
         <Card>
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-medium">
-                Allocations {pagination?.total !== undefined && `(${pagination.total})`}
+                Licenses {pagination?.total !== undefined && `(${pagination.total})`}
               </CardTitle>
               <div className="flex items-center gap-3">
                 <div className="relative w-[280px]">
@@ -173,102 +160,120 @@ export default function VisaPrep() {
                   <Input
                     placeholder="Search by name, email, license..."
                     value={search}
-                    onChange={(e) => setSearch(e.target.value)}
+                    onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                     className="pl-9"
                   />
                 </div>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => refetch()}
-                  disabled={isFetching}
-                >
+                <Button variant="outline" size="icon" onClick={() => refetch()} disabled={isFetching}>
                   <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
                 </Button>
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            {allocLoading ? (
+            {licensesLoading ? (
               <div className="space-y-3">
-                {[...Array(5)].map((_, i) => (
-                  <Skeleton key={i} className="h-12 w-full" />
-                ))}
+                {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
               </div>
-            ) : allocations.length === 0 ? (
+            ) : licenses.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
-                <Users className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                <p>No allocations found.</p>
-                <p className="text-sm mt-1">Click "Assign License" to allocate a license to a student.</p>
+                <Key className="h-10 w-10 mx-auto mb-3 opacity-40" />
+                <p>No licenses found. Try adjusting your search.</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <Table className="w-max min-w-full">
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="sticky left-0 bg-background z-10">License No.</TableHead>
-                      <TableHead>Student Name</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Phone</TableHead>
-                      <TableHead className="text-center">Consent</TableHead>
-                      <TableHead className="text-center">Activation</TableHead>
-                      <TableHead className="text-center">Usage</TableHead>
-                      <TableHead>Allocated At</TableHead>
-                      <TableHead className="text-center sticky right-0 bg-background z-10 shadow-[-2px_0_4px_-2px_rgba(0,0,0,0.1)] min-w-[80px]">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {allocations.map((alloc: Allocation) => (
-                      <TableRow key={alloc.license_no}>
-                        <TableCell className="font-mono text-sm whitespace-nowrap sticky left-0 bg-background z-10">
-                          {alloc.license_no}
-                        </TableCell>
-                        <TableCell className="whitespace-nowrap">
-                          {[alloc.student?.first_name, alloc.student?.last_name].filter(Boolean).join(" ") || "—"}
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
-                          {alloc.student?.email || "—"}
-                        </TableCell>
-                        <TableCell className="whitespace-nowrap">
-                          {alloc.student?.phone || "—"}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {alloc.comms_workflow_consent ? (
-                            <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">Yes</Badge>
-                          ) : (
-                            <Badge variant="outline">No</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {getStatusBadge(alloc.license?.activation_status || "—", "activation")}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {getStatusBadge(alloc.license?.usage_status || "—", "usage")}
-                        </TableCell>
-                        <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
-                          {alloc.allocated_at ? new Date(alloc.allocated_at).toLocaleDateString() : "—"}
-                        </TableCell>
-                        <TableCell className="text-center sticky right-0 bg-background z-10 shadow-[-2px_0_4px_-2px_rgba(0,0,0,0.1)] min-w-[80px]">
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            onClick={() => setSelectedLicense(alloc.license_no)}
-                            title="View details"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
+              <>
+                <div className="overflow-x-auto">
+                  <Table className="w-max min-w-full">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="sticky left-0 bg-background z-10">License No.</TableHead>
+                        <TableHead>Alloted To</TableHead>
+                        <TableHead>Student Name</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Mobile</TableHead>
+                        <TableHead>Target Degree</TableHead>
+                        <TableHead>Visa Type</TableHead>
+                        <TableHead className="text-center">Activation</TableHead>
+                        <TableHead className="text-center">Usage</TableHead>
+                        <TableHead className="text-center">Tests</TableHead>
+                        <TableHead className="text-center sticky right-0 bg-background z-10 shadow-[-2px_0_4px_-2px_rgba(0,0,0,0.1)] min-w-[140px]">Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                    </TableHeader>
+                    <TableBody>
+                      {licenses.map((license: VisaLicense) => (
+                        <TableRow key={license.license_number}>
+                          <TableCell className="font-mono text-sm whitespace-nowrap sticky left-0 bg-background z-10">
+                            {license.license_number}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">{license.alloted_to || "—"}</TableCell>
+                          <TableCell className="whitespace-nowrap">{license.student_name || "—"}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{license.email || "—"}</TableCell>
+                          <TableCell className="whitespace-nowrap">{license.mobile || "—"}</TableCell>
+                          <TableCell className="whitespace-nowrap">{license.target_degree || "—"}</TableCell>
+                          <TableCell className="whitespace-nowrap">{license.visa_app_type || "—"}</TableCell>
+                          <TableCell className="text-center">{getStatusBadge(license.activation_status)}</TableCell>
+                          <TableCell className="text-center">{getStatusBadge(license.usage_status)}</TableCell>
+                          <TableCell className="text-center font-medium">{license.test_attempted ?? 0}</TableCell>
+                          <TableCell className="text-center sticky right-0 bg-background z-10 shadow-[-2px_0_4px_-2px_rgba(0,0,0,0.1)] min-w-[140px]">
+                            <div className="flex items-center gap-1 justify-center">
+                              <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                onClick={() => setSelectedLicense(license.license_number)}
+                                title="View details"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 text-xs"
+                                onClick={() => openAssignForLicense(license.license_number)}
+                                title="Assign license"
+                              >
+                                <UserPlus className="h-3 w-3 mr-1" />
+                                Assign
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Pagination */}
+                {pagination && pagination.total_pages > 1 && (
+                  <div className="flex items-center justify-between pt-4">
+                    <p className="text-sm text-muted-foreground">
+                      Page {pagination.page} of {pagination.total_pages} ({pagination.total} total)
+                    </p>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        disabled={page <= 1}
+                      >
+                        <ChevronLeft className="h-4 w-4 mr-1" /> Previous
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((p) => p + 1)}
+                        disabled={page >= pagination.total_pages}
+                      >
+                        Next <ChevronRight className="h-4 w-4 ml-1" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
       </div>
 
-      {/* License Detail Modal */}
       <LicenseDetailModal
         licenseNumber={selectedLicense}
         open={!!selectedLicense}
@@ -276,14 +281,15 @@ export default function VisaPrep() {
         onUpdate={() => refetch()}
       />
 
-      {/* Assign License Modal */}
       <AssignLicenseModal
         open={showAssignModal}
-        onClose={() => setShowAssignModal(false)}
+        onClose={() => { setShowAssignModal(false); setAssignPrefill(undefined); }}
         onSuccess={() => {
           setShowAssignModal(false);
+          setAssignPrefill(undefined);
           refetch();
         }}
+        prefillLicenseNo={assignPrefill}
       />
     </DashboardLayout>
   );
