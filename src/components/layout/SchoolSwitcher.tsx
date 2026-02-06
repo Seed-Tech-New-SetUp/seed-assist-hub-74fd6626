@@ -23,11 +23,14 @@ export function SchoolSwitcher() {
   const [switchingSchoolId, setSwitchingSchoolId] = useState<string | null>(null);
 
   // Get full school name from selectedSchool (has university info) - decode HTML entities
-  const fullSchoolName = decodeUTF8(
-    selectedSchool?.university 
-      ? `${selectedSchool.university} - ${selectedSchool.school_name}` 
-      : selectedSchool?.school_name || currentSchool?.name || ""
-  );
+  // Only show dash if both university and school_name exist
+  const getFullSchoolName = () => {
+    if (selectedSchool?.university && selectedSchool?.school_name) {
+      return `${selectedSchool.university} - ${selectedSchool.school_name}`;
+    }
+    return selectedSchool?.university || selectedSchool?.school_name || currentSchool?.name || "";
+  };
+  const fullSchoolName = decodeUTF8(getFullSchoolName());
   
   const schoolCountry = decodeUTF8(selectedSchool?.country || "");
   const schoolLogo = selectedSchool?.school_logo 
