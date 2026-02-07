@@ -126,7 +126,7 @@ export function LicenseDetailModal({ licenseNumber, open, onClose, onUpdate }: L
         <div className="px-6 pt-6 pb-4 border-b">
           <DialogHeader>
             <DialogTitle className="text-xl flex items-center gap-3">
-              License Details
+              Licence Details
               {licenseNumber && (
                 <Badge variant="outline" className="font-mono text-xs px-2.5 py-1">{licenseNumber}</Badge>
               )}
@@ -155,7 +155,7 @@ export function LicenseDetailModal({ licenseNumber, open, onClose, onUpdate }: L
             <Skeleton className="h-48 w-full" />
           </div>
         ) : !detail ? (
-          <div className="text-center py-12 text-muted-foreground">License not found</div>
+          <div className="text-center py-12 text-muted-foreground">Licence not found</div>
         ) : (
           <Tabs defaultValue="details" className="w-full">
             <div className="px-6 pt-2">
@@ -205,7 +205,7 @@ export function LicenseDetailModal({ licenseNumber, open, onClose, onUpdate }: L
                   {/* License Info */}
                   <div>
                     <h3 className="text-sm font-semibold flex items-center gap-2 mb-3">
-                      <GraduationCap className="h-4 w-4" /> License Information
+                      <GraduationCap className="h-4 w-4" /> Licence Information
                     </h3>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 border rounded-lg px-4">
                       <InfoRow label="Sub Partner" value={detail.license.sub_partner_id} />
