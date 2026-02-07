@@ -222,11 +222,19 @@ export default function VisaPrep() {
       : <ArrowDown className="h-3 w-3 ml-1" />;
   };
 
+  // Compute counts from actual enriched data for accuracy
+  const localCounts = {
+    available: enrichedLicenses.filter(l => !l.isAllocated).length,
+    allocated: enrichedLicenses.filter(l => l.isAllocated).length,
+    activated: enrichedLicenses.filter(l => l.isActivated).length,
+    used: enrichedLicenses.filter(l => l.isUsed).length,
+  };
+
   const statCards: Array<{ key: CardFilter; label: string; value: number; icon: React.ReactNode; color: string }> = [
-    { key: "available", label: "No. of Licences Available", value: stats?.licenses.unassigned ?? 0, icon: <Key className="h-5 w-5" />, color: "text-primary bg-primary/10" },
-    { key: "allocated", label: "No. of Licences Allocated", value: stats?.licenses.assigned ?? 0, icon: <Users className="h-5 w-5" />, color: "text-blue-500 bg-blue-500/10" },
-    { key: "activated", label: "No. of Licences Activated", value: stats?.licenses.activated ?? 0, icon: <Zap className="h-5 w-5" />, color: "text-orange-500 bg-orange-500/10" },
-    { key: "used", label: "No. of Licences Used", value: stats?.licenses.in_use ?? 0, icon: <PlayCircle className="h-5 w-5" />, color: "text-green-600 bg-green-600/10" },
+    { key: "available", label: "Licences Available", value: localCounts.available || (stats?.licenses.unassigned ?? 0), icon: <Key className="h-5 w-5" />, color: "text-primary bg-primary/10" },
+    { key: "allocated", label: "Licences Allocated", value: localCounts.allocated || (stats?.licenses.assigned ?? 0), icon: <Users className="h-5 w-5" />, color: "text-blue-500 bg-blue-500/10" },
+    { key: "activated", label: "Licences Activated", value: localCounts.activated || (stats?.licenses.activated ?? 0), icon: <Zap className="h-5 w-5" />, color: "text-orange-500 bg-orange-500/10" },
+    { key: "used", label: "Licences Used", value: localCounts.used || (stats?.licenses.in_use ?? 0), icon: <PlayCircle className="h-5 w-5" />, color: "text-green-600 bg-green-600/10" },
   ];
 
   return (
@@ -251,12 +259,12 @@ export default function VisaPrep() {
                 className={cn("cursor-pointer transition-all hover:shadow-md", activeFilter === card.key && "ring-2 ring-primary shadow-md")}
                 onClick={() => handleCardClick(card.key)}
               >
-                <CardContent className="pt-6">
+                <CardContent className="py-4 px-5">
                   <div className="flex items-center gap-3">
                     <div className={cn("p-2 rounded-lg", card.color)}>{card.icon}</div>
                     <div>
-                      <p className="text-sm text-muted-foreground">{card.label}</p>
-                      <p className="text-2xl font-bold">{card.value}</p>
+                      <p className="text-xs text-muted-foreground leading-tight">{card.label}</p>
+                      <p className="text-3xl font-bold leading-tight mt-0.5">{card.value}</p>
                     </div>
                   </div>
                 </CardContent>
