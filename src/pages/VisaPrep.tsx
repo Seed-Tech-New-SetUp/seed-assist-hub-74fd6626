@@ -83,16 +83,22 @@ export default function VisaPrep() {
   const { data: statsData, isLoading: statsLoading, refetch: refetchStats } = useQuery({
     queryKey: ["visa-stats"],
     queryFn: fetchStats,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: licensesData, isLoading: licensesLoading, refetch: refetchLicenses, isFetching } = useQuery({
     queryKey: ["visa-licenses-all", search],
     queryFn: () => fetchLicenses({ search: search || undefined, page: 1, limit: 500 }),
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: allocData, refetch: refetchAlloc } = useQuery({
     queryKey: ["visa-allocations-all"],
     queryFn: () => fetchAllocations({ limit: 500 }),
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const detailFetchedRef = useRef(new Set<string>());
