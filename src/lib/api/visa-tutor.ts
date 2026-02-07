@@ -351,7 +351,11 @@ export async function updateAllocation(payload: UpdateAllocationPayload): Promis
   });
 
   const data = await response.json().catch(() => ({}));
+  console.log("[updateAllocation] response status:", response.status, "data:", JSON.stringify(data));
   if (!response.ok) {
+    return { success: false, error: getErrorMessage(data.error) || "Failed to update allocation" };
+  }
+  if (data.success === false) {
     return { success: false, error: getErrorMessage(data.error) || "Failed to update allocation" };
   }
   return data;
