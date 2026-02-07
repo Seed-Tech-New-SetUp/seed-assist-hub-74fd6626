@@ -297,7 +297,7 @@ export function LicenseDetailModal({ licenseNumber, open, onClose, onUpdate }: L
                           <TableBody>
                             {improvements.map((imp) => (
                               <TableRow key={imp.metric}>
-                                <TableCell className="capitalize font-medium">{imp.metric.replace(/_/g, " ")}</TableCell>
+                                <TableCell className="capitalize font-medium">{imp.metric === "visa" ? "Visa Readiness" : imp.metric.replace(/_/g, " ")}</TableCell>
                                 <TableCell className="text-center">{imp.first_score}</TableCell>
                                 <TableCell className="text-center">{imp.latest_score}</TableCell>
                                 <TableCell className="text-center font-medium">{imp.best_score}</TableCell>
@@ -341,7 +341,7 @@ export function LicenseDetailModal({ licenseNumber, open, onClose, onUpdate }: L
                         <TableHead className="text-center">Overall</TableHead>
                         <TableHead className="text-center">Communication</TableHead>
                         <TableHead className="text-center">Body Language</TableHead>
-                        <TableHead className="text-center">Visa</TableHead>
+                        <TableHead className="text-center">Visa Readiness</TableHead>
                         <TableHead className="text-center">Status</TableHead>
                       </TableRow>
                     </TableHeader>
