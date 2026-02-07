@@ -25,6 +25,17 @@ export default function Dashboard() {
         </p>
       </div>
 
+      {/* Revamp Banner */}
+      <div className="mb-6 md:mb-8 animate-fade-in rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-5 md:p-6">
+        <div className="flex items-center gap-3 mb-1.5">
+          <span className="inline-flex items-center rounded-full bg-primary/15 px-3 py-0.5 text-xs font-semibold text-primary tracking-wide uppercase">New</span>
+          <h2 className="text-base md:text-lg font-display font-bold text-foreground">Introducing SEED Assist 2.0</h2>
+        </div>
+        <p className="text-sm text-muted-foreground max-w-2xl">
+          The next generation of international recruitment — reimagined, rebuilt, and more powerful than ever.
+        </p>
+      </div>
+
       {/* Dashboard Content */}
       <TilesDashboard />
     </DashboardLayout>
