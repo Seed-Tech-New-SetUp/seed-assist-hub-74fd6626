@@ -8,11 +8,14 @@ import { Badge } from "@/components/ui/badge";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Search, RefreshCw, Eye, UserPlus, Key, Users, Zap, PlayCircle,
   ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Lock,
-  RefreshCcw,
+  RefreshCcw, Plus,
 } from "lucide-react";
 import {
   fetchLicenses, fetchStats, fetchAllocations, fetchAllocationDetail,
@@ -20,6 +23,8 @@ import {
 } from "@/lib/api/visa-tutor";
 import { LicenseDetailModal } from "@/components/visa/LicenseDetailModal";
 import { AssignLicenseModal } from "@/components/visa/AssignLicenseModal";
+import { AssignOptionsModal } from "@/components/visa/AssignOptionsModal";
+import { BulkAssignModal } from "@/components/visa/BulkAssignModal";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 
@@ -65,9 +70,13 @@ export default function VisaPrep() {
   const [page, setPage] = useState(1);
   const [selectedLicense, setSelectedLicense] = useState<string | null>(null);
   const [showAssignModal, setShowAssignModal] = useState(false);
+  const [showAssignOptions, setShowAssignOptions] = useState(false);
+  const [showBulkAssign, setShowBulkAssign] = useState(false);
   const [assignPrefill, setAssignPrefill] = useState<EnrichedLicense | undefined>();
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [filterVisaStatus, setFilterVisaStatus] = useState<string>("all");
+  const [filterInterviewStatus, setFilterInterviewStatus] = useState<string>("all");
 
   const { data: statsData, isLoading: statsLoading, refetch: refetchStats } = useQuery({
     queryKey: ["visa-stats"],
@@ -175,19 +184,50 @@ export default function VisaPrep() {
     });
   }, [allLicenses, allocMap, performerMap, allocatedSet, detailMap]);
 
+  // Collect unique visa statuses and interview statuses for filter dropdowns
+  const visaStatusOptions = useMemo(() => {
+    const set = new Set<string>();
+    enrichedLicenses.forEach(l => {
+      const vs = l.richVisaStatus || l.visa_status;
+      if (vs) set.add(vs);
+    });
+    return Array.from(set).sort();
+  }, [enrichedLicenses]);
+
+  const interviewStatusOptions = useMemo(() => {
+    const set = new Set<string>();
+    enrichedLicenses.forEach(l => {
+      const vis = l.richVisaInterviewStatus || l.visa_interview_status;
+      if (vis) set.add(vis);
+    });
+    return Array.from(set).sort();
+  }, [enrichedLicenses]);
+
   // Filter
   const filteredLicenses = useMemo(() => {
     return enrichedLicenses.filter((lic) => {
-      if (!activeFilter) return true;
-      switch (activeFilter) {
-        case "available": return !lic.isAllocated;
-        case "allocated": return lic.isAllocated;
-        case "activated": return lic.isActivated;
-        case "used": return lic.isUsed;
-        default: return true;
+      // Card filter
+      if (activeFilter) {
+        switch (activeFilter) {
+          case "available": if (lic.isAllocated) return false; break;
+          case "allocated": if (!lic.isAllocated) return false; break;
+          case "activated": if (!lic.isActivated) return false; break;
+          case "used": if (!lic.isUsed) return false; break;
+        }
       }
+      // Visa status filter
+      if (filterVisaStatus !== "all") {
+        const vs = lic.richVisaStatus || lic.visa_status;
+        if (!vs || vs !== filterVisaStatus) return false;
+      }
+      // Interview status filter
+      if (filterInterviewStatus !== "all") {
+        const vis = lic.richVisaInterviewStatus || lic.visa_interview_status;
+        if (!vis || vis !== filterInterviewStatus) return false;
+      }
+      return true;
     });
-  }, [enrichedLicenses, activeFilter]);
+  }, [enrichedLicenses, activeFilter, filterVisaStatus, filterInterviewStatus]);
 
   // Sort
   const sortedLicenses = useMemo(() => {
@@ -312,17 +352,61 @@ export default function VisaPrep() {
           </div>
         ) : null}
 
-        {/* Filter indicator */}
-        {activeFilter && (
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="text-sm">
-              Showing: {statCards.find((c) => c.key === activeFilter)?.label}
-            </Badge>
-            <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => { setActiveFilter(null); setPage(1); }}>
-              Clear filter
+        {/* Filter Row */}
+        <div className="flex flex-wrap items-center gap-3">
+          <Select value={activeFilter || "all"} onValueChange={(v) => { setActiveFilter(v === "all" ? null : v as CardFilter); setPage(1); }}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Licence Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Licence Statuses</SelectItem>
+              <SelectItem value="available">Available</SelectItem>
+              <SelectItem value="allocated">Allocated</SelectItem>
+              <SelectItem value="activated">Activated</SelectItem>
+              <SelectItem value="used">Used</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={filterVisaStatus} onValueChange={(v) => { setFilterVisaStatus(v); setPage(1); }}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Visa Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Visa Statuses</SelectItem>
+              {visaStatusOptions.map(s => (
+                <SelectItem key={s} value={s}>{capitalize(s)}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={filterInterviewStatus} onValueChange={(v) => { setFilterInterviewStatus(v); setPage(1); }}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Interview Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Interview Statuses</SelectItem>
+              {interviewStatusOptions.map(s => (
+                <SelectItem key={s} value={s}>{capitalize(s)}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {(activeFilter || filterVisaStatus !== "all" || filterInterviewStatus !== "all") && (
+            <Button variant="ghost" size="sm" className="h-9 text-xs" onClick={() => { setActiveFilter(null); setFilterVisaStatus("all"); setFilterInterviewStatus("all"); setPage(1); }}>
+              Clear all filters
+            </Button>
+          )}
+
+          <div className="ml-auto">
+            <Button
+              size="lg"
+              className="h-11 px-6 text-sm font-semibold gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md"
+              onClick={() => setShowAssignOptions(true)}
+            >
+              <Plus className="h-5 w-5" /> Assign Licences
             </Button>
           </div>
-        )}
+        </div>
 
         {/* Table */}
         <Card>
@@ -544,6 +628,29 @@ export default function VisaPrep() {
         open={!!selectedLicense}
         onClose={() => setSelectedLicense(null)}
         onUpdate={refetch}
+      />
+
+      <AssignOptionsModal
+        open={showAssignOptions}
+        onClose={() => setShowAssignOptions(false)}
+        onSingleAssign={() => { setAssignPrefill(undefined); setShowAssignModal(true); }}
+        onBulkAssign={() => setShowBulkAssign(true)}
+      />
+
+      <BulkAssignModal
+        open={showBulkAssign}
+        onClose={() => setShowBulkAssign(false)}
+        onSuccess={() => { setShowBulkAssign(false); refetch(); }}
+        licences={enrichedLicenses.map(l => ({
+          license_number: l.license_number,
+          isAllocated: l.isAllocated,
+          isActivated: l.isActivated,
+          studentFirstName: l.allocName?.split(" ")[0] || "",
+          studentLastName: l.allocName?.split(" ").slice(1).join(" ") || "",
+          studentEmail: l.allocEmail || "",
+          studentPhone: allocMap.get(l.license_number)?.student?.phone || l.mobile || "",
+          commsConsent: allocMap.get(l.license_number)?.comms_workflow_consent ?? true,
+        }))}
       />
 
       <AssignLicenseModal
