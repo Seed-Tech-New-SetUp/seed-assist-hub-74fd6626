@@ -235,7 +235,7 @@ export default function VisaPrep() {
         {/* Header */}
         <div>
           <h1 className="text-2xl font-semibold text-foreground">AI Visa Tutor</h1>
-          <p className="text-muted-foreground mt-1">Manage license allocations and track student performance</p>
+          <p className="text-muted-foreground mt-1">Manage licence allocations and track student performance</p>
         </div>
 
         {/* Stat Cards */}
@@ -280,7 +280,7 @@ export default function VisaPrep() {
         {/* Table */}
         <Card>
           <div className="p-4 pb-0 flex items-center justify-between">
-            <p className="text-sm font-medium text-foreground">Licenses ({totalFiltered})</p>
+            <p className="text-sm font-medium text-foreground">Licences ({totalFiltered})</p>
             <div className="flex items-center gap-3">
               <div className="relative w-[280px]">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -304,7 +304,7 @@ export default function VisaPrep() {
             ) : paginatedLicenses.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 <Key className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                <p>No licenses found.</p>
+                <p>No licences found.</p>
               </div>
             ) : (
               <>
@@ -313,7 +313,7 @@ export default function VisaPrep() {
                     <TableHeader>
                       <TableRow>
                         <TableHead className="sticky left-0 bg-background z-20 min-w-[170px] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
-                          License No.
+                          Licence No.
                         </TableHead>
                         <TableHead className="sticky left-[170px] bg-background z-20 min-w-[200px] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
                           <button className="flex items-center" onClick={() => handleSort("allotted")}>
@@ -438,7 +438,7 @@ export default function VisaPrep() {
                                 <Eye className="h-4 w-4" />
                               </Button>
                               {lic.isActivated ? (
-                                <Button variant="outline" size="sm" className="h-7 text-xs opacity-50 cursor-not-allowed" disabled title="License already activated — cannot reassign">
+                                <Button variant="outline" size="sm" className="h-7 text-xs opacity-50 cursor-not-allowed" disabled title="Licence already activated — cannot reassign">
                                   <Lock className="h-3 w-3 mr-1" /> Locked
                                 </Button>
                               ) : lic.isAllocated ? (
@@ -447,7 +447,7 @@ export default function VisaPrep() {
                                   size="sm"
                                   className="h-7 text-xs border-orange-500/50 text-orange-600 hover:bg-orange-500/10 dark:text-orange-400"
                                   onClick={() => { setAssignPrefill(lic); setShowAssignModal(true); }}
-                                  title="Reassign license (currently allocated but not activated)"
+                                  title="Reassign licence (currently allocated but not activated)"
                                 >
                                   <RefreshCcw className="h-3 w-3 mr-1" /> Reassign
                                 </Button>
@@ -457,7 +457,7 @@ export default function VisaPrep() {
                                   size="sm"
                                   className="h-7 text-xs"
                                   onClick={() => { setAssignPrefill(lic); setShowAssignModal(true); }}
-                                  title="Assign license"
+                                  title="Assign licence"
                                 >
                                   <UserPlus className="h-3 w-3 mr-1" /> Assign
                                 </Button>
