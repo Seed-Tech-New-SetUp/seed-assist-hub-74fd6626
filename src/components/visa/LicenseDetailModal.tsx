@@ -248,7 +248,7 @@ export function LicenseDetailModal({ licenseNumber, open, onClose, onUpdate }: L
                   {apiStudent && (
                     <div>
                       <h3 className="text-sm font-semibold flex items-center gap-2 mb-3">
-                        <Globe className="h-4 w-4" /> VisaMonk Student Data
+                        <Globe className="h-4 w-4" /> Student Data
                       </h3>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 border rounded-lg px-4">
                         <InfoRow label="Name" value={`${apiStudent.first_name} ${apiStudent.last_name}`} />
