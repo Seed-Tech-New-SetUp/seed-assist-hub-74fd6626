@@ -106,7 +106,7 @@ export default function VisaPrep() {
     return allLicenses.map((lic) => {
       const alloc = allocMap.get(lic.license_number);
       const perf = performerMap.get(lic.license_number);
-      const isAllocated = allocatedSet.has(lic.license_number);
+      const isAllocated = allocatedSet.has(lic.license_number) || !!lic.email || !!lic.alloted_to;
       const isActivated = lic.activation_status === "started";
       const isUsed = lic.usage_status === "started";
 
