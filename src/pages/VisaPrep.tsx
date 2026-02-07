@@ -252,10 +252,12 @@ export default function VisaPrep() {
         const vs = lic.richVisaStatus || lic.visa_status;
         if (!vs || vs !== filterVisaStatus) return false;
       }
-      // Interview status filter
+      // Visa slot booked filter (Yes/No)
       if (filterInterviewStatus !== "all") {
         const vis = lic.richVisaInterviewStatus || lic.visa_interview_status;
-        if (!vis || vis !== filterInterviewStatus) return false;
+        const hasSlot = !!vis;
+        if (filterInterviewStatus === "yes" && !hasSlot) return false;
+        if (filterInterviewStatus === "no" && hasSlot) return false;
       }
       return true;
     });
@@ -417,10 +419,9 @@ export default function VisaPrep() {
               <SelectValue placeholder="Visa Slot Booked" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Visa Slot Statuses</SelectItem>
-              {interviewStatusOptions.map(s => (
-                <SelectItem key={s} value={s}>{capitalize(s)}</SelectItem>
-              ))}
+              <SelectItem value="all">Visa Slot Booked</SelectItem>
+              <SelectItem value="yes">Yes</SelectItem>
+              <SelectItem value="no">No</SelectItem>
             </SelectContent>
           </Select>
 
