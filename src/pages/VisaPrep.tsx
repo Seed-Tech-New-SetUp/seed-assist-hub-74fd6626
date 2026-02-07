@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Search, RefreshCw, Eye, UserPlus, Key, Users, Zap, PlayCircle,
   ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Lock,
+  RefreshCcw,
 } from "lucide-react";
 import {
   fetchLicenses, fetchStats, fetchAllocations,
@@ -438,8 +439,18 @@ export default function VisaPrep() {
                                 <Eye className="h-4 w-4" />
                               </Button>
                               {lic.isActivated ? (
-                                <Button variant="outline" size="sm" className="h-7 text-xs opacity-50 cursor-not-allowed" disabled title="License already activated">
-                                  <Lock className="h-3 w-3 mr-1" /> Assign
+                                <Button variant="outline" size="sm" className="h-7 text-xs opacity-50 cursor-not-allowed" disabled title="License already activated — cannot reassign">
+                                  <Lock className="h-3 w-3 mr-1" /> Locked
+                                </Button>
+                              ) : lic.isAllocated ? (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-7 text-xs border-orange-500/50 text-orange-600 hover:bg-orange-500/10 dark:text-orange-400"
+                                  onClick={() => { setAssignPrefill(lic.license_number); setShowAssignModal(true); }}
+                                  title="Reassign license (currently allocated but not activated)"
+                                >
+                                  <RefreshCcw className="h-3 w-3 mr-1" /> Reassign
                                 </Button>
                               ) : (
                                 <Button
