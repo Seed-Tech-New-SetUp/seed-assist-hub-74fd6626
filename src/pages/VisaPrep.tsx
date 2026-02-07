@@ -15,7 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Search, RefreshCw, Eye, UserPlus, Key, Users, Zap, PlayCircle,
   ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Lock,
-  RefreshCcw, Plus,
+  RefreshCcw, Plus, Download,
 } from "lucide-react";
 import {
   fetchLicenses, fetchStats, fetchAllocations, fetchAllocationDetail,
@@ -27,6 +27,7 @@ import { AssignOptionsModal } from "@/components/visa/AssignOptionsModal";
 import { BulkAssignModal } from "@/components/visa/BulkAssignModal";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
+import { exportToXLSX } from "@/lib/utils/xlsx-export";
 
 type CardFilter = "available" | "allocated" | "activated" | "used" | null;
 type SortKey = "allotted" | "activated" | "platform" | "usage" | "avg_score" | "best_score" | "visa_status" | "visa_date" | "visa_interview_slot" | "visa_interview_status";
@@ -468,6 +469,32 @@ export default function VisaPrep() {
                   className="pl-9"
                 />
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={() => {
+                  const today = format(new Date(), "yyyy-MM-dd");
+                  const exportData = sortedLicenses.map((lic) => ({
+                    "Licence No.": lic.license_number,
+                    "Name": lic.allocName || "—",
+                    "Email": lic.allocEmail || "—",
+                    "Activated": lic.isActivated ? "Yes" : "No",
+                    "Platform Used": lic.isUsed ? "Yes" : "No",
+                    "No. of Mock Attempts": lic.test_attempted ?? 0,
+                    "Avg Score": lic.displayAvgScore ?? "—",
+                    "Best Score": lic.displayBestScore ?? "—",
+                    "Visa Status": capitalize(lic.richVisaStatus || lic.visa_status || ""),
+                    "Visa Slot Booked": (lic.richVisaInterviewStatus || lic.visa_interview_status) ? "Yes" : "No",
+                    "Interview Date": formatVisaDate(lic.richVisaInterviewDate || lic.visa_interview_date || lic.visa_slot_date),
+                  }));
+                  exportToXLSX(exportData, { filename: `visa-tutor-licences-${today}`, sheetName: "Licences" });
+                }}
+                disabled={sortedLicenses.length === 0}
+              >
+                <Download className="h-4 w-4" />
+                Export
+              </Button>
               <Button variant="outline" size="icon" onClick={refetch} disabled={isFetching}>
                 <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
               </Button>
