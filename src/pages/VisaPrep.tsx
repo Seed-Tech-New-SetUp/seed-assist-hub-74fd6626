@@ -442,7 +442,7 @@ export default function VisaPrep() {
             <Button
               size="lg"
               className="h-11 px-8 text-sm font-semibold gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md whitespace-nowrap"
-              onClick={() => setShowAssignOptions(true)}
+              onClick={() => setShowBulkAssign(true)}
             >
               <Plus className="h-5 w-5" /> Assign Licences
             </Button>
