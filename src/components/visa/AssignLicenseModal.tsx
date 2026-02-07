@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { UserPlus } from "lucide-react";
-import { createAllocation, CreateAllocationPayload } from "@/lib/api/visa-tutor";
+import { createAllocation, updateAllocation, CreateAllocationPayload } from "@/lib/api/visa-tutor";
 
 interface AssignLicenseModalProps {
   open: boolean;
@@ -34,7 +34,22 @@ export function AssignLicenseModal({ open, onClose, onSuccess, prefillLicenseNo 
   });
 
   const mutation = useMutation({
-    mutationFn: createAllocation,
+    mutationFn: async (payload: CreateAllocationPayload) => {
+      const result = await createAllocation(payload);
+      // If already allocated but not activated, auto-retry with PUT
+      if (!result.success && typeof result.error === "string" && result.error.toLowerCase().includes("already allocated")) {
+        const updateResult = await updateAllocation({
+          license_no: payload.license_no,
+          student_first_name: payload.student_first_name,
+          student_last_name: payload.student_last_name,
+          student_email: payload.student_email,
+          student_phone: payload.student_phone,
+          comms_workflow_consent: payload.comms_workflow_consent,
+        });
+        return updateResult;
+      }
+      return result;
+    },
     onSuccess: (result) => {
       if (result.success) {
         toast({ title: "Success", description: result.message || "License allocated successfully" });
@@ -100,7 +115,7 @@ export function AssignLicenseModal({ open, onClose, onSuccess, prefillLicenseNo 
             Assign License
           </DialogTitle>
           <DialogDescription>
-            Assign a license to a student. The license must belong to your school and not be already allocated.
+            Assign a license to a student. Already-allocated but not-yet-activated licenses can be reassigned.
           </DialogDescription>
         </DialogHeader>
 
