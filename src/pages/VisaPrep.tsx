@@ -114,33 +114,50 @@ export default function VisaPrep() {
 
   const allocatedSet = useMemo(() => new Set(allocMap.keys()), [allocMap]);
 
-  // Fetch rich visa data from allocation detail API for allocated licences
+  // Fetch rich visa data from allocation detail API for all licences with students
   const [detailMap, setDetailMap] = useState<Map<string, { visa_status: string | null; visa_interview_date: string | null; visa_interview_status: string | null }>>(new Map());
 
+  // Build set of all licences that have a student (via allocation or licence email)
+  const licencesWithStudents = useMemo(() => {
+    const set = new Set<string>(allocatedSet);
+    allLicenses.forEach(l => { if (l.email) set.add(l.license_number); });
+    return set;
+  }, [allocatedSet, allLicenses]);
+
   useEffect(() => {
-    const allocatedLicenseNos = Array.from(allocatedSet);
-    if (allocatedLicenseNos.length === 0) return;
+    const licenseNos = Array.from(licencesWithStudents);
+    if (licenseNos.length === 0) return;
 
     // Only fetch for licences we haven't fetched yet
-    const toFetch = allocatedLicenseNos.filter(ln => !detailMap.has(ln));
+    const toFetch = licenseNos.filter(ln => !detailMap.has(ln));
     if (toFetch.length === 0) return;
 
-    Promise.all(
-      toFetch.map(ln => fetchAllocationDetail(ln).then(res => ({ ln, data: res.data?.api_student ?? null })))
-    ).then(results => {
-      setDetailMap(prev => {
-        const next = new Map(prev);
-        results.forEach(({ ln, data }) => {
-          next.set(ln, {
-            visa_status: data?.visa_status || null,
-            visa_interview_date: data?.visa_interview_date || null,
-            visa_interview_status: data?.visa_interview_status || null,
+    // Batch in groups of 10 to avoid overwhelming the API
+    const batchSize = 10;
+    const batches: string[][] = [];
+    for (let i = 0; i < toFetch.length; i += batchSize) {
+      batches.push(toFetch.slice(i, i + batchSize));
+    }
+
+    (async () => {
+      for (const batch of batches) {
+        const results = await Promise.all(
+          batch.map(ln => fetchAllocationDetail(ln).then(res => ({ ln, data: res.data?.api_student ?? null })).catch(() => ({ ln, data: null })))
+        );
+        setDetailMap(prev => {
+          const next = new Map(prev);
+          results.forEach(({ ln, data }) => {
+            next.set(ln, {
+              visa_status: data?.visa_status || null,
+              visa_interview_date: data?.visa_interview_date || null,
+              visa_interview_status: data?.visa_interview_status || null,
+            });
           });
+          return next;
         });
-        return next;
-      });
-    });
-  }, [allocatedSet]); // eslint-disable-line react-hooks/exhaustive-deps
+      }
+    })();
+  }, [licencesWithStudents]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Enrich licenses
   const enrichedLicenses = useMemo<EnrichedLicense[]>(() => {
