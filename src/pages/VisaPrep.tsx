@@ -414,10 +414,10 @@ export default function VisaPrep() {
 
           <Select value={filterInterviewStatus} onValueChange={(v) => { setFilterInterviewStatus(v); setPage(1); }}>
             <SelectTrigger className="min-w-[200px]">
-              <SelectValue placeholder="Visa Interview Slot Booked" />
+              <SelectValue placeholder="Visa Slot Booked" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Slot Statuses</SelectItem>
+              <SelectItem value="all">All Visa Slot Statuses</SelectItem>
               {interviewStatusOptions.map(s => (
                 <SelectItem key={s} value={s}>{capitalize(s)}</SelectItem>
               ))}
