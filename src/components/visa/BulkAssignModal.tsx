@@ -149,12 +149,16 @@ export function BulkAssignModal({ open, onClose, onSuccess, licences }: BulkAssi
           const consentVal = (row[5]?.toString().trim().toUpperCase() || "YES");
           const consent = consentVal !== "NO";
 
+          // Sanitize phone: strip spaces, +, dashes, parentheses, dots
+          const rawPhone = row[4]?.toString().trim() || "";
+          const cleanPhone = rawPhone.replace(/[\s+\-().]/g, "");
+
           allocations.push({
             license_no: licenseNo,
             student_first_name: firstName,
             student_last_name: row[2]?.toString().trim() || "",
             student_email: email,
-            student_phone: row[4]?.toString().trim() || "",
+            student_phone: cleanPhone,
             comms_workflow_consent: consent,
           });
         }
