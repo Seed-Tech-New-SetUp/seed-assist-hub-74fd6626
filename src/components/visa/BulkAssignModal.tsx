@@ -41,6 +41,7 @@ export function BulkAssignModal({ open, onClose, onSuccess, licences }: BulkAssi
     mutationFn: (allocations: CreateAllocationPayload[]) =>
       bulkAllocations({ allocations, on_conflict: "update" }),
     onSuccess: (result) => {
+      console.log("[BulkAssign] API response:", JSON.stringify(result));
       setUploadResult(result);
       if (result.success) {
         toast({ title: "Bulk Assignment Complete", description: result.message || "Licences assigned successfully" });
@@ -56,7 +57,14 @@ export function BulkAssignModal({ open, onClose, onSuccess, licences }: BulkAssi
 
   const handleDownloadTemplate = () => {
     // Filter: all licences that are NOT activated
-    const templateLicences = licences.filter(l => !l.isActivated);
+    const templateLicences = licences
+      .filter(l => !l.isActivated)
+      // Sort: allocated (but not activated) first, then unallocated
+      .sort((a, b) => {
+        if (a.isAllocated && !b.isAllocated) return -1;
+        if (!a.isAllocated && b.isAllocated) return 1;
+        return 0;
+      });
 
     const instructionRows = [
       ["SEED AI Visa Tutor — Bulk Licence Assignment Template"],
@@ -264,7 +272,7 @@ export function BulkAssignModal({ open, onClose, onSuccess, licences }: BulkAssi
               {uploadResult.results?.failed && uploadResult.results.failed.length > 0 && (
                 <div className="text-xs text-destructive mt-2">
                   {uploadResult.results.failed.map((f, i) => (
-                    <p key={i}>Row {f.row} ({f.license_no}): {f.reason}</p>
+                    <p key={i}>Row {f.row} ({f.license_no}): {f.reason || "Assignment failed — licence may already be activated or locked"}</p>
                   ))}
                 </div>
               )}
