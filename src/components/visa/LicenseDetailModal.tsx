@@ -214,7 +214,7 @@ export function LicenseDetailModal({ licenseNumber, open, onClose, onUpdate }: L
                     </h3>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 border rounded-lg px-4">
                       <InfoRow label="Start Date" value={detail.license.start_date} icon={<Calendar className="h-3.5 w-3.5" />} />
-                      <InfoRow label="Start Date" value={detail.license.start_date} icon={<Calendar className="h-3.5 w-3.5" />} />
+                      <InfoRow label="Activation Date" value={detail.license.activation_start_date || "—"} icon={<Calendar className="h-3.5 w-3.5" />} />
                       <InfoRow label="End Date" value={detail.license.end_date} icon={<Calendar className="h-3.5 w-3.5" />} />
                     </div>
                   </div>
