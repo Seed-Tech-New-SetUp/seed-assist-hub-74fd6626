@@ -137,7 +137,7 @@ export function AssignLicenseModal({ open, onClose, onSuccess, prefillLicenseNo,
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Icon className="h-5 w-5" />
@@ -185,26 +185,27 @@ export function AssignLicenseModal({ open, onClose, onSuccess, prefillLicenseNo,
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email">Email *</Label>
-            <Input
-              id="email"
-              type="email"
-              value={form.student_email}
-              onChange={(e) => updateField("student_email", e.target.value)}
-              placeholder="john@example.com"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone</Label>
-            <Input
-              id="phone"
-              value={form.student_phone || ""}
-              onChange={(e) => updateField("student_phone", e.target.value)}
-              placeholder="+919876543210"
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email *</Label>
+              <Input
+                id="email"
+                type="email"
+                value={form.student_email}
+                onChange={(e) => updateField("student_email", e.target.value)}
+                placeholder="john@example.com"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone</Label>
+              <Input
+                id="phone"
+                value={form.student_phone || ""}
+                onChange={(e) => updateField("student_phone", e.target.value)}
+                placeholder="+919876543210"
+              />
+            </div>
           </div>
 
           <div className="rounded-lg border p-3 space-y-2">
