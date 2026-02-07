@@ -188,9 +188,14 @@ export function LicenseDetailModal({ licenseNumber, open, onClose, onUpdate }: L
                       <Input value={formData.student_phone || ""} onChange={(e) => handleInputChange("student_phone", e.target.value)} />
                     </div>
                   </div>
-                  <div className="flex items-center justify-between rounded-lg border p-3">
-                    <Label>Communication Consent</Label>
-                    <Switch checked={formData.comms_workflow_consent || false} onCheckedChange={(v) => handleInputChange("comms_workflow_consent", v)} />
+                  <div className="rounded-lg border p-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label>Communication Consent</Label>
+                      <Switch checked={formData.comms_workflow_consent || false} onCheckedChange={(v) => handleInputChange("comms_workflow_consent", v)} />
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      I consent to the student receiving emails and messages regarding the AI Visa Tutor platform only. No other kind of communication will be sent to the student.
+                    </p>
                   </div>
                   <div className="flex gap-2 justify-end">
                     <Button variant="outline" onClick={() => setEditMode(false)}>Cancel</Button>

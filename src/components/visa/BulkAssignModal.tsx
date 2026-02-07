@@ -73,7 +73,7 @@ export function BulkAssignModal({ open, onClose, onSuccess, licences }: BulkAssi
       ["1. Fill in student details for each licence you want to assign."],
       ["2. Licences already allocated (but not activated) have existing student data pre-filled. Update these to reassign."],
       ["3. Leave rows blank (no email) to skip assignment for that licence."],
-      ["4. Communication Consent: Enter YES or NO. Default is YES if left blank."],
+      ["4. Communication Consent: Enter YES or NO. Default is YES if left blank. Consent is for AI Visa Tutor communications only — no other kind of communication will be sent to the student."],
       ["5. Save this file and upload it back in the Bulk Assign modal."],
       ["6. Email is required for each assignment. First Name is required."],
       [""],
