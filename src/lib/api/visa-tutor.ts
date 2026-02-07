@@ -395,6 +395,41 @@ export async function fetchLicenses(options: { search?: string; page?: number; l
   return decodeObjectStrings(await response.json());
 }
 
+export interface LicenseDetailResponse {
+  success: boolean;
+  data?: {
+    license: {
+      license_number: string;
+      student_name: string | null;
+      first_name: string | null;
+      last_name: string | null;
+      email: string | null;
+      mobile: string | null;
+      target_degree: string | null;
+      visa_app_type: string | null;
+      visa_slot_date: string | null;
+      visa_status: string | null;
+      visa_interview_date: string | null;
+      visa_interview_status: string | null;
+      [key: string]: unknown;
+    };
+  };
+  error?: string;
+}
+
+export async function fetchLicenseDetail(licenseNumber: string): Promise<LicenseDetailResponse> {
+  const token = getAuthToken();
+  if (!token) return { success: false, error: "No authentication token found" };
+
+  const params = new URLSearchParams({ action: "license_details", license_number: licenseNumber });
+  const response = await fetch(proxyUrl(params), { method: "GET", headers: authHeaders(token) });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    return { success: false, error: getErrorMessage(errorData.error) || "Failed to fetch license detail" };
+  }
+  return decodeObjectStrings(await response.json());
+}
+
 export async function fetchSessionDetails(licenseNumber: string): Promise<SessionDetailsResponse> {
   const token = getAuthToken();
   if (!token) return { success: false, error: "No authentication token found" };

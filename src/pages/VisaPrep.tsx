@@ -18,7 +18,7 @@ import {
   RefreshCcw, Plus, Download,
 } from "lucide-react";
 import {
-  fetchLicenses, fetchStats, fetchAllocations, fetchAllocationDetail,
+  fetchLicenses, fetchStats, fetchAllocations, fetchLicenseDetail,
   type VisaLicense, type Allocation,
 } from "@/lib/api/visa-tutor";
 import { LicenseDetailModal } from "@/components/visa/LicenseDetailModal";
@@ -116,24 +116,18 @@ export default function VisaPrep() {
 
   const allocatedSet = useMemo(() => new Set(allocMap.keys()), [allocMap]);
 
-  // Fetch rich visa data from allocation detail API for all licences with students
+  // Fetch rich visa data from license_details endpoint for all licences
   const [detailMap, setDetailMap] = useState<Map<string, { visa_status: string | null; visa_interview_date: string | null; visa_interview_status: string | null }>>(new Map());
-
-  // Build set of all licences that have a student (via allocation or licence email)
-  const licencesWithStudents = useMemo(() => {
-    const set = new Set<string>(allocatedSet);
-    allLicenses.forEach(l => { if (l.email) set.add(l.license_number); });
-    return set;
-  }, [allocatedSet, allLicenses]);
 
 
 
   useEffect(() => {
     let cancelled = false;
-    const licenseNos = Array.from(licencesWithStudents);
-    if (licenseNos.length === 0) return;
+    if (allLicenses.length === 0) return;
 
-    const toFetch = licenseNos.filter(ln => !detailFetchedRef.current.has(ln));
+    const toFetch = allLicenses
+      .map(l => l.license_number)
+      .filter(ln => !detailFetchedRef.current.has(ln));
     if (toFetch.length === 0) return;
 
     // Mark as fetched immediately to prevent re-runs
@@ -149,13 +143,13 @@ export default function VisaPrep() {
       for (const batch of batches) {
         if (cancelled) return;
         const results = await Promise.all(
-          batch.map(ln => fetchAllocationDetail(ln).then(res => {
-            const student = res.data?.api_student ?? null;
-            if (student) {
-              console.log(`[DetailFetch] ${ln}: visa_status=${student.visa_status}, interview_status=${student.visa_interview_status}`);
+          batch.map(ln => fetchLicenseDetail(ln).then(res => {
+            const license = res.data?.license ?? null;
+            if (license) {
+              console.log(`[LicenseDetail] ${ln}: visa_status=${license.visa_status}, interview_status=${license.visa_interview_status}`);
             }
-            return { ln, data: student };
-          }).catch((err) => { console.error(`[DetailFetch] ${ln} error:`, err); return { ln, data: null }; }))
+            return { ln, data: license };
+          }).catch((err) => { console.error(`[LicenseDetail] ${ln} error:`, err); return { ln, data: null }; }))
         );
         if (cancelled) return;
         setDetailMap(prev => {
@@ -173,7 +167,7 @@ export default function VisaPrep() {
     })();
 
     return () => { cancelled = true; };
-  }, [licencesWithStudents]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [allLicenses]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Enrich licenses
   const enrichedLicenses = useMemo<EnrichedLicense[]>(() => {
