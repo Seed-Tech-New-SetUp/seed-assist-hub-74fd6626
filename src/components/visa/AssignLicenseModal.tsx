@@ -218,7 +218,7 @@ export function AssignLicenseModal({ open, onClose, onSuccess, prefillLicenseNo,
               />
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              By enabling this, you confirm that the student has consented to receive emails and messages on behalf of your university via SEED AI Visa Tutor, including practice reminders, performance updates, and related follow-up communications. You may withdraw this consent at any time by updating this setting.
+              I consent to the student receiving emails and messages regarding the AI Visa Tutor platform, including practice reminders, performance updates, and related follow-up communications. No other kind of communication will be sent to the student. This consent may be withdrawn at any time by updating this setting.
             </p>
           </div>
 
