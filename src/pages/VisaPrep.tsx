@@ -176,7 +176,7 @@ export default function VisaPrep() {
       const perf = performerMap.get(lic.license_number);
       const isAllocated = allocatedSet.has(lic.license_number) || !!lic.email;
       const isActivated = lic.activation_status === "started";
-      const isExpired = lic.usage_status === "expired";
+      const isExpired = lic.usage_status === "started";
 
       const allocName = alloc
         ? [alloc.student?.first_name, alloc.student?.last_name].filter(Boolean).join(" ")
