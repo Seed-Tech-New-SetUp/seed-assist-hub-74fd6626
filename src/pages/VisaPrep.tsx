@@ -29,7 +29,7 @@ import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { exportToXLSX } from "@/lib/utils/xlsx-export";
 
-type CardFilter = "available" | "allocated" | "activated" | "used" | null;
+type CardFilter = "available" | "allocated" | "activated" | "expired" | null;
 type SortKey = "allotted" | "activated" | "platform" | "usage" | "avg_score" | "best_score" | "visa_status" | "visa_date" | "visa_interview_slot" | "visa_interview_status";
 type SortDir = "asc" | "desc";
 
@@ -41,7 +41,7 @@ interface EnrichedLicense extends VisaLicense {
   allocEmail: string | null;
   isAllocated: boolean;
   isActivated: boolean;
-  isUsed: boolean;
+  isExpired: boolean;
   displayAvgScore: number | null;
   displayBestScore: number | null;
   sortTier: number;
@@ -176,7 +176,7 @@ export default function VisaPrep() {
       const perf = performerMap.get(lic.license_number);
       const isAllocated = allocatedSet.has(lic.license_number) || !!lic.email;
       const isActivated = lic.activation_status === "started";
-      const isUsed = lic.usage_status === "started";
+      const isExpired = lic.usage_status === "expired";
 
       const allocName = alloc
         ? [alloc.student?.first_name, alloc.student?.last_name].filter(Boolean).join(" ")
@@ -187,7 +187,7 @@ export default function VisaPrep() {
       const allocEmail = alloc?.student?.email || lic.email || null;
 
       let sortTier = 3;
-      if (isUsed) sortTier = 0;
+      if (isExpired) sortTier = 0;
       else if (isActivated) sortTier = 1;
       else if (isAllocated) sortTier = 2;
 
@@ -200,7 +200,7 @@ export default function VisaPrep() {
         allocEmail,
         isAllocated,
         isActivated,
-        isUsed,
+        isExpired,
         displayAvgScore: lic.avg_overall_score ?? null,
         displayBestScore: lic.best_overall_score ?? perf?.best_score ?? null,
         sortTier,
@@ -239,7 +239,7 @@ export default function VisaPrep() {
           case "available": if (lic.isAllocated) return false; break;
           case "allocated": if (!lic.isAllocated) return false; break;
           case "activated": if (!lic.isActivated) return false; break;
-          case "used": if (!lic.isUsed) return false; break;
+          case "expired": if (!lic.isExpired) return false; break;
         }
       }
       // Visa status filter
@@ -282,7 +282,7 @@ export default function VisaPrep() {
       switch (sortKey) {
         case "allotted": va = a.allocName; vb = b.allocName; break;
         case "activated": va = a.isActivated ? 1 : 0; vb = b.isActivated ? 1 : 0; break;
-        case "platform": va = a.isUsed ? 1 : 0; vb = b.isUsed ? 1 : 0; break;
+        case "platform": va = a.isExpired ? 1 : 0; vb = b.isExpired ? 1 : 0; break;
         case "usage": va = a.test_attempted ?? 0; vb = b.test_attempted ?? 0; break;
         case "avg_score": va = a.displayAvgScore; vb = b.displayAvgScore; break;
         case "best_score": va = a.displayBestScore; vb = b.displayBestScore; break;
@@ -336,14 +336,14 @@ export default function VisaPrep() {
     available: enrichedLicenses.filter(l => !l.isAllocated).length,
     allocated: enrichedLicenses.filter(l => l.isAllocated).length,
     activated: enrichedLicenses.filter(l => l.isActivated).length,
-    used: enrichedLicenses.filter(l => l.isUsed).length,
+    expired: enrichedLicenses.filter(l => l.isExpired).length,
   };
 
   const statCards: Array<{ key: CardFilter; label: string; value: number; icon: React.ReactNode; color: string }> = [
     { key: "available", label: "Licences Available", value: hasLocalData ? localCounts.available : (stats?.licenses.unassigned ?? 0), icon: <Key className="h-5 w-5" />, color: "text-primary bg-primary/10" },
     { key: "allocated", label: "Licences Allocated", value: hasLocalData ? localCounts.allocated : (stats?.licenses.assigned ?? 0), icon: <Users className="h-5 w-5" />, color: "text-blue-500 bg-blue-500/10" },
     { key: "activated", label: "Licences Activated", value: hasLocalData ? localCounts.activated : (stats?.licenses.activated ?? 0), icon: <Zap className="h-5 w-5" />, color: "text-orange-500 bg-orange-500/10" },
-    { key: "used", label: "Licences Used", value: hasLocalData ? localCounts.used : (stats?.licenses.in_use ?? 0), icon: <PlayCircle className="h-5 w-5" />, color: "text-green-600 bg-green-600/10" },
+    { key: "expired", label: "Licences Expired", value: hasLocalData ? localCounts.expired : (stats?.licenses.expired ?? 0), icon: <PlayCircle className="h-5 w-5" />, color: "text-red-500 bg-red-500/10" },
   ];
 
   return (
@@ -474,7 +474,7 @@ export default function VisaPrep() {
                     "Name": lic.allocName || "—",
                     "Email": lic.allocEmail || "—",
                     "Activated": lic.isActivated ? "Yes" : "No",
-                    "Platform Used": lic.isUsed ? "Yes" : "No",
+                    "Expired": lic.isExpired ? "Yes" : "No",
                     "No. of Mock Attempts": lic.test_attempted ?? 0,
                     "Avg Score": lic.displayAvgScore ?? "—",
                     "Best Score": lic.displayBestScore ?? "—",
@@ -525,7 +525,7 @@ export default function VisaPrep() {
                         </TableHead>
                         <TableHead>
                           <button className="flex items-center" onClick={() => handleSort("platform")}>
-                            Platform Used <SortIcon col="platform" />
+                            Expired <SortIcon col="platform" />
                           </button>
                         </TableHead>
                         <TableHead>
@@ -595,10 +595,10 @@ export default function VisaPrep() {
                               {lic.isActivated ? "Yes" : "No"}
                             </Badge>
                           </TableCell>
-                          {/* Platform Used */}
+                          {/* Expired */}
                           <TableCell>
-                            <Badge variant={lic.isUsed ? "default" : "outline"} className={lic.isUsed ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" : ""}>
-                              {lic.isUsed ? "Yes" : "No"}
+                            <Badge variant={lic.isExpired ? "default" : "outline"} className={lic.isExpired ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" : ""}>
+                              {lic.isExpired ? "Yes" : "No"}
                             </Badge>
                           </TableCell>
                           {/* Usage (attempts) */}
