@@ -478,8 +478,8 @@ export default function StudentProfile() {
         {/* Header Section - Sticky */}
         <Card className="sticky top-14 md:top-16 z-20 bg-background shadow-sm">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
+            <div className="flex items-start justify-between">
+              <div className="flex flex-col gap-2">
                 <h1 className="text-2xl font-display font-bold">{profile.name}</h1>
                 <div className="flex gap-2">
                   {profile.isSeedRecommended && (
