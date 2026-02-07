@@ -111,7 +111,10 @@ export default function VisaPrep() {
 
       const allocName = alloc
         ? [alloc.student?.first_name, alloc.student?.last_name].filter(Boolean).join(" ")
-        : [lic.first_name, lic.last_name].filter(Boolean).join(" ") || null;
+        : [lic.first_name, lic.last_name].filter(Boolean).join(" ")
+          || lic.student_name
+          || lic.alloted_to
+          || null;
 
       const allocEmail = alloc?.student?.email || lic.email || null;
 
