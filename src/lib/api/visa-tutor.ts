@@ -333,7 +333,11 @@ export async function createAllocation(payload: CreateAllocationPayload): Promis
   });
 
   const data = await response.json().catch(() => ({}));
+  console.log("[createAllocation] status:", response.status, "data:", JSON.stringify(data));
   if (!response.ok) {
+    return { success: false, error: getErrorMessage(data.error) || "Failed to create allocation" };
+  }
+  if (data.success === false) {
     return { success: false, error: getErrorMessage(data.error) || "Failed to create allocation" };
   }
   return data;
