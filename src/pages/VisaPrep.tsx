@@ -386,9 +386,9 @@ export default function VisaPrep() {
         ) : null}
 
         {/* Filter Row */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-3 flex-nowrap overflow-x-auto">
           <Select value={activeFilter || "all"} onValueChange={(v) => { setActiveFilter(v === "all" ? null : v as CardFilter); setPage(1); }}>
-            <SelectTrigger className="w-[234px]">
+            <SelectTrigger className="min-w-[180px]">
               <SelectValue placeholder="Licence Status" />
             </SelectTrigger>
             <SelectContent>
@@ -401,7 +401,7 @@ export default function VisaPrep() {
           </Select>
 
           <Select value={filterVisaStatus} onValueChange={(v) => { setFilterVisaStatus(v); setPage(1); }}>
-            <SelectTrigger className="w-[234px]">
+            <SelectTrigger className="min-w-[180px]">
               <SelectValue placeholder="Visa Status" />
             </SelectTrigger>
             <SelectContent>
@@ -413,7 +413,7 @@ export default function VisaPrep() {
           </Select>
 
           <Select value={filterInterviewStatus} onValueChange={(v) => { setFilterInterviewStatus(v); setPage(1); }}>
-            <SelectTrigger className="w-[234px]">
+            <SelectTrigger className="min-w-[200px]">
               <SelectValue placeholder="Visa Interview Slot Booked" />
             </SelectTrigger>
             <SelectContent>
@@ -425,7 +425,7 @@ export default function VisaPrep() {
           </Select>
 
           <Select value="all" disabled>
-            <SelectTrigger className="w-[234px] opacity-60 cursor-not-allowed">
+            <SelectTrigger className="min-w-[200px] opacity-60 cursor-not-allowed">
               <div className="flex items-center gap-2">
                 <Lock className="h-3.5 w-3.5" />
                 <span>Visa Interview Status</span>
@@ -442,10 +442,10 @@ export default function VisaPrep() {
             </Button>
           )}
 
-          <div className="ml-auto">
+          <div className="ml-auto shrink-0">
             <Button
               size="lg"
-              className="h-11 px-12 text-sm font-semibold gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md min-w-[280px]"
+              className="h-11 px-8 text-sm font-semibold gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md whitespace-nowrap"
               onClick={() => setShowAssignOptions(true)}
             >
               <Plus className="h-5 w-5" /> Assign Licences
