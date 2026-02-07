@@ -204,9 +204,9 @@ export default function VisaPrep() {
         displayAvgScore: lic.avg_overall_score ?? null,
         displayBestScore: lic.best_overall_score ?? perf?.best_score ?? null,
         sortTier,
-        richVisaStatus: detail?.visa_status || null,
-        richVisaInterviewDate: detail?.visa_interview_date || null,
-        richVisaInterviewStatus: detail?.visa_interview_status || null,
+        richVisaStatus: lic.visa_status || detail?.visa_status || null,
+        richVisaInterviewDate: lic.visa_interview_date || detail?.visa_interview_date || null,
+        richVisaInterviewStatus: lic.visa_interview_status || detail?.visa_interview_status || null,
       };
     });
   }, [allLicenses, allocMap, performerMap, allocatedSet, detailMap]);
