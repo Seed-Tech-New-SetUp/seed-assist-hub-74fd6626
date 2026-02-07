@@ -61,7 +61,7 @@ export default function VisaPrep() {
   const [page, setPage] = useState(1);
   const [selectedLicense, setSelectedLicense] = useState<string | null>(null);
   const [showAssignModal, setShowAssignModal] = useState(false);
-  const [assignPrefill, setAssignPrefill] = useState<string | undefined>();
+  const [assignPrefill, setAssignPrefill] = useState<EnrichedLicense | undefined>();
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
@@ -446,7 +446,7 @@ export default function VisaPrep() {
                                   variant="outline"
                                   size="sm"
                                   className="h-7 text-xs border-orange-500/50 text-orange-600 hover:bg-orange-500/10 dark:text-orange-400"
-                                  onClick={() => { setAssignPrefill(lic.license_number); setShowAssignModal(true); }}
+                                  onClick={() => { setAssignPrefill(lic); setShowAssignModal(true); }}
                                   title="Reassign license (currently allocated but not activated)"
                                 >
                                   <RefreshCcw className="h-3 w-3 mr-1" /> Reassign
@@ -456,7 +456,7 @@ export default function VisaPrep() {
                                   variant="outline"
                                   size="sm"
                                   className="h-7 text-xs"
-                                  onClick={() => { setAssignPrefill(lic.license_number); setShowAssignModal(true); }}
+                                  onClick={() => { setAssignPrefill(lic); setShowAssignModal(true); }}
                                   title="Assign license"
                                 >
                                   <UserPlus className="h-3 w-3 mr-1" /> Assign
@@ -501,7 +501,13 @@ export default function VisaPrep() {
         open={showAssignModal}
         onClose={() => { setShowAssignModal(false); setAssignPrefill(undefined); }}
         onSuccess={() => { setShowAssignModal(false); setAssignPrefill(undefined); refetch(); }}
-        prefillLicenseNo={assignPrefill}
+        prefillLicenseNo={assignPrefill?.license_number}
+        isReassign={!!assignPrefill?.isAllocated}
+        existingData={assignPrefill?.isAllocated ? {
+          firstName: assignPrefill.allocName?.split(" ")[0] || "",
+          lastName: assignPrefill.allocName?.split(" ").slice(1).join(" ") || "",
+          email: assignPrefill.allocEmail || "",
+        } : undefined}
       />
     </DashboardLayout>
   );
