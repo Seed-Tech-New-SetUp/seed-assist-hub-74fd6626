@@ -148,7 +148,13 @@ export default function VisaPrep() {
       for (const batch of batches) {
         if (cancelled) return;
         const results = await Promise.all(
-          batch.map(ln => fetchAllocationDetail(ln).then(res => ({ ln, data: res.data?.api_student ?? null })).catch(() => ({ ln, data: null })))
+          batch.map(ln => fetchAllocationDetail(ln).then(res => {
+            const student = res.data?.api_student ?? null;
+            if (student) {
+              console.log(`[DetailFetch] ${ln}: visa_status=${student.visa_status}, interview_status=${student.visa_interview_status}`);
+            }
+            return { ln, data: student };
+          }).catch((err) => { console.error(`[DetailFetch] ${ln} error:`, err); return { ln, data: null }; }))
         );
         if (cancelled) return;
         setDetailMap(prev => {
