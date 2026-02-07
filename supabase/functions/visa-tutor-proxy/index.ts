@@ -120,7 +120,9 @@ serve(async (req) => {
           // Update allocation
           apiUrl = `${BASE_URL}/allocation.php`;
           headers['Content-Type'] = 'application/json';
-          body = await req.text();
+          const rawBody = await req.text();
+          console.log('[visa-tutor-proxy] PUT allocation body:', rawBody);
+          body = rawBody;
         } else {
           return new Response(
             JSON.stringify({ success: false, error: `Method ${method} not allowed for allocation` }),
@@ -183,6 +185,7 @@ serve(async (req) => {
 
     // Safe JSON parsing
     const rawText = await response.text();
+    console.log('[visa-tutor-proxy]', method, action, 'upstream status:', response.status, 'body:', rawText.slice(0, 500));
     let data: unknown;
     try {
       data = JSON.parse(rawText);
