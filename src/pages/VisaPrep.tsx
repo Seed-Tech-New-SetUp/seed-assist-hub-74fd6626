@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,7 +15,7 @@ import {
   RefreshCcw,
 } from "lucide-react";
 import {
-  fetchLicenses, fetchStats, fetchAllocations,
+  fetchLicenses, fetchStats, fetchAllocations, fetchAllocationDetail,
   type VisaLicense, type Allocation,
 } from "@/lib/api/visa-tutor";
 import { LicenseDetailModal } from "@/components/visa/LicenseDetailModal";
@@ -38,7 +38,11 @@ interface EnrichedLicense extends VisaLicense {
   isUsed: boolean;
   displayAvgScore: number | null;
   displayBestScore: number | null;
-  sortTier: number; // 0=used, 1=activated, 2=assigned, 3=remaining
+  sortTier: number;
+  // Rich visa data from allocation detail API
+  richVisaStatus: string | null;
+  richVisaInterviewDate: string | null;
+  richVisaInterviewStatus: string | null;
 }
 
 function formatVisaDate(dateStr: string | null | undefined): string {
@@ -80,7 +84,7 @@ export default function VisaPrep() {
     queryFn: () => fetchAllocations({ limit: 500 }),
   });
 
-  const refetch = () => { refetchLicenses(); refetchAlloc(); refetchStats(); };
+  const refetch = () => { refetchLicenses(); refetchAlloc(); refetchStats(); setDetailMap(new Map()); };
 
   const stats = statsData?.data;
   const allLicenses = licensesData?.data?.licenses || [];
@@ -100,6 +104,34 @@ export default function VisaPrep() {
   }, [stats]);
 
   const allocatedSet = useMemo(() => new Set(allocMap.keys()), [allocMap]);
+
+  // Fetch rich visa data from allocation detail API for allocated licences
+  const [detailMap, setDetailMap] = useState<Map<string, { visa_status: string | null; visa_interview_date: string | null; visa_interview_status: string | null }>>(new Map());
+
+  useEffect(() => {
+    const allocatedLicenseNos = Array.from(allocatedSet);
+    if (allocatedLicenseNos.length === 0) return;
+
+    // Only fetch for licences we haven't fetched yet
+    const toFetch = allocatedLicenseNos.filter(ln => !detailMap.has(ln));
+    if (toFetch.length === 0) return;
+
+    Promise.all(
+      toFetch.map(ln => fetchAllocationDetail(ln).then(res => ({ ln, data: res.data?.api_student ?? null })))
+    ).then(results => {
+      setDetailMap(prev => {
+        const next = new Map(prev);
+        results.forEach(({ ln, data }) => {
+          next.set(ln, {
+            visa_status: data?.visa_status || null,
+            visa_interview_date: data?.visa_interview_date || null,
+            visa_interview_status: data?.visa_interview_status || null,
+          });
+        });
+        return next;
+      });
+    });
+  }, [allocatedSet]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Enrich licenses
   const enrichedLicenses = useMemo<EnrichedLicense[]>(() => {
@@ -123,6 +155,9 @@ export default function VisaPrep() {
       else if (isActivated) sortTier = 1;
       else if (isAllocated) sortTier = 2;
 
+      // Merge rich visa data from detail API
+      const detail = detailMap.get(lic.license_number);
+
       return {
         ...lic,
         allocName,
@@ -133,9 +168,12 @@ export default function VisaPrep() {
         displayAvgScore: lic.avg_overall_score ?? null,
         displayBestScore: lic.best_overall_score ?? perf?.best_score ?? null,
         sortTier,
+        richVisaStatus: detail?.visa_status || null,
+        richVisaInterviewDate: detail?.visa_interview_date || null,
+        richVisaInterviewStatus: detail?.visa_interview_status || null,
       };
     });
-  }, [allLicenses, allocMap, performerMap, allocatedSet]);
+  }, [allLicenses, allocMap, performerMap, allocatedSet, detailMap]);
 
   // Filter
   const filteredLicenses = useMemo(() => {
@@ -179,9 +217,9 @@ export default function VisaPrep() {
         case "usage": va = a.test_attempted ?? 0; vb = b.test_attempted ?? 0; break;
         case "avg_score": va = a.displayAvgScore; vb = b.displayAvgScore; break;
         case "best_score": va = a.displayBestScore; vb = b.displayBestScore; break;
-        case "visa_status": va = a.visa_status; vb = b.visa_status; break;
-        case "visa_date": va = a.visa_interview_date || a.visa_slot_date; vb = b.visa_interview_date || b.visa_slot_date; break;
-        case "visa_interview_status": va = a.visa_interview_status; vb = b.visa_interview_status; break;
+        case "visa_status": va = a.richVisaStatus || a.visa_status; vb = b.richVisaStatus || b.visa_status; break;
+        case "visa_date": va = a.richVisaInterviewDate || a.visa_interview_date || a.visa_slot_date; vb = b.richVisaInterviewDate || b.visa_interview_date || b.visa_slot_date; break;
+        case "visa_interview_status": va = a.richVisaInterviewStatus || a.visa_interview_status; vb = b.richVisaInterviewStatus || b.visa_interview_status; break;
       }
 
       if (va == null && vb == null) return 0;
@@ -428,17 +466,21 @@ export default function VisaPrep() {
                           </TableCell>
                           {/* Visa Status */}
                           <TableCell className="whitespace-nowrap">
-                            {lic.visa_status ? capitalize(lic.visa_status) : "—"}
+                            {(() => {
+                              const vs = lic.richVisaStatus || lic.visa_status;
+                              return vs ? <Badge variant="outline">{capitalize(vs)}</Badge> : "—";
+                            })()}
                           </TableCell>
                           {/* Visa Interview Date */}
                           <TableCell className="whitespace-nowrap">
-                            {formatVisaDate(lic.visa_interview_date || lic.visa_slot_date)}
+                            {formatVisaDate(lic.richVisaInterviewDate || lic.visa_interview_date || lic.visa_slot_date)}
                           </TableCell>
                           {/* Visa Interview Status */}
                           <TableCell className="whitespace-nowrap">
-                            {lic.visa_interview_status ? (
-                              <Badge variant="outline">{capitalize(lic.visa_interview_status)}</Badge>
-                            ) : "—"}
+                            {(() => {
+                              const vis = lic.richVisaInterviewStatus || lic.visa_interview_status;
+                              return vis ? <Badge variant="outline">{capitalize(vis)}</Badge> : "—";
+                            })()}
                           </TableCell>
                           {/* Actions */}
                           <TableCell className="text-center sticky right-0 bg-background z-10 shadow-[-2px_0_4px_-2px_rgba(0,0,0,0.1)] min-w-[120px]">
