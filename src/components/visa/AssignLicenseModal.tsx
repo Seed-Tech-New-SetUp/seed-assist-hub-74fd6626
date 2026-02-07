@@ -25,6 +25,7 @@ interface AssignLicenseModalProps {
     firstName: string;
     lastName: string;
     email: string;
+    phone?: string;
   };
 }
 
@@ -125,6 +126,7 @@ export function AssignLicenseModal({ open, onClose, onSuccess, prefillLicenseNo,
         student_first_name: existingData?.firstName || "",
         student_last_name: existingData?.lastName || "",
         student_email: existingData?.email || "",
+        student_phone: existingData?.phone || "",
       }));
     }
   }, [open, prefillLicenseNo, existingData]);
