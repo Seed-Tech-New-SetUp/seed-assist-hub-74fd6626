@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { UserPlus } from "lucide-react";
+import { UserPlus, RefreshCcw } from "lucide-react";
 import { createAllocation, updateAllocation, CreateAllocationPayload } from "@/lib/api/visa-tutor";
 
 interface AssignLicenseModalProps {
@@ -20,12 +20,18 @@ interface AssignLicenseModalProps {
   onClose: () => void;
   onSuccess: () => void;
   prefillLicenseNo?: string;
+  isReassign?: boolean;
+  existingData?: {
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
 }
 
-export function AssignLicenseModal({ open, onClose, onSuccess, prefillLicenseNo }: AssignLicenseModalProps) {
+export function AssignLicenseModal({ open, onClose, onSuccess, prefillLicenseNo, isReassign, existingData }: AssignLicenseModalProps) {
   const { toast } = useToast();
   const [form, setForm] = useState<CreateAllocationPayload>({
-    license_no: prefillLicenseNo || "",
+    license_no: "",
     student_first_name: "",
     student_last_name: "",
     student_email: "",
@@ -35,10 +41,9 @@ export function AssignLicenseModal({ open, onClose, onSuccess, prefillLicenseNo 
 
   const mutation = useMutation({
     mutationFn: async (payload: CreateAllocationPayload) => {
-      const result = await createAllocation(payload);
-      // If already allocated but not activated, auto-retry with PUT
-      if (!result.success && typeof result.error === "string" && result.error.toLowerCase().includes("already allocated")) {
-        const updateResult = await updateAllocation({
+      if (isReassign) {
+        // Directly use PUT for reassignment
+        return updateAllocation({
           license_no: payload.license_no,
           student_first_name: payload.student_first_name,
           student_last_name: payload.student_last_name,
@@ -46,17 +51,28 @@ export function AssignLicenseModal({ open, onClose, onSuccess, prefillLicenseNo 
           student_phone: payload.student_phone,
           comms_workflow_consent: payload.comms_workflow_consent,
         });
-        return updateResult;
+      }
+      const result = await createAllocation(payload);
+      // Fallback: if already allocated, auto-retry with PUT
+      if (!result.success && typeof result.error === "string" && result.error.toLowerCase().includes("already allocated")) {
+        return updateAllocation({
+          license_no: payload.license_no,
+          student_first_name: payload.student_first_name,
+          student_last_name: payload.student_last_name,
+          student_email: payload.student_email,
+          student_phone: payload.student_phone,
+          comms_workflow_consent: payload.comms_workflow_consent,
+        });
       }
       return result;
     },
     onSuccess: (result) => {
       if (result.success) {
-        toast({ title: "Success", description: result.message || "License allocated successfully" });
+        toast({ title: "Success", description: result.message || (isReassign ? "License reassigned successfully" : "License allocated successfully") });
         resetForm();
         onSuccess();
       } else {
-        toast({ title: "Allocation Failed", description: result.error || "Failed to allocate license", variant: "destructive" });
+        toast({ title: isReassign ? "Reassignment Failed" : "Allocation Failed", description: result.error || "Failed to allocate license", variant: "destructive" });
       }
     },
     onError: () => {
@@ -100,22 +116,33 @@ export function AssignLicenseModal({ open, onClose, onSuccess, prefillLicenseNo 
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  // Sync prefill data when modal opens
   useEffect(() => {
-    if (prefillLicenseNo) {
-      setForm((prev) => ({ ...prev, license_no: prefillLicenseNo }));
+    if (open && prefillLicenseNo) {
+      setForm((prev) => ({
+        ...prev,
+        license_no: prefillLicenseNo,
+        student_first_name: existingData?.firstName || "",
+        student_last_name: existingData?.lastName || "",
+        student_email: existingData?.email || "",
+      }));
     }
-  }, [prefillLicenseNo]);
+  }, [open, prefillLicenseNo, existingData]);
+
+  const Icon = isReassign ? RefreshCcw : UserPlus;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <UserPlus className="h-5 w-5" />
-            Assign License
+            <Icon className="h-5 w-5" />
+            {isReassign ? "Reassign License" : "Assign License"}
           </DialogTitle>
           <DialogDescription>
-            Assign a license to a student. Already-allocated but not-yet-activated licenses can be reassigned.
+            {isReassign
+              ? "Update the student assigned to this license. The previous allocation will be replaced."
+              : "Assign a license to a student. Already-allocated but not-yet-activated licenses can be reassigned."}
           </DialogDescription>
         </DialogHeader>
 
@@ -193,7 +220,7 @@ export function AssignLicenseModal({ open, onClose, onSuccess, prefillLicenseNo 
               Cancel
             </Button>
             <Button type="submit" disabled={mutation.isPending}>
-              {mutation.isPending ? "Assigning..." : "Assign License"}
+              {mutation.isPending ? (isReassign ? "Reassigning..." : "Assigning...") : (isReassign ? "Reassign License" : "Assign License")}
             </Button>
           </div>
         </form>
